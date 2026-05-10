@@ -155,7 +155,7 @@
         friends: ["系统助手"],
         activeFriend: "系统助手",
         chats: {
-          系统助手: [
+          "系统助手": [
             {
               text: "你好，欢迎使用在线聊天系统。",
               time: new Date().toLocaleString(),
@@ -267,6 +267,12 @@
         renderMessages();
       });
 
+      friendInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          addFriendBtn.click();
+        }
+      });
+
       sendMessageBtn.addEventListener("click", () => {
         const text = messageInput.value.trim();
         if (!state.activeFriend || !text) {
@@ -280,6 +286,12 @@
 
         messageInput.value = "";
         renderMessages();
+      });
+
+      messageInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          sendMessageBtn.click();
+        }
       });
 
       renderFriends();
