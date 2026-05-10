@@ -249,6 +249,7 @@
         const name = friendInput.value.trim();
         if (!name) {
           friendFeedback.textContent = "请输入好友昵称。";
+          friendInput.value = "";
           return;
         }
         if (state.friends.includes(name)) {
