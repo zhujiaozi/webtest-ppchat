@@ -174,16 +174,25 @@
           const nameSpan = document.createElement("span");
           nameSpan.className = "friend-name";
           nameSpan.textContent = name;
-          nameSpan.addEventListener("click", () => {
+          const selectFriend = () => {
             state.activeFriend = name;
             renderFriends();
             renderMessages();
+          };
+          nameSpan.tabIndex = 0;
+          nameSpan.addEventListener("click", selectFriend);
+          nameSpan.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              selectFriend();
+            }
           });
 
           const removeBtn = document.createElement("button");
           removeBtn.className = "secondary";
           removeBtn.type = "button";
           removeBtn.textContent = "删除";
+          removeBtn.setAttribute("aria-label", "删除 " + name);
           removeBtn.addEventListener("click", () => {
             state.friends = state.friends.filter((friend) => friend !== name);
             delete state.chats[name];
