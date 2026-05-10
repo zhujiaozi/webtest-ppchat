@@ -124,6 +124,7 @@
             <input id="friend-input" type="text" placeholder="输入好友昵称" />
             <button id="add-friend" type="button">添加</button>
           </div>
+          <p id="friend-feedback" class="empty" aria-live="polite"></p>
           <ul id="friend-list" aria-live="polite"></ul>
         </div>
       </section>
@@ -144,6 +145,7 @@
       const friendInput = document.getElementById("friend-input");
       const addFriendBtn = document.getElementById("add-friend");
       const friendList = document.getElementById("friend-list");
+      const friendFeedback = document.getElementById("friend-feedback");
       const chatTitle = document.getElementById("chat-title");
       const messages = document.getElementById("messages");
       const messageInput = document.getElementById("message-input");
@@ -246,9 +248,11 @@
       addFriendBtn.addEventListener("click", () => {
         const name = friendInput.value.trim();
         if (!name) {
+          friendFeedback.textContent = "请输入好友昵称。";
           return;
         }
         if (state.friends.includes(name)) {
+          friendFeedback.textContent = "该好友已存在。";
           friendInput.value = "";
           return;
         }
@@ -257,6 +261,7 @@
         state.chats[name] = [];
         state.activeFriend = name;
         friendInput.value = "";
+        friendFeedback.textContent = "";
 
         renderFriends();
         renderMessages();
