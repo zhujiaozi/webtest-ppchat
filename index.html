@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>在线聊天系统</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      }
+      body {
+        margin: 0;
+        background: #f5f7fb;
+        color: #1f2937;
+      }
+      .app {
+        max-width: 980px;
+        margin: 24px auto;
+        padding: 0 16px;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 16px;
+      }
+      .panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      }
+      .panel h2 {
+        margin: 0;
+        padding: 14px 16px;
+        font-size: 16px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .content {
+        padding: 12px 16px 16px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      input,
+      button {
+        font: inherit;
+      }
+      input {
+        flex: 1;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 8px 10px;
+      }
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        background: #2563eb;
+        color: #fff;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #6b7280;
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .friend-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+      }
+      .friend-item.active {
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
+      .friend-name {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .messages {
+        min-height: 300px;
+        max-height: 420px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 12px;
+        background: #f9fafb;
+      }
+      .message {
+        margin-bottom: 10px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+      }
+      .message small {
+        color: #6b7280;
+      }
+      .empty {
+        color: #6b7280;
+      }
+      @media (max-width: 800px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <section class="panel" aria-label="好友管理">
+        <h2>好友管理</h2>
+        <div class="content">
+          <div class="row">
+            <input id="friend-input" type="text" placeholder="输入好友昵称" />
+            <button id="add-friend" type="button">添加</button>
+          </div>
+          <ul id="friend-list" aria-live="polite"></ul>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="聊天管理">
+        <h2 id="chat-title">聊天管理</h2>
+        <div class="content">
+          <div id="messages" class="messages"></div>
+          <div class="row">
+            <input id="message-input" type="text" placeholder="输入聊天内容" />
+            <button id="send-message" type="button">发送</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const friendInput = document.getElementById("friend-input");
+      const addFriendBtn = document.getElementById("add-friend");
+      const friendList = document.getElementById("friend-list");
+      const chatTitle = document.getElementById("chat-title");
+      const messages = document.getElementById("messages");
+      const messageInput = document.getElementById("message-input");
+      const sendMessageBtn = document.getElementById("send-message");
+
+      const state = {
+        friends: ["系统助手"],
+        activeFriend: "系统助手",
+        chats: {
+          系统助手: [
+            {
+              text: "你好，欢迎使用在线聊天系统。",
+              time: new Date().toLocaleString(),
+            },
+          ],
+        },
+      };
+
+      function renderFriends() {
+        friendList.textContent = "";
+
+        state.friends.forEach((name) => {
+          const li = document.createElement("li");
+          li.className = "friend-item" + (name === state.activeFriend ? " active" : "");
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "friend-name";
+          nameSpan.textContent = name;
+          nameSpan.addEventListener("click", () => {
+            state.activeFriend = name;
+            renderFriends();
+            renderMessages();
+          });
+
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "secondary";
+          removeBtn.type = "button";
+          removeBtn.textContent = "删除";
+          removeBtn.addEventListener("click", () => {
+            state.friends = state.friends.filter((friend) => friend !== name);
+            delete state.chats[name];
+            if (state.activeFriend === name) {
+              state.activeFriend = state.friends[0] || "";
+            }
+            renderFriends();
+            renderMessages();
+          });
+
+          li.append(nameSpan, removeBtn);
+          friendList.appendChild(li);
+        });
+
+        if (!state.friends.length) {
+          const li = document.createElement("li");
+          li.className = "empty";
+          li.textContent = "暂无好友，请先添加。";
+          friendList.appendChild(li);
+        }
+      }
+
+      function renderMessages() {
+        messages.textContent = "";
+        if (!state.activeFriend) {
+          chatTitle.textContent = "聊天管理";
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "请选择或添加好友后再开始聊天。";
+          messages.appendChild(empty);
+          return;
+        }
+
+        chatTitle.textContent = "聊天管理 - " + state.activeFriend;
+        const list = state.chats[state.activeFriend] || [];
+
+        if (!list.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "暂无聊天记录。";
+          messages.appendChild(empty);
+          return;
+        }
+
+        list.forEach((item) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "message";
+
+          const text = document.createElement("div");
+          text.textContent = item.text;
+
+          const time = document.createElement("small");
+          time.textContent = item.time;
+
+          wrapper.append(text, time);
+          messages.appendChild(wrapper);
+        });
+
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      addFriendBtn.addEventListener("click", () => {
+        const name = friendInput.value.trim();
+        if (!name) {
+          return;
+        }
+        if (state.friends.includes(name)) {
+          friendInput.value = "";
+          return;
+        }
+
+        state.friends.push(name);
+        state.chats[name] = [];
+        state.activeFriend = name;
+        friendInput.value = "";
+
+        renderFriends();
+        renderMessages();
+      });
+
+      sendMessageBtn.addEventListener("click", () => {
+        const text = messageInput.value.trim();
+        if (!state.activeFriend || !text) {
+          return;
+        }
+
+        state.chats[state.activeFriend].push({
+          text,
+          time: new Date().toLocaleString(),
+        });
+
+        messageInput.value = "";
+        renderMessages();
+      });
+
+      renderFriends();
+      renderMessages();
+    </script>
+  </body>
+</html>
