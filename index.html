@@ -279,6 +279,9 @@
         if (!state.activeFriend || !text) {
           return;
         }
+        if (!state.chats[state.activeFriend]) {
+          state.chats[state.activeFriend] = [];
+        }
 
         state.chats[state.activeFriend].push({
           text,
