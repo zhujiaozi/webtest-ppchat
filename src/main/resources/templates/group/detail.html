@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{common/layout :: html(title='群详情', content=~{::main})}">
+<main>
+    <h2 th:text="${group.name}"></h2>
+    <a th:href="@{/groups}" class="btn">← 返回</a>
+    <a th:href="@{/chat}" class="btn btn-primary">进入聊天</a>
+    <div class="section" style="margin-top:16px">
+        <h3>群公告</h3>
+        <form th:action="@{/groups/{id}/notice(id=${group.id})}" method="post" style="display:flex;gap:8px">
+            <input type="text" name="notice" th:value="${group.notice}" placeholder="群公告" style="flex:1">
+            <button type="submit" class="btn">更新</button>
+        </form>
+    </div>
+    <div class="section" style="margin-top:16px">
+        <h3>群成员</h3>
+        <table class="table">
+            <thead><tr><th>用户ID</th><th>角色</th><th>操作</th></tr></thead>
+            <tbody>
+                <tr th:each="m : ${members}">
+                    <td th:text="${m.userId}"></td>
+                    <td th:text="${m.role == 2 ? '群主' : (m.role == 1 ? '管理员' : '成员')}"></td>
+                    <td>
+                        <form th:if="${isOwner and m.role != 2}" th:action="@{/groups/{id}/kick/{uid}(id=${group.id},uid=${m.userId})}" method="post" style="display:inline" onsubmit="return confirm('确定踢出？')">
+                            <button type="submit" class="btn btn-small btn-danger">踢出</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="margin-top:16px">
+        <form th:action="@{/groups/{id}/leave(id=${group.id})}" method="post" style="display:inline" onsubmit="return confirm('确定退出？')">
+            <button type="submit" class="btn btn-danger">退出群聊</button>
+        </form>
+        <form th:if="${isOwner}" th:action="@{/groups/{id}/dissolve(id=${group.id})}" method="post" style="display:inline" onsubmit="return confirm('确定解散？')">
+            <button type="submit" class="btn btn-danger">解散群聊</button>
+        </form>
+    </div>
+</main>
+</html>

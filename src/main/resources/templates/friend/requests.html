@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{common/layout :: html(title='好友申请', content=~{::main})}">
+<main>
+    <h2>好友申请</h2>
+    <a th:href="@{/friends}" class="btn">← 返回好友列表</a>
+    <table class="table" style="margin-top:12px">
+        <thead><tr><th>申请人ID</th><th>验证消息</th><th>时间</th><th>操作</th></tr></thead>
+        <tbody>
+            <tr th:each="r : ${requests}">
+                <td th:text="${r.fromUserId}"></td>
+                <td th:text="${r.message}"></td>
+                <td th:text="${r.createdAt}"></td>
+                <td>
+                    <form th:action="@{/friends/request/accept/{id}(id=${r.id})}" method="post" style="display:inline">
+                        <button type="submit" class="btn btn-small btn-primary">同意</button>
+                    </form>
+                    <form th:action="@{/friends/request/reject/{id}(id=${r.id})}" method="post" style="display:inline">
+                        <button type="submit" class="btn btn-small btn-danger">拒绝</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div th:if="${#lists.isEmpty(requests)}" class="empty-msg">暂无待处理的好友申请</div>
+</main>
+</html>

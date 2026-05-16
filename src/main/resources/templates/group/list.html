@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{common/layout :: html(title='群聊管理', content=~{::main})}">
+<main>
+    <h2>我的群聊</h2>
+    <a th:href="@{/groups/create}" class="btn btn-primary">+ 创建群</a>
+    <div class="card-grid" style="margin-top:16px">
+        <a th:each="g : ${groups}" th:href="@{/groups/{id}(id=${g.id})}" class="card">
+            <h3 th:text="${g.name}"></h3>
+            <p th:text="${g.notice ?: '暂无公告'}"></p>
+        </a>
+    </div>
+    <div th:if="${#lists.isEmpty(groups)}" class="empty-msg">暂无群聊</div>
+</main>
+</html>
