@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "group_chat")
+@Table(name = "pp_group_chat")
 public class GroupChat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

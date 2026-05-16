@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "friend_group")
+@Table(name = "pp_friend_group")
 public class FriendGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
