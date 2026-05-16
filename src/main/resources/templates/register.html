@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{common/layout :: html(title='注册', content=~{::main})}">
+<main>
+    <div class="form-container">
+        <h2>用户注册</h2>
+        <div class="error-msg" th:if="${error}" th:text="${error}"></div>
+        <form th:action="@{/register}" method="post">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" name="username" required placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" name="password" required placeholder="请输入密码">
+            </div>
+            <div class="form-group">
+                <label>昵称（可选）</label>
+                <input type="text" name="nickname" placeholder="请输入昵称">
+            </div>
+            <button type="submit" class="btn btn-primary">注册</button>
+        </form>
+        <p class="form-footer">已有账号？<a th:href="@{/login}">去登录</a></p>
+    </div>
+</main>
+</html>

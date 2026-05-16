@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{common/layout :: html(title='首页', content=~{::main})}">
+<main>
+    <div class="welcome">
+        <h2>欢迎回来, <span th:text="${user.nickname ?: user.username}"></span>！</h2>
+        <p>请选择功能：</p>
+        <div class="card-grid">
+            <a th:href="@{/chat}" class="card"><h3>💬 聊天</h3><p>与好友实时聊天</p></a>
+            <a th:href="@{/friends}" class="card"><h3>👥 好友</h3><p>管理好友和分组</p></a>
+            <a th:href="@{/groups}" class="card"><h3>🏠 群聊</h3><p>创建和管理群</p></a>
+            <a th:href="@{/profile}" class="card"><h3>👤 个人中心</h3><p>修改个人资料</p></a>
+        </div>
+    </div>
+</main>
+</html>
