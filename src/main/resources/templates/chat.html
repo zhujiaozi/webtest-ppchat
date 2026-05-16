@@ -1,74 +1,96 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PP 聊天</title>
+    <title>PP Chat</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
-        body { margin: 0; overflow: hidden; }
-        .chat-container { display: flex; height: 100vh; }
-        .sidebar { width: 56px; background: #2e2e3e; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; }
-        .sidebar .icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: #999; text-decoration: none; }
-        .sidebar .icon.active { background: #3b82f6; color: white; }
-        .session-list { width: 240px; background: #f5f5f5; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; }
-        .session-item { padding: 12px 16px; cursor: pointer; display: flex; gap: 10px; align-items: center; }
-        .session-item:hover, .session-item.active { background: #e8e8e8; }
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: #f0f0f0; }
-        .chat-header { padding: 12px 20px; background: white; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; }
-        .messages { flex: 1; padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .msg-bubble { max-width: 60%; padding: 8px 12px; border-radius: 12px; word-break: break-word; }
-        .msg-mine { align-self: flex-end; background: #95ec69; border-radius: 12px 0 12px 12px; }
-        .msg-other { align-self: flex-start; background: white; border-radius: 0 12px 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
-        .msg-time { text-align: center; color: #999; font-size: 11px; }
-        .input-area { background: white; border-top: 1px solid #e0e0e0; padding: 10px 16px; }
-        .input-toolbar { display: flex; gap: 16px; margin-bottom: 8px; font-size: 18px; }
-        .input-row { display: flex; gap: 8px; }
-        .input-row textarea { flex: 1; resize: none; height: 60px; border: 1px solid #ddd; border-radius: 6px; padding: 8px; font-size: 13px; font-family: inherit; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold; flex-shrink: 0; }
-        .avatar-lg { width: 40px; height: 40px; font-size: 14px; }
-    </style>
+    <script th:src="@{/js/theme.js}"></script>
+    <style>body { overflow: hidden; }</style>
 </head>
 <body>
-    <div class="chat-container" th:attr="data-user-id=${session.currentUser.id}, data-user-name=${session.currentUser.nickname ?: session.currentUser.username}">
-        <div class="sidebar">
-            <div class="icon active">💬</div>
-            <a th:href="@{/friends}" class="icon">👥</a>
-            <a th:href="@{/groups}" class="icon">🏠</a>
-            <div style="flex:1"></div>
-            <a th:href="@{/profile}" class="icon">👤</a>
+<div class="chat-app" th:attr="data-user-id=${session.currentUser.id}, data-user-name=${session.currentUser.nickname ?: session.currentUser.username}">
+
+    <!-- 左侧导航栏 -->
+    <nav class="chat-nav">
+        <div th:if="${session.currentUser.avatar}">
+            <img class="nav-avatar" th:src="${session.currentUser.avatar}" alt="头像">
         </div>
-        <div class="session-list">
-            <div style="padding:12px">
-                <input type="text" id="searchInput" placeholder="搜索联系人..." style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px">
-            </div>
-            <div id="sessionList" style="flex:1;overflow-y:auto"></div>
+        <div th:unless="${session.currentUser.avatar}" class="nav-avatar-placeholder"
+             th:text="${#strings.substring(session.currentUser.nickname ?: session.currentUser.username, 0, 1)}"></div>
+
+        <button class="active" title="聊天">💬</button>
+        <a th:href="@{/friends}" style="text-decoration:none"><button title="好友">👥</button></a>
+        <a th:href="@{/groups}" style="text-decoration:none"><button title="群聊">🏠</button></a>
+
+        <div class="nav-bottom">
+            <div id="theme-switcher-area"></div>
+            <a th:href="@{/profile}" style="text-decoration:none"><button title="个人中心">⚙️</button></a>
+            <a th:href="@{/logout}" style="text-decoration:none"><button title="退出" style="color:var(--danger)">⏻</button></a>
         </div>
-        <div class="chat-area">
-            <div class="chat-header" id="chatHeader" style="display:none">
-                <span id="chatTitle" style="font-weight:600"></span>
-                <span>
-                    <span style="cursor:pointer;margin-right:12px" onclick="searchMessages()">🔍 搜索</span>
-                    <span style="cursor:pointer" onclick="exportChat()">📥 导出</span>
-                </span>
-            </div>
-            <div class="messages" id="messages"></div>
-            <div class="input-area" id="inputArea" style="display:none">
-                <div class="input-toolbar">
-                    <span style="cursor:pointer" title="按住录音" id="voiceBtn">🎤</span>
-                </div>
-                <div class="input-row">
-                    <textarea id="msgInput" placeholder="输入消息... (Enter发送)"></textarea>
-                    <button class="btn btn-primary" onclick="sendMessage()" style="align-self:flex-end">发送</button>
-                </div>
-            </div>
-            <div id="emptyState" style="display:flex;align-items:center;justify-content:center;height:100%;color:#999">
-                选择一个会话开始聊天
+    </nav>
+
+    <!-- 中间会话列表 -->
+    <aside class="chat-sidebar">
+        <div class="chat-sidebar-header">
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" id="searchInput" placeholder="搜索联系人...">
             </div>
         </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <script th:src="@{/js/chat.js}"></script>
+        <div class="chat-sidebar-list" id="sessionList"></div>
+    </aside>
+
+    <!-- 右侧聊天区 -->
+    <main class="chat-main">
+        <div class="chat-header" id="chatHeader" style="display:none">
+            <span class="chat-title" id="chatTitle"></span>
+            <div class="chat-actions">
+                <button onclick="searchMessages()" title="搜索聊天记录">🔍</button>
+                <button onclick="exportChat()" title="导出聊天记录">📥</button>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="messages"></div>
+
+        <div class="chat-input-area" id="inputArea" style="display:none">
+            <div class="chat-toolbar">
+                <button onclick="document.getElementById('fileInput').click()" title="发送文件">📎</button>
+                <button id="voiceBtn" title="按住录音">🎤</button>
+                <input type="file" id="fileInput" style="display:none">
+            </div>
+            <div class="chat-input-row">
+                <textarea id="msgInput" placeholder="输入消息... (Enter发送，Shift+Enter换行)" rows="1"></textarea>
+                <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+            </div>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <p>选择一个会话开始聊天</p>
+        </div>
+    </main>
+
+    <!-- 搜索面板 -->
+    <aside class="chat-search-panel hidden" id="searchPanel">
+        <div class="panel-header">
+            <h3>搜索聊天记录</h3>
+            <button class="btn btn-sm btn-ghost" onclick="toggleSearchPanel()">✕</button>
+        </div>
+        <div style="padding:12px 16px">
+            <input type="text" class="input" id="historySearchInput" placeholder="输入关键词搜索...">
+        </div>
+        <div class="panel-body" id="searchResults"></div>
+    </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script th:src="@{/js/chat.js}"></script>
+<script>
+    document.getElementById('theme-switcher-area').appendChild(ThemeManager.createSwitcher());
+</script>
 </body>
 </html>

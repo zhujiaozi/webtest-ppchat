@@ -1,15 +1,44 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{common/layout :: html(title='群聊管理', content=~{::main})}">
-<main>
-    <h2>我的群聊</h2>
-    <a th:href="@{/groups/create}" class="btn btn-primary">+ 创建群</a>
-    <div class="card-grid" style="margin-top:16px">
-        <a th:each="g : ${groups}" th:href="@{/groups/{id}(id=${g.id})}" class="card">
-            <h3 th:text="${g.name}"></h3>
-            <p th:text="${g.notice ?: '暂无公告'}"></p>
-        </a>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>群聊 — PP Chat</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/theme.js}"></script>
+</head>
+<body>
+<div class="mgmt-page">
+    <header class="mgmt-header">
+        <span class="brand">PP Chat</span>
+        <div class="nav-links">
+            <a th:href="@{/chat}">聊天</a>
+            <a th:href="@{/friends}">好友</a>
+            <a th:href="@{/groups}" class="active">群聊</a>
+            <a th:href="@{/profile}">个人中心</a>
+            <span id="theme-area"></span>
+        </div>
+    </header>
+
+    <div class="mgmt-body" style="flex-direction:column;max-width:720px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h2 style="font-size:20px;font-weight:700">我的群聊</h2>
+            <a th:href="@{/groups/create}" class="btn btn-primary">+ 创建群</a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(groups)}" class="card" style="padding:60px;text-align:center">
+            <p style="color:var(--text-tertiary);margin-bottom:16px">还没有加入任何群聊</p>
+            <a th:href="@{/groups/create}" class="btn btn-primary">创建第一个群</a>
+        </div>
+
+        <div class="group-grid">
+            <a th:each="g : ${groups}" th:href="@{/groups/{id}(id=${g.id})}" class="group-card">
+                <div class="group-name" th:text="${g.name}"></div>
+                <div class="group-meta" th:text="${g.notice ?: '暂无公告'}"></div>
+            </a>
+        </div>
     </div>
-    <div th:if="${#lists.isEmpty(groups)}" class="empty-msg">暂无群聊</div>
-</main>
+</div>
+<script>document.getElementById('theme-area').appendChild(ThemeManager.createSwitcher());</script>
+</body>
 </html>

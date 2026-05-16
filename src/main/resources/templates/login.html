@@ -1,22 +1,33 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{common/layout :: html(title='登录', content=~{::main})}">
-<main>
-    <div class="form-container">
-        <h2>用户登录</h2>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 — PP Chat</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/theme.js}"></script>
+</head>
+<body>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="logo">
+            <h1>PP</h1>
+            <p>在线聊天系统</p>
+        </div>
         <div class="error-msg" th:if="${error}" th:text="${error}"></div>
         <form th:action="@{/login}" method="post">
             <div class="form-group">
-                <label>用户名</label>
-                <input type="text" name="username" required placeholder="请输入用户名">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" class="input" required placeholder="请输入用户名" autofocus>
             </div>
             <div class="form-group">
-                <label>密码</label>
-                <input type="password" name="password" required placeholder="请输入密码">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" class="input" required placeholder="请输入密码">
             </div>
-            <button type="submit" class="btn btn-primary">登录</button>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">登录</button>
         </form>
         <p class="form-footer">还没有账号？<a th:href="@{/register}">去注册</a></p>
     </div>
-</main>
+</div>
+</body>
 </html>

@@ -62,6 +62,13 @@ public class PageController {
         return "redirect:/login";
     }
 
+    @GetMapping("/chat")
+    public String chatPage(HttpSession session, Model model) {
+        User user = (User) session.getAttribute("currentUser");
+        model.addAttribute("user", user);
+        return "chat";
+    }
+
     @GetMapping("/")
     public String index(HttpSession session, Model model) {
         User user = (User) session.getAttribute("currentUser");

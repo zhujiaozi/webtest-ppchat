@@ -1,26 +1,51 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{common/layout :: html(title='创建群聊', content=~{::main})}">
-<main>
-    <h2>创建群聊</h2>
-    <div class="form-container">
-        <form th:action="@{/groups/create}" method="post">
-            <div class="form-group">
-                <label>群名称</label>
-                <input type="text" name="name" required placeholder="请输入群名称">
-            </div>
-            <div class="form-group">
-                <label>邀请好友入群</label>
-                <div th:each="f : ${friends}">
-                    <label style="font-weight:normal">
-                        <input type="checkbox" name="memberIds" th:value="${f.friendId}">
-                        <span th:text="${f.remark ?: '用户' + f.friendId}"></span>
-                    </label>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建群聊 — PP Chat</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/theme.js}"></script>
+</head>
+<body>
+<div class="mgmt-page">
+    <header class="mgmt-header">
+        <span class="brand">PP Chat</span>
+        <div class="nav-links">
+            <a th:href="@{/chat}">聊天</a>
+            <a th:href="@{/friends}">好友</a>
+            <a th:href="@{/groups}" class="active">群聊</a>
+            <a th:href="@{/profile}">个人中心</a>
+            <span id="theme-area"></span>
+        </div>
+    </header>
+
+    <div class="mgmt-body" style="max-width:560px">
+        <div class="card" style="padding:32px;width:100%">
+            <h2 style="font-size:20px;font-weight:700;margin-bottom:24px">创建群聊</h2>
+            <form th:action="@{/groups/create}" method="post">
+                <div class="form-group">
+                    <label for="name">群名称</label>
+                    <input type="text" id="name" name="name" class="input" required placeholder="请输入群名称">
                 </div>
-            </div>
-            <button type="submit" class="btn btn-primary">创建</button>
-            <a th:href="@{/groups}" class="btn">取消</a>
-        </form>
+                <div class="form-group">
+                    <label>邀请好友入群</label>
+                    <div th:if="${#lists.isEmpty(friends)}" style="color:var(--text-tertiary);font-size:13px;padding:8px 0">
+                        暂无好友，先去添加好友吧
+                    </div>
+                    <div th:each="f : ${friends}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-light)">
+                        <input type="checkbox" name="memberIds" th:value="${f.friendId}" style="width:16px;height:16px;accent-color:var(--accent)">
+                        <span th:text="${f.remark ?: '好友 #' + f.friendId}" style="font-size:14px"></span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:24px">
+                    <button type="submit" class="btn btn-primary">创建</button>
+                    <a th:href="@{/groups}" class="btn btn-ghost">取消</a>
+                </div>
+            </form>
+        </div>
     </div>
-</main>
+</div>
+<script>document.getElementById('theme-area').appendChild(ThemeManager.createSwitcher());</script>
+</body>
 </html>

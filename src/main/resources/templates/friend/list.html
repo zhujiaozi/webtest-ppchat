@@ -1,60 +1,99 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{common/layout :: html(title='好友管理', content=~{::main})}">
-<main>
-    <h2>好友管理</h2>
-    <div class="toolbar">
-        <form th:action="@{/friends}" method="get" class="search-form">
-            <input type="text" name="keyword" th:value="${keyword}" placeholder="搜索用户...">
-            <button type="submit" class="btn">搜索</button>
-        </form>
-        <a th:href="@{/friends/requests}" class="btn btn-primary">好友申请</a>
-    </div>
-    <div th:if="${searchResults}" class="section">
-        <h3>搜索结果</h3>
-        <table class="table">
-            <thead><tr><th>用户名</th><th>昵称</th><th>操作</th></tr></thead>
-            <tbody>
-                <tr th:each="u : ${searchResults}">
-                    <td th:text="${u.username}"></td>
-                    <td th:text="${u.nickname}"></td>
-                    <td>
-                        <form th:action="@{/friends/request/send}" method="post" style="display:inline">
-                            <input type="hidden" name="toUserId" th:value="${u.id}">
-                            <input type="text" name="message" placeholder="验证消息" style="width:120px">
-                            <button type="submit" class="btn btn-small btn-primary">加好友</button>
-                        </form>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="section">
-        <h3>我的好友</h3>
-        <div style="display:flex;gap:8px;margin-bottom:12px">
-            <form th:action="@{/friends/group/create}" method="post" style="display:flex;gap:4px">
-                <input type="text" name="name" placeholder="新分组名" required>
-                <button type="submit" class="btn btn-small">创建分组</button>
-            </form>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>好友管理 — PP Chat</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/theme.js}"></script>
+</head>
+<body>
+<div class="mgmt-page">
+    <header class="mgmt-header">
+        <span class="brand">PP Chat</span>
+        <div class="nav-links">
+            <a th:href="@{/chat}">聊天</a>
+            <a th:href="@{/friends}" class="active">好友</a>
+            <a th:href="@{/groups}">群聊</a>
+            <a th:href="@{/profile}">个人中心</a>
+            <span id="theme-area"></span>
         </div>
-        <table class="table">
-            <thead><tr><th>昵称/备注</th><th>用户ID</th><th>分组ID</th><th>操作</th></tr></thead>
-            <tbody>
-                <tr th:each="f : ${friends}">
-                    <td th:text="${f.remark ?: '未设置'}"></td>
-                    <td th:text="${f.friendId}"></td>
-                    <td th:text="${f.groupId}"></td>
-                    <td>
-                        <form th:action="@{/friends/delete/{id}(id=${f.friendId})}" method="post" style="display:inline"
-                              onsubmit="return confirm('确定删除？')">
-                            <button type="submit" class="btn btn-small btn-danger">删除</button>
-                        </form>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    </header>
+
+    <div class="mgmt-body">
+        <!-- 左侧：搜索 + 分组管理 -->
+        <aside class="mgmt-sidebar">
+            <div class="card" style="padding:16px;margin-bottom:16px">
+                <form th:action="@{/friends}" method="get">
+                    <div style="display:flex;gap:8px">
+                        <input type="text" name="keyword" th:value="${keyword}" class="input" placeholder="搜索用户...">
+                        <button type="submit" class="btn btn-primary btn-sm">搜索</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card" style="padding:16px;margin-bottom:16px">
+                <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text-secondary)">新建分组</div>
+                <form th:action="@{/friends/group/create}" method="post">
+                    <div style="display:flex;gap:8px">
+                        <input type="text" name="name" class="input" placeholder="分组名称" required>
+                        <button type="submit" class="btn btn-ghost btn-sm">创建</button>
+                    </div>
+                </form>
+            </div>
+            <a th:href="@{/friends/requests}" class="btn btn-ghost btn-block" style="justify-content:flex-start">
+                📬 好友申请
+            </a>
+        </aside>
+
+        <!-- 右侧：内容区 -->
+        <div class="mgmt-content">
+            <!-- 搜索结果 -->
+            <div th:if="${searchResults}" class="card" style="padding:20px;margin-bottom:20px">
+                <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">搜索结果</h3>
+                <div th:if="${#lists.isEmpty(searchResults)}" style="color:var(--text-tertiary);font-size:13px">未找到用户</div>
+                <div th:each="u : ${searchResults}" class="friend-item">
+                    <div class="avatar avatar-placeholder" th:text="${#strings.substring(u.nickname ?: u.username, 0, 1)}"></div>
+                    <div class="friend-info">
+                        <div class="friend-name" th:text="${u.nickname ?: u.username}"></div>
+                        <div class="friend-remark" th:text="'@' + ${u.username}"></div>
+                    </div>
+                    <form th:action="@{/friends/request/send}" method="post" style="display:flex;gap:6px;align-items:center">
+                        <input type="hidden" name="toUserId" th:value="${u.id}">
+                        <input type="text" name="message" class="input" placeholder="验证消息" style="width:140px;padding:6px 10px;font-size:12px">
+                        <button type="submit" class="btn btn-primary btn-sm">加好友</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 好友列表 -->
+            <div class="card" style="padding:20px">
+                <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">我的好友</h3>
+                <div th:if="${#lists.isEmpty(friends)}" style="color:var(--text-tertiary);font-size:13px;padding:20px 0;text-align:center">
+                    还没有好友，搜索用户名添加吧
+                </div>
+                <div class="friend-list">
+                    <div th:each="f : ${friends}" class="friend-item">
+                        <div class="avatar avatar-placeholder" th:text="${#strings.substring(f.remark ?: 'U', 0, 1)}"></div>
+                        <div class="friend-info">
+                            <div class="friend-name" th:text="${f.remark ?: '好友 #' + f.friendId}"></div>
+                            <div class="friend-remark" th:text="'分组ID: ' + ${f.groupId}"></div>
+                        </div>
+                        <div class="friend-actions">
+                            <a th:href="@{/chat}" class="btn btn-sm btn-primary">聊天</a>
+                            <form th:action="@{/friends/delete/{id}(id=${f.friendId})}" method="post" style="display:inline"
+                                  onsubmit="return confirm('确定删除该好友？')">
+                                <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="error-msg" th:if="${error}" th:text="${error}" style="margin-top:12px"></div>
+            <div th:if="${msg}" style="color:var(--accent);padding:12px 0;font-size:13px" th:text="${msg}"></div>
+        </div>
     </div>
-    <div class="error-msg" th:if="${error}" th:text="${error}"></div>
-    <div th:if="${msg}" style="color:green;padding:8px" th:text="${msg}"></div>
-</main>
+</div>
+<script>document.getElementById('theme-area').appendChild(ThemeManager.createSwitcher());</script>
+</body>
 </html>

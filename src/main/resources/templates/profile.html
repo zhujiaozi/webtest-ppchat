@@ -1,51 +1,82 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{common/layout :: html(title='个人中心', content=~{::main})}">
-<main>
-    <h2>个人中心</h2>
-    <div class="error-msg" th:if="${error}" th:text="${error}"></div>
-    <div th:if="${msg}" style="color:green;padding:8px" th:text="${msg}"></div>
-    <div class="form-container">
-        <form th:action="@{/profile/update}" method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label>头像</label>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 — PP Chat</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/theme.js}"></script>
+</head>
+<body>
+<div class="mgmt-page">
+    <header class="mgmt-header">
+        <span class="brand">PP Chat</span>
+        <div class="nav-links">
+            <a th:href="@{/chat}">聊天</a>
+            <a th:href="@{/friends}">好友</a>
+            <a th:href="@{/groups}">群聊</a>
+            <a th:href="@{/profile}" class="active">个人中心</a>
+            <span id="theme-area"></span>
+        </div>
+    </header>
+
+    <div class="mgmt-body" style="max-width:560px">
+        <div class="profile-card" style="width:100%">
+            <div class="profile-avatar-section">
                 <div th:if="${user.avatar}">
-                    <img th:src="${user.avatar}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">
+                    <img class="avatar avatar-xl" th:src="${user.avatar}" alt="头像" style="border-radius:50%">
                 </div>
-                <input type="file" name="avatarFile" accept="image/*">
+                <div th:unless="${user.avatar}" class="avatar avatar-xl avatar-placeholder" style="border-radius:50%;font-size:28px"
+                     th:text="${#strings.substring(user.nickname ?: user.username, 0, 1)}"></div>
+                <span style="font-size:18px;font-weight:600;margin-top:8px" th:text="${user.nickname ?: user.username}"></span>
+                <span style="font-size:13px;color:var(--text-tertiary)" th:text="'@' + ${user.username}"></span>
             </div>
-            <div class="form-group">
-                <label>昵称</label>
-                <input type="text" name="nickname" th:value="${user.nickname}">
+
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <div class="stat-value" th:text="${user.loginCount ?: 0}"></div>
+                    <div class="stat-label">登录次数</div>
+                </div>
+                <div class="profile-stat">
+                    <div class="stat-value" th:text="${user.lastLogin != null ? #temporals.format(user.lastLogin, 'MM-dd') : '--'}"></div>
+                    <div class="stat-label">最近登录</div>
+                </div>
             </div>
-            <div class="form-group">
-                <label>用户名</label>
-                <input type="text" th:value="${user.username}" disabled>
-            </div>
-            <div class="form-group">
-                <label>登录次数</label>
-                <input type="text" th:value="${user.loginCount}" disabled>
-            </div>
-            <div class="form-group">
-                <label>最近登录</label>
-                <input type="text" th:value="${user.lastLogin}" disabled>
-            </div>
-            <button type="submit" class="btn btn-primary">保存修改</button>
-        </form>
+
+            <div class="error-msg" th:if="${error}" th:text="${error}" style="margin-bottom:16px"></div>
+            <div th:if="${msg}" style="color:var(--accent);padding:8px 0;font-size:13px;margin-bottom:16px" th:text="${msg}"></div>
+
+            <!-- 修改资料 -->
+            <form th:action="@{/profile/update}" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="avatarFile">头像</label>
+                    <input type="file" id="avatarFile" name="avatarFile" accept="image/*" class="input" style="padding:8px">
+                </div>
+                <div class="form-group">
+                    <label for="nickname">昵称</label>
+                    <input type="text" id="nickname" name="nickname" class="input" th:value="${user.nickname}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">保存修改</button>
+            </form>
+
+            <hr style="margin:24px 0;border:none;border-top:1px solid var(--border-light)">
+
+            <!-- 修改密码 -->
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">修改密码</h3>
+            <form th:action="@{/profile/password}" method="post">
+                <div class="form-group">
+                    <label for="oldPassword">原密码</label>
+                    <input type="password" id="oldPassword" name="oldPassword" class="input" required placeholder="请输入原密码">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">新密码</label>
+                    <input type="password" id="newPassword" name="newPassword" class="input" required placeholder="请输入新密码">
+                </div>
+                <button type="submit" class="btn btn-ghost btn-block">修改密码</button>
+            </form>
+        </div>
     </div>
-    <div class="form-container" style="margin-top:20px">
-        <h3>修改密码</h3>
-        <form th:action="@{/profile/password}" method="post">
-            <div class="form-group">
-                <label>原密码</label>
-                <input type="password" name="oldPassword" required>
-            </div>
-            <div class="form-group">
-                <label>新密码</label>
-                <input type="password" name="newPassword" required>
-            </div>
-            <button type="submit" class="btn btn-primary">修改密码</button>
-        </form>
-    </div>
-</main>
+</div>
+<script>document.getElementById('theme-area').appendChild(ThemeManager.createSwitcher());</script>
+</body>
 </html>

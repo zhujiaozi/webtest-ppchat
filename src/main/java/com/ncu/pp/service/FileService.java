@@ -16,7 +16,9 @@ public class FileService {
     private String uploadDir;
 
     public String upload(MultipartFile file) throws IOException {
-        Path dir = Paths.get(uploadDir);
+        // 基于项目根目录构建绝对路径，避免解析到 Tomcat 临时目录
+        Path projectRoot = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+        Path dir = projectRoot.resolve(uploadDir);
         if (!Files.exists(dir)) Files.createDirectories(dir);
         String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
         Path filepath = dir.resolve(filename);
