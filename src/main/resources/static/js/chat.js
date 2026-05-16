@@ -185,7 +185,7 @@ async function openChat(id, name, isGroup) {
         try {
             const res = await fetch(`/api/groups/${id}/messages`);
             const msgs = await res.json();
-            msgs.forEach(m => appendChatMessage({ senderId: m.senderId, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
+            msgs.forEach(m => appendChatMessage({ senderId: m.senderId, sender: m.sender, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
         } catch (e) { console.error(e); }
         if (!groupSubscriptions[id]) {
             stompClient.subscribe(`/topic/group/${id}`, (msg) => {
@@ -206,12 +206,15 @@ function appendChatMessage(msg) {
     const isMine = msg.senderId == userId;
     const div = document.createElement('div');
     div.className = 'im-msg-row' + (isMine ? ' self' : '');
+    const senderName = msg.sender || (isMine ? userName : '');
+    const senderHtml = (currentChat && currentChat.isGroup && !isMine && senderName)
+        ? `<div class="im-msg-sender">${escapeHtml(senderName)}</div>` : '';
     if (msg.msgType === 1 && msg.audioData) {
-        div.innerHTML = `<div class="msg-av">${isMine ? initial(userName) : '?'}</div>
-            <div class="im-msg-bubble"><button onclick="playAudio('${msg.audioData}')" style="background:none;border:none;cursor:pointer;font-size:13px">🔊 播放语音</button></div>`;
+        div.innerHTML = `<div class="msg-av">${isMine ? initial(userName) : initial(senderName || '?')}</div>
+            <div>${senderHtml}<div class="im-msg-bubble"><button onclick="playAudio('${msg.audioData}')" style="background:none;border:none;cursor:pointer;font-size:13px">🔊 播放语音</button></div></div>`;
     } else {
-        div.innerHTML = `<div class="msg-av">${isMine ? initial(userName) : '?'}</div>
-            <div class="im-msg-bubble">${escapeHtml(msg.content || '')}</div>`;
+        div.innerHTML = `<div class="msg-av">${isMine ? initial(userName) : initial(senderName || '?')}</div>
+            <div>${senderHtml}<div class="im-msg-bubble">${escapeHtml(msg.content || '')}</div></div>`;
     }
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
@@ -237,7 +240,7 @@ function searchChatHistory() {
         if (msgs.length === 0) {
             box.innerHTML = '<div class="im-empty"><p>未找到匹配的消息</p></div>';
         }
-        msgs.forEach(m => appendChatMessage({ senderId: m.senderId, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
+        msgs.forEach(m => appendChatMessage({ senderId: m.senderId, sender: m.sender, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
     });
 }
 
@@ -492,8 +495,8 @@ async function showGroupDetail(groupId) {
                 <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:8px">群成员 (${members.length})</label>
                 <div class="member-grid">
                     ${members.map(m => `<div class="member-chip">
-                        <div class="mc-av">${initial('U')}</div>
-                        <span class="mc-name">用户 #${m.userId}</span>
+                        <div class="mc-av">${initial(m.nickname || 'U')}</div>
+                        <span class="mc-name">${escapeHtml(m.nickname || '用户')}</span>
                         <span class="mc-role">${m.role == 2 ? '群主' : m.role == 1 ? '管理' : ''}</span>
                         ${isOwner && m.role != 2 ? `<button class="btn btn-sm btn-danger" onclick="kickMember(${group.id},${m.userId})" style="padding:2px 6px;font-size:11px">踢出</button>` : ''}
                     </div>`).join('')}

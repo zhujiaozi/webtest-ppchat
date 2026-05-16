@@ -212,13 +212,13 @@ textarea.input { resize: vertical; min-height: 80px; }
 @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 
 .theme-switcher {
-    display: flex; align-items: center; gap: 4px;
-    padding: 4px; background: var(--bg-tertiary); border-radius: var(--radius-full);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 3px; background: var(--bg-tertiary); border-radius: var(--radius-md);
 }
 .theme-switcher button {
-    width: 28px; height: 28px;
+    width: 32px; height: 32px;
     display: flex; align-items: center; justify-content: center;
-    border: none; border-radius: var(--radius-full);
+    border: none; border-radius: var(--radius-sm);
     background: transparent; color: var(--text-tertiary);
     cursor: pointer; font-size: 14px; transition: all 0.2s;
 }

@@ -32,7 +32,7 @@ public class PageController {
             return "login";
         }
         session.setAttribute("currentUser", user);
-        return "redirect:/";
+        return "redirect:/chat";
     }
 
     @GetMapping("/register")
@@ -63,9 +63,7 @@ public class PageController {
     }
 
     @GetMapping("/")
-    public String index(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("currentUser");
-        model.addAttribute("user", user);
-        return "index";
+    public String index() {
+        return "redirect:/chat";
     }
 }
