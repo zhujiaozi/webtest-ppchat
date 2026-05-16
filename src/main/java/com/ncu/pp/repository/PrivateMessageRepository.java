@@ -1,0 +1,30 @@
+package com.ncu.pp.repository;
+
+import com.ncu.pp.entity.PrivateMessage;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+
+public interface PrivateMessageRepository extends JpaRepository<PrivateMessage, Long> {
+
+    @Query("SELECT m FROM PrivateMessage m WHERE " +
+           "(m.senderId = ?1 AND m.receiverId = ?2) OR " +
+           "(m.senderId = ?2 AND m.receiverId = ?1) " +
+           "ORDER BY m.createdAt ASC")
+    List<PrivateMessage> findConversation(Long userId1, Long userId2);
+
+    @Query("SELECT m FROM PrivateMessage m WHERE " +
+           "((m.senderId = ?1 AND m.receiverId = ?2) OR " +
+           "(m.senderId = ?2 AND m.receiverId = ?1)) " +
+           "AND m.content LIKE %?3% ORDER BY m.createdAt ASC")
+    List<PrivateMessage> searchInConversation(Long userId1, Long userId2, String keyword);
+
+    long countByReceiverIdAndSenderIdAndStatus(Long receiverId, Long senderId, Integer status);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE PrivateMessage m SET m.status = 2 WHERE m.senderId = ?1 AND m.receiverId = ?2 AND m.status < 2")
+    void markAsRead(Long senderId, Long receiverId);
+}
