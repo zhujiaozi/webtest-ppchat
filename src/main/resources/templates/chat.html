@@ -6,54 +6,98 @@
     <title>PP Chat</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/icons.js}"></script>
     <style>
         /* QQ 桌面端核心布局 — 覆盖 style.css 中的通用样式 */
         html, body { height: 100%; overflow: hidden; margin: 0; }
-        .im-app { display: flex; height: 100vh; overflow: hidden; }
+        .im-app { display: flex; height: 100vh; overflow: hidden; background:
+            radial-gradient(circle at top left, rgba(91,141,239,.18), transparent 28%),
+            radial-gradient(circle at bottom right, rgba(65,211,189,.10), transparent 24%),
+            var(--bg-primary);
+            position: relative;
+        }
+
+        /* 粒子效果容器 */
+        .particles-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; border-radius: 50%; opacity: 0.15;
+            animation: particleFloat linear infinite;
+        }
+        @keyframes particleFloat {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.15; }
+            90% { opacity: 0.15; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
 
         /* ===== 左侧图标栏 ===== */
         .im-sidebar {
-            width: 64px; flex-shrink: 0;
+            width: 72px; flex-shrink: 0;
             display: flex; flex-direction: column; align-items: center;
-            padding: 12px 0; background: var(--bg-nav);
-            -webkit-app-region: drag; /* 模拟桌面窗口拖拽 */
+            padding: 14px 0 12px; background: linear-gradient(180deg, rgba(24,34,56,.92), rgba(19,26,42,.96));
+            border-right: 1px solid rgba(255,255,255,.06);
+            box-shadow: inset -1px 0 0 rgba(255,255,255,.03);
+            backdrop-filter: blur(18px);
+            -webkit-app-region: drag;
         }
         .im-sidebar .im-avatar {
-            width: 36px; height: 36px; border-radius: 8px;
-            object-fit: cover; margin-bottom: 16px; cursor: pointer;
-            border: 2px solid transparent; transition: border-color 0.2s;
+            width: 40px; height: 40px; border-radius: 12px;
+            object-fit: cover; display:block;
+            border: 2px solid rgba(255,255,255,.12); transition: all .22s ease;
         }
-        .im-sidebar .im-avatar:hover { border-color: var(--accent); }
+        .im-sidebar .im-avatar:hover { border-color: rgba(255,255,255,.28); transform: translateY(-1px); }
         .im-sidebar .im-avatar-ph {
-            width: 36px; height: 36px; border-radius: 8px;
+            width: 40px; height: 40px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
-            margin-bottom: 16px; cursor: pointer;
+            background: linear-gradient(135deg, #5b8def, #41d3bd); color: #fff; font-weight: 700; font-size: 14px;
         }
-        .im-sidebar .im-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .im-user-entry {
+            width: 52px; height: 52px; border:none; background: transparent; cursor:pointer;
+            border-radius: 16px; display:flex; align-items:center; justify-content:center;
+            transition: all .22s ease; -webkit-app-region: no-drag;
+        }
+        .im-user-entry:hover { background: rgba(255,255,255,.08); transform: translateY(-1px); }
+        .im-sidebar .im-nav { display: flex; flex-direction: column; gap: 8px; flex: 1; margin-top: 10px; }
         .im-sidebar .im-nav-btn {
-            width: 48px; height: 48px; border: none; background: transparent;
-            border-radius: 10px; cursor: pointer; font-size: 20px;
-            color: var(--text-nav); transition: all 0.15s; position: relative;
+            width: 52px; height: 52px; border: none; background: transparent;
+            border-radius: 16px; cursor: pointer;
+            color: rgba(232,238,255,.72); transition: all 0.22s ease; position: relative;
             display: flex; align-items: center; justify-content: center;
             -webkit-app-region: no-drag;
         }
-        .im-sidebar .im-nav-btn:hover { background: var(--bg-nav-hover); }
-        .im-sidebar .im-nav-btn.active { background: var(--bg-nav-active); color: var(--text-nav-active); }
-        .im-sidebar .im-nav-btn .dot {
-            position: absolute; top: 8px; right: 8px;
-            width: 8px; height: 8px; background: var(--danger); border-radius: 50%;
+        .im-sidebar .im-nav-btn:hover { background: rgba(255,255,255,.08); color:#fff; transform: translateY(-1px) scale(1.02); }
+        .im-sidebar .im-nav-btn.active {
+            background: linear-gradient(135deg, rgba(91,141,239,.92), rgba(108,167,255,.82));
+            color: #fff; box-shadow: 0 10px 24px rgba(91,141,239,.32);
         }
-        .im-sidebar .im-bottom { margin-top: auto; display: flex; flex-direction: column; gap: 2px; align-items: center; }
-        .im-sidebar .im-bottom .im-nav-btn { width: 40px; height: 40px; font-size: 16px; }
+        .im-sidebar .im-bottom { margin-top: auto; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+        .im-sidebar .im-bottom .im-nav-btn { width: 44px; height: 44px; border-radius: 14px; }
+        .im-sidebar .im-bottom .im-nav-btn.danger { color: #ff8e92; }
+        .im-sidebar .im-bottom .im-nav-btn.danger:hover { background: rgba(255,95,95,.12); color:#ffd5d7; }
+
+        /* WebSocket 连接状态指示器 */
+        .ws-status-indicator {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #fa5151; transition: all 0.3s;
+        }
+        .ws-status-indicator.connected { background: #07c160; box-shadow: 0 0 6px rgba(7,193,96,.5); }
+        .ws-status-indicator.connecting { background: #ffc300; animation: pulse 1.5s infinite; }
 
         /* ===== 中间列表面板 ===== */
         .im-panel {
-            width: 260px; flex-shrink: 0;
+            min-width: 200px; max-width: 400px;
             display: flex; flex-direction: column;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border-light);
         }
+        .im-resizer {
+            width: 4px; cursor: col-resize; background: transparent;
+            transition: background 0.2s; flex-shrink: 0;
+        }
+        .im-resizer:hover, .im-resizer.active { background: var(--accent); opacity: 0.5; }
         .im-panel-search {
             padding: 12px; border-bottom: 1px solid var(--border-light);
         }
@@ -170,10 +214,12 @@
         .im-msg-row:not(.self) .im-msg-bubble {
             background: var(--bubble-other); color: var(--bubble-other-text);
             border-top-left-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.06);
         }
         .im-msg-row.self .im-msg-bubble {
             background: var(--bubble-self); color: var(--bubble-self-text);
             border-top-right-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.06);
         }
         .im-msg-sender { font-size: 11px; color: var(--text-tertiary); margin-bottom: 2px; }
 
@@ -192,11 +238,11 @@
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.5} }
         .im-input-row { display: flex; gap: 8px; align-items: flex-end; }
         .im-input-row textarea {
-            flex: 1; padding: 8px 10px; font-size: 13px;
+            flex: 1; padding: 10px 12px; font-size: 14px;
             color: var(--text-primary); background: var(--bg-primary);
-            border: 1px solid var(--border-color); border-radius: 6px;
-            outline: none; resize: none; min-height: 36px; max-height: 100px;
-            font-family: inherit; line-height: 1.5;
+            border: 1px solid var(--border-color); border-radius: 8px;
+            outline: none; resize: none; min-height: 44px; max-height: 120px;
+            font-family: inherit; line-height: 1.6;
         }
         .im-input-row textarea:focus { border-color: var(--accent); }
         .im-input-row textarea::placeholder { color: var(--text-tertiary); }
@@ -206,6 +252,18 @@
             cursor: pointer; white-space: nowrap;
         }
         .im-input-row .send-btn:hover { background: var(--accent-hover); }
+        .im-input-row .voice-btn {
+            width: 36px; height: 36px; border: none; border-radius: 6px;
+            background: var(--bg-primary); color: var(--text-secondary);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: all 0.15s;
+            border: 1px solid var(--border-color);
+        }
+        .im-input-row .voice-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .im-input-row .voice-btn.recording {
+            background: rgba(250,81,81,.1); color: var(--danger);
+            border-color: var(--danger); animation: pulse 1s infinite;
+        }
 
         /* 空状态 */
         .im-empty {
@@ -237,9 +295,9 @@
         .sp-result .sp-text mark { background: var(--warning); border-radius: 2px; padding: 0 2px; }
 
         /* 好友详情 / 群详情 / 个人中心 — 右侧内容 */
-        .im-detail { flex: 1; overflow-y: auto; padding: 24px; }
+        .im-detail { flex: 1; overflow-y: auto; padding: 24px; display: flex; justify-content: center; align-items: flex-start; }
         .im-detail-card {
-            max-width: 480px; padding: 24px;
+            max-width: 480px; width: 100%; padding: 24px;
             background: var(--bg-card); border-radius: 10px;
             box-shadow: var(--shadow-sm);
         }
@@ -302,55 +360,136 @@
         .search-user-item .su-info { flex: 1; }
         .search-user-item .su-name { font-size: 13px; font-weight: 500; }
         .search-user-item .su-username { font-size: 11px; color: var(--text-tertiary); }
+
+        /* ===== 右侧信息抽屉 ===== */
+        .im-drawer {
+            width: 300px; flex-shrink: 0;
+            display: flex; flex-direction: column;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-light);
+            transition: width 0.25s ease, opacity 0.2s ease;
+            overflow: hidden;
+        }
+        .im-drawer.hidden { width: 0; opacity: 0; border: none; }
+        .im-drawer-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; flex-shrink: 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .im-drawer-header span { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .drawer-close {
+            width: 28px; height: 28px; border: none; background: transparent;
+            border-radius: 6px; cursor: pointer; color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .drawer-close:hover { background: var(--bg-hover); }
+        .im-drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .drawer-section { margin-bottom: 20px; }
+        .drawer-section-title {
+            font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+        }
+        .drawer-user-info { text-align: center; padding: 16px 0; }
+        .drawer-user-info .du-avatar {
+            width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent); color: #fff; font-size: 22px; font-weight: 700;
+        }
+        .drawer-user-info .du-name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .drawer-user-info .du-id { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+        .drawer-actions { display: flex; flex-direction: column; gap: 4px; }
+        .drawer-action-btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border: none; background: transparent;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            color: var(--text-secondary); transition: all 0.15s; width: 100%; text-align: left;
+        }
+        .drawer-action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .drawer-action-btn.danger { color: var(--danger); }
+        .drawer-action-btn.danger:hover { background: rgba(250,81,81,.08); }
+        .drawer-member-list { display: flex; flex-direction: column; gap: 6px; }
+        .drawer-member {
+            display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+            border-radius: 8px; transition: background 0.12s;
+        }
+        .drawer-member:hover { background: var(--bg-hover); }
+        .drawer-member .dm-av {
+            width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-tertiary); color: #fff; font-size: 12px; font-weight: 600;
+        }
+        .drawer-member .dm-name { font-size: 13px; flex: 1; color: var(--text-primary); }
+        .drawer-member .dm-role {
+            font-size: 10px; padding: 2px 8px;
+            background: var(--accent-light); color: var(--accent); border-radius: 10px;
+        }
     </style>
 </head>
 <body>
 <div class="im-app" th:attr="data-user-id=${session.currentUser.id}, data-user-name=${session.currentUser.nickname ?: session.currentUser.username}">
+    <div class="particles-container" id="particlesContainer"></div>
 
-    <!-- ===== 左侧图标栏 ===== -->
     <nav class="im-sidebar">
-        <div th:if="${session.currentUser.avatar}">
-            <img class="im-avatar" th:src="${session.currentUser.avatar}" alt="">
-        </div>
-        <div th:unless="${session.currentUser.avatar}" class="im-avatar-ph"
-             th:text="${#strings.substring(session.currentUser.nickname ?: session.currentUser.username, 0, 1)}"></div>
-
         <div class="im-nav">
-            <button class="im-nav-btn active" data-view="chat" title="聊天" onclick="switchView('chat')">💬</button>
-            <button class="im-nav-btn" data-view="friends" title="好友" onclick="switchView('friends')">👥</button>
-            <button class="im-nav-btn" data-view="groups" title="群聊" onclick="switchView('groups')">🏠</button>
+            <button class="im-nav-btn active" data-view="chat" title="聊天列表" onclick="switchView('chat')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+            <button class="im-nav-btn" data-view="friends" title="好友列表" onclick="switchView('friends')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+            <button class="im-nav-btn" data-view="groups" title="群聊列表" onclick="switchView('groups')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </button>
         </div>
 
         <div class="im-bottom">
             <div id="theme-area"></div>
-            <button class="im-nav-btn" data-view="profile" title="个人中心" onclick="switchView('profile')">⚙️</button>
-            <a th:href="@{/logout}" style="text-decoration:none">
-                <button class="im-nav-btn" title="退出" style="color:var(--danger)">⏻</button>
-            </a>
+            <button class="im-user-entry" title="个人资料与设置" onclick="switchView('profile')">
+                <div th:if="${session.currentUser.avatar}">
+                    <img class="im-avatar" th:src="${session.currentUser.avatar}" alt="">
+                </div>
+                <div th:unless="${session.currentUser.avatar}" class="im-avatar-ph"
+                     th:text="${#strings.substring(session.currentUser.nickname ?: session.currentUser.username, 0, 1)}"></div>
+            </button>
+            <div id="ws-status" class="ws-status-indicator" title="WebSocket 连接状态"></div>
         </div>
     </nav>
 
-    <!-- ===== 中间列表面板 ===== -->
-    <aside class="im-panel">
-        <!-- 搜索栏 -->
+    <aside class="im-panel" id="imPanel">
         <div class="im-panel-search">
             <div class="search-input">
-                <span class="icon">🔍</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="flex-shrink:0;color:var(--text-tertiary)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 <input type="text" id="panelSearchInput" placeholder="搜索...">
             </div>
         </div>
-        <!-- 列表区 — JS 动态渲染 -->
         <div class="im-panel-list" id="panelList"></div>
     </aside>
 
-    <!-- ===== 右侧内容区 ===== -->
+    <div class="im-resizer" id="imResizer"></div>
+
     <main class="im-content" id="contentArea">
-        <!-- 默认空状态 -->
         <div class="im-empty" id="emptyState">
-            <div class="im-empty-icon">💬</div>
-            <p>选择一个会话开始聊天</p>
+            <svg viewBox="0 0 120 120" width="100" height="100" style="opacity:0.35;margin-bottom:16px">
+                <defs><linearGradient id="emptyGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#5b8def"/><stop offset="100%" style="stop-color:#41d3bd"/></linearGradient></defs>
+                <rect x="15" y="25" width="90" height="65" rx="12" fill="url(#emptyGrad)" opacity="0.15"/>
+                <path d="M30 45h60M30 58h40M30 71h50" stroke="url(#emptyGrad)" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+                <circle cx="85" cy="75" r="18" fill="url(#emptyGrad)" opacity="0.2"/>
+                <path d="M78 75l5 5 9-9" stroke="url(#emptyGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+            </svg>
+            <p style="font-size:14px;font-weight:500">选择一个会话开始聊天</p>
+            <p style="font-size:12px;margin-top:4px;opacity:0.6">在左侧列表中选择好友或群聊</p>
         </div>
     </main>
+
+    <aside class="im-drawer hidden" id="infoDrawer">
+        <div class="im-drawer-header">
+            <span id="drawerTitle">更多信息</span>
+            <button class="drawer-close" onclick="toggleInfoDrawer(false)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="im-drawer-body" id="drawerBody"></div>
+    </aside>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>

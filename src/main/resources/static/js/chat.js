@@ -15,22 +15,98 @@ let groupSubscriptions = {};    // 已订阅的群 STOMP
 
 // ========== 初始化 ==========
 async function init() {
+    bindGlobalEvents();
+    initResizer();
+    initParticles();
     await loadChatView();
     connectWebSocket();
+}
+
+// 粒子效果
+function initParticles() {
+    const container = document.getElementById('particlesContainer');
+    if (!container) return;
+    const colors = ['rgba(91,141,239,.3)', 'rgba(65,211,189,.3)', 'rgba(155,89,182,.2)', 'rgba(241,196,15,.2)'];
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 6 + 2;
+        p.style.cssText = `
+            width:${size}px; height:${size}px;
+            left:${Math.random()*100}%;
+            background:${colors[Math.floor(Math.random()*colors.length)]};
+            animation-duration:${Math.random()*15+10}s;
+            animation-delay:${Math.random()*10}s;
+        `;
+        container.appendChild(p);
+    }
+}
+
+// 可拖动分割线
+function initResizer() {
+    const resizer = document.getElementById('imResizer');
+    const panel = document.getElementById('imPanel');
+    if (!resizer || !panel) return;
+    let isDragging = false;
+    const MIN_WIDTH = 200, MAX_WIDTH = 400;
+
+    resizer.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        resizer.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const sidebarWidth = 72; // im-sidebar width
+        const newWidth = e.clientX - sidebarWidth;
+        if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
+            panel.style.width = newWidth + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            resizer.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
+}
+
+function bindGlobalEvents() {
+    const searchInput = document.getElementById('panelSearchInput');
+    if (searchInput && !searchInput.dataset.bound) {
+        searchInput.dataset.bound = 'true';
+        searchInput.addEventListener('input', function () {
+            const keyword = this.value.trim();
+            if (currentView === 'chat') {
+                if (!keyword) loadChatView();
+                else searchUsersForChat(keyword);
+            } else if (currentView === 'friends') {
+                if (!keyword) loadFriendsView();
+                else searchUsersForFriend(keyword);
+            } else if (currentView === 'groups') {
+                if (!keyword) loadGroupsView();
+            }
+        });
+    }
 }
 
 // ========== 视图切换 ==========
 function switchView(view) {
     currentView = view;
-    // 更新左侧按钮高亮
     document.querySelectorAll('.im-nav-btn[data-view]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.view === view);
     });
-    // 清空搜索
     const searchInput = document.getElementById('panelSearchInput');
-    searchInput.value = '';
-    searchInput.placeholder = { chat: '搜索联系人...', friends: '搜索用户...', groups: '搜索群聊...', profile: '' }[view];
-    // 加载对应视图
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.placeholder = { chat: '搜索联系人...', friends: '搜索用户...', groups: '搜索群聊...', profile: '' }[view] || '搜索...';
+    }
     switch (view) {
         case 'chat': loadChatView(); break;
         case 'friends': loadFriendsView(); break;
@@ -38,49 +114,73 @@ function switchView(view) {
         case 'profile': loadProfileView(); break;
     }
 }
+let wsConnected = false;
 
-// ========== 搜索输入绑定 ==========
-document.getElementById('panelSearchInput').addEventListener('input', function () {
-    const keyword = this.value.trim();
-    if (currentView === 'chat') {
-        if (!keyword) loadChatView();
-        else searchUsersForChat(keyword);
-    } else if (currentView === 'friends') {
-        if (!keyword) loadFriendsView();
-        else searchUsersForFriend(keyword);
-    }
-});
+function updateWsStatus() {
+    const indicator = document.getElementById('ws-status');
+    if (!indicator) return;
+    indicator.className = 'ws-status-indicator' + (wsConnected ? ' connected' : ' connecting');
+    indicator.title = wsConnected ? 'WebSocket 已连接' : 'WebSocket 连接中...';
+}
 
-// ========== WebSocket ==========
 function connectWebSocket() {
     const socket = new SockJS('/ws');
     stompClient = Stomp.over(socket);
     stompClient.debug = null;
+    updateWsStatus();
     stompClient.connect({}, () => {
+        wsConnected = true;
+        updateWsStatus();
+        console.log('[WS] 已连接');
         stompClient.subscribe('/user/queue/private', (msg) => {
             const message = JSON.parse(msg.body);
             if (currentChat && !currentChat.isGroup &&
                 (message.senderId == currentChat.id || message.receiverId == currentChat.id)) {
                 appendChatMessage(message);
             }
-            // TODO: 更新会话列表未读计数
         });
+    }, (error) => {
+        wsConnected = false;
+        updateWsStatus();
+        console.error('[WS] 连接失败:', error);
+        setTimeout(connectWebSocket, 3000);
     });
 }
 
 // ========== 发送消息 ==========
 function sendMessage() {
     const input = document.getElementById('imMsgInput');
+    if (!input) return;
     const content = input.value.trim();
     if (!content || !currentChat) return;
+    if (!stompClient || !wsConnected) {
+        showToast('正在连接服务器，请稍后重试...', 'error');
+        return;
+    }
     const message = {
-        senderId: userId, sender: userName,
+        senderId: userId,
+        sender: userName,
         receiverId: currentChat.isGroup ? null : currentChat.id,
         receiver: currentChat.id.toString(),
-        content, msgType: 0, isGroup: currentChat.isGroup
+        content: content,
+        msgType: 0,
+        isGroup: currentChat.isGroup
     };
-    stompClient.send(currentChat.isGroup ? '/app/chat/group' : '/app/chat/private', {}, JSON.stringify(message));
-    input.value = '';
+    try {
+        // 立即显示自己的消息（乐观更新）
+        appendChatMessage({ ...message, createdAt: new Date().toISOString() });
+        stompClient.send(
+            currentChat.isGroup ? '/app/chat/group' : '/app/chat/private',
+            {},
+            JSON.stringify(message)
+        );
+        input.value = '';
+        input.style.height = 'auto';
+        input.focus();
+    } catch (e) {
+        console.error('[WS] 发送失败:', e);
+        showToast('发送失败，请重试', 'error');
+    }
 }
 
 // ========== 工具函数 ==========
@@ -93,6 +193,19 @@ function formatTime(t) {
     return d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
 }
 function initial(str) { return str ? str.charAt(0).toUpperCase() : 'U'; }
+
+// 根据字符串生成渐变色
+function avatarGradient(str) {
+    const colors = [
+        ['#5b8def','#41d3bd'], ['#f39c12','#e74c3c'], ['#9b59b6','#3498db'],
+        ['#1abc9c','#2ecc71'], ['#e67e22','#f1c40f'], ['#e74c3c','#c0392b'],
+        ['#2ecc71','#1abc9c'], ['#3498db','#9b59b6'], ['#f1c40f','#e67e22'],
+    ];
+    let hash = 0;
+    for (let i = 0; i < (str || '').length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    const pair = colors[Math.abs(hash) % colors.length];
+    return `linear-gradient(135deg, ${pair[0]}, ${pair[1]})`;
+}
 
 // ============================================================
 //  聊天视图
@@ -110,7 +223,7 @@ async function loadChatView() {
             const name = f.remark || ('好友 #' + f.friendId);
             const div = document.createElement('div');
             div.className = 'conv-item' + (currentChat && !currentChat.isGroup && currentChat.id == f.friendId ? ' active' : '');
-            div.innerHTML = `<div class="conv-avatar-ph">${initial(name)}</div>
+            div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(name)}">${initial(name)}</div>
                 <div class="conv-body"><div class="conv-name">${escapeHtml(name)}</div>
                 <div class="conv-preview">点击开始聊天</div></div>`;
             div.onclick = () => openChat(f.friendId, name, false);
@@ -125,7 +238,9 @@ async function loadChatView() {
         for (const g of groups) {
             const div = document.createElement('div');
             div.className = 'conv-item' + (currentChat && currentChat.isGroup && currentChat.id == g.id ? ' active' : '');
-            div.innerHTML = `<div class="conv-avatar-ph" style="background:#4a90d9">👥</div>
+            div.innerHTML = `<div class="conv-avatar-ph" style="background:#4a90d9">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:#fff"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
                 <div class="conv-body"><div class="conv-name">${escapeHtml(g.name)}</div>
                 <div class="conv-preview">${escapeHtml(g.notice || '暂无公告')}</div></div>`;
             div.onclick = () => openChat(g.id, g.name, true);
@@ -150,25 +265,38 @@ async function openChat(id, name, isGroup) {
         <div class="im-chat-header">
             <span class="ch-title">${escapeHtml(name)}</span>
             <div class="ch-actions">
-                <button onclick="searchChatHistory()" title="搜索聊天记录">🔍</button>
-                ${!isGroup ? '<button onclick="exportChat()" title="导出聊天记录">📥</button>' : ''}
+                <button onclick="searchChatHistory()" title="搜索聊天记录">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </button>
+                ${!isGroup ? `<button onclick="exportChat()" title="导出聊天记录">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>` : ''}
+                <button onclick="toggleInfoDrawer()" title="更多信息">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
             </div>
         </div>
         <div class="im-messages" id="imMessages"></div>
         <div class="im-input-area">
-            <div class="im-input-toolbar">
-                <button onclick="document.getElementById('imFileInput').click()" title="发送文件">📎</button>
-                <button id="imVoiceBtn" title="按住录音">🎤</button>
-                <input type="file" id="imFileInput" style="display:none">
-            </div>
             <div class="im-input-row">
                 <textarea id="imMsgInput" placeholder="输入消息... (Enter发送)" rows="1"></textarea>
-                <button class="send-btn" onclick="sendMessage()">发送</button>
+                <button id="imVoiceBtn" class="voice-btn" title="点击录音（最长10秒）">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                </button>
+                <button class="send-btn" onclick="sendMessage()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="margin-right:4px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    发送
+                </button>
             </div>
         </div>`;
 
     document.getElementById('imMsgInput').addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+    // textarea 自动增高
+    document.getElementById('imMsgInput').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
     });
     initVoiceBtn();
 
@@ -187,7 +315,7 @@ async function openChat(id, name, isGroup) {
             const msgs = await res.json();
             msgs.forEach(m => appendChatMessage({ senderId: m.senderId, sender: m.sender, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
         } catch (e) { console.error(e); }
-        if (!groupSubscriptions[id]) {
+        if (!groupSubscriptions[id] && stompClient && wsConnected) {
             stompClient.subscribe(`/topic/group/${id}`, (msg) => {
                 const message = JSON.parse(msg.body);
                 if (currentChat && currentChat.isGroup && currentChat.id == id) {
@@ -210,10 +338,14 @@ function appendChatMessage(msg) {
     const senderHtml = (currentChat && currentChat.isGroup && !isMine && senderName)
         ? `<div class="im-msg-sender">${escapeHtml(senderName)}</div>` : '';
     if (msg.msgType === 1 && msg.audioData) {
-        div.innerHTML = `<div class="msg-av">${isMine ? initial(userName) : initial(senderName || '?')}</div>
-            <div>${senderHtml}<div class="im-msg-bubble"><button onclick="playAudio('${msg.audioData}')" style="background:none;border:none;cursor:pointer;font-size:13px">🔊 播放语音</button></div></div>`;
+        const durationMatch = (msg.content || '').match(/(\d+)s/);
+        const durationText = durationMatch ? ` ${durationMatch[1]}s` : '';
+        div.innerHTML = `<div class="msg-av" style="background:${avatarGradient(isMine ? userName : senderName)}">${isMine ? initial(userName) : initial(senderName || '?')}</div>
+            <div>${senderHtml}<div class="im-msg-bubble"><button onclick="playAudio('${msg.audioData}')" style="background:none;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg> 播放语音${durationText}
+            </button></div></div>`;
     } else {
-        div.innerHTML = `<div class="msg-av">${isMine ? initial(userName) : initial(senderName || '?')}</div>
+        div.innerHTML = `<div class="msg-av" style="background:${avatarGradient(isMine ? userName : senderName)}">${isMine ? initial(userName) : initial(senderName || '?')}</div>
             <div>${senderHtml}<div class="im-msg-bubble">${escapeHtml(msg.content || '')}</div></div>`;
     }
     box.appendChild(div);
@@ -221,6 +353,94 @@ function appendChatMessage(msg) {
 }
 
 function playAudio(base64) { new Audio(base64).play(); }
+
+// ========== 信息抽屉 ==========
+function toggleInfoDrawer(forceState) {
+    const drawer = document.getElementById('infoDrawer');
+    if (!drawer) return;
+    const shouldShow = forceState !== undefined ? forceState : drawer.classList.contains('hidden');
+    if (shouldShow) {
+        drawer.classList.remove('hidden');
+        loadDrawerContent();
+    } else {
+        drawer.classList.add('hidden');
+    }
+}
+
+async function loadDrawerContent() {
+    if (!currentChat) return;
+    const title = document.getElementById('drawerTitle');
+    const body = document.getElementById('drawerBody');
+    if (currentChat.isGroup) {
+        title.textContent = '群信息';
+        body.innerHTML = '<p style="color:var(--text-tertiary);text-align:center">加载中...</p>';
+        try {
+            const res = await fetch(`/api/groups/${currentChat.id}`);
+            const data = await res.json();
+            const group = data.group;
+            const members = data.members || [];
+            body.innerHTML = `
+                <div class="drawer-user-info">
+                    <div class="du-avatar" style="background:#4a90d9">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="28" height="28"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    </div>
+                    <div class="du-name">${escapeHtml(group.name)}</div>
+                    <div class="du-id">群ID: ${group.id}</div>
+                </div>
+                ${group.notice ? `<div class="drawer-section">
+                    <div class="drawer-section-title">群公告</div>
+                    <div style="font-size:13px;color:var(--text-secondary);padding:10px;background:var(--bg-primary);border-radius:8px">${escapeHtml(group.notice)}</div>
+                </div>` : ''}
+                <div class="drawer-section">
+                    <div class="drawer-section-title">群成员 (${members.length})</div>
+                    <div class="drawer-member-list">
+                        ${members.map(m => `<div class="drawer-member">
+                            <div class="dm-av">${initial(m.nickname || 'U')}</div>
+                            <span class="dm-name">${escapeHtml(m.nickname || '用户')}</span>
+                            ${m.role == 2 ? '<span class="dm-role">群主</span>' : m.role == 1 ? '<span class="dm-role">管理</span>' : ''}
+                        </div>`).join('')}
+                    </div>
+                </div>
+                <div class="drawer-actions">
+                    <button class="drawer-action-btn" onclick="showGroupDetail(${currentChat.id});switchView('groups')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                        查看群详情
+                    </button>
+                </div>`;
+        } catch (e) { body.innerHTML = '<p style="color:var(--danger)">加载失败</p>'; }
+    } else {
+        title.textContent = '好友信息';
+        const name = currentChat.name;
+        body.innerHTML = `
+            <div class="drawer-user-info">
+                <div class="du-avatar">${initial(name)}</div>
+                <div class="du-name">${escapeHtml(name)}</div>
+                <div class="du-id">ID: ${currentChat.id}</div>
+            </div>
+            <div class="drawer-actions">
+                <button class="drawer-action-btn" onclick="setFriendRemark(${currentChat.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    设置备注
+                </button>
+                <button class="drawer-action-btn" onclick="moveFriend(${currentChat.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
+                    移动分组
+                </button>
+                <button class="drawer-action-btn" onclick="exportChat()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    导出聊天记录
+                </button>
+                <button class="drawer-action-btn danger" onclick="deleteFriend(${currentChat.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    删除好友
+                </button>
+            </div>`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+});
 
 function exportChat() {
     if (!currentChat || currentChat.isGroup) return;
@@ -244,32 +464,82 @@ function searchChatHistory() {
     });
 }
 
-// 语音录制
+// 语音录制（点击开始/停止，最长 10 秒，记录时长）
 function initVoiceBtn() {
     const btn = document.getElementById('imVoiceBtn');
-    if (!btn) return;
-    let recorder, chunks = [], recording = false;
-    btn.addEventListener('mousedown', async () => {
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = 'true';
+    let recorder, chunks = [], recording = false, countdownTimer = null, secondsLeft = 0, startTime = 0;
+    const MAX_SECONDS = 10;
+
+    const micIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+
+    function updateBtnTime() {
+        btn.innerHTML = `<span style="font-size:11px;font-weight:700;color:var(--danger)">${secondsLeft}</span>`;
+    }
+
+    async function startRecording() {
+        if (!stompClient || !wsConnected) {
+            showToast('正在连接服务器，请稍后...', 'error');
+            return;
+        }
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
             chunks = [];
             recorder.ondataavailable = e => chunks.push(e.data);
             recorder.onstop = () => {
+                clearInterval(countdownTimer);
+                const duration = Math.round((Date.now() - startTime) / 1000);
                 const blob = new Blob(chunks, { type: 'audio/webm' });
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     if (!currentChat) return;
-                    stompClient.send(currentChat.isGroup ? '/app/chat/group' : '/app/chat/private', {},
-                        JSON.stringify({ senderId: userId, sender: userName, receiverId: currentChat.isGroup ? null : currentChat.id, receiver: currentChat.id.toString(), content: '[语音消息]', msgType: 1, audioData: reader.result, isGroup: currentChat.isGroup }));
+                    stompClient.send(
+                        currentChat.isGroup ? '/app/chat/group' : '/app/chat/private', {},
+                        JSON.stringify({
+                            senderId: userId, sender: userName,
+                            receiverId: currentChat.isGroup ? null : currentChat.id,
+                            receiver: currentChat.id.toString(),
+                            content: `[语音消息 ${duration}s]`,
+                            msgType: 1, audioData: reader.result,
+                            isGroup: currentChat.isGroup
+                        })
+                    );
                 };
                 reader.readAsDataURL(blob);
                 stream.getTracks().forEach(t => t.stop());
+                btn.classList.remove('recording');
+                btn.innerHTML = micIcon;
+                recording = false;
             };
-            recorder.start(); recording = true; btn.classList.add('recording');
-        } catch (e) { showToast('无法访问麦克风', 'error'); }
+            recorder.start();
+            recording = true;
+            startTime = Date.now();
+            btn.classList.add('recording');
+            secondsLeft = MAX_SECONDS;
+            updateBtnTime();
+            countdownTimer = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= 0) {
+                    recorder.stop();
+                } else {
+                    updateBtnTime();
+                }
+            }, 1000);
+        } catch (e) {
+            showToast('无法访问麦克风，请检查权限', 'error');
+        }
+    }
+
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (recording) {
+            recorder.stop();
+        } else {
+            startRecording();
+        }
     });
-    btn.addEventListener('mouseup', () => { if (recording && recorder) { recorder.stop(); recording = false; btn.classList.remove('recording'); } });
 }
 
 // 搜索用户（聊天视图）
@@ -283,7 +553,7 @@ async function searchUsersForChat(keyword) {
             const name = u.nickname || u.username;
             const div = document.createElement('div');
             div.className = 'conv-item';
-            div.innerHTML = `<div class="conv-avatar-ph" style="background:#f39c12">${initial(name)}</div>
+            div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(name)}">${initial(name)}</div>
                 <div class="conv-body"><div class="conv-name">${escapeHtml(name)}</div>
                 <div class="conv-preview">@${escapeHtml(u.username)}</div></div>`;
             div.onclick = () => openChat(u.id, name, false);
@@ -307,7 +577,7 @@ async function loadFriendsView() {
         // 好友申请按钮
         const reqBtn = document.createElement('button');
         reqBtn.className = 'panel-btn';
-        reqBtn.innerHTML = '📬 好友申请';
+        reqBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 好友申请`;
         reqBtn.onclick = () => showFriendRequests();
         panel.appendChild(reqBtn);
         // 搜索结果区
@@ -325,7 +595,7 @@ async function loadFriendsView() {
                 const name = f.remark || ('好友 #' + f.friendId);
                 const div = document.createElement('div');
                 div.className = 'friend-item';
-                div.innerHTML = `<div class="f-avatar" style="background:#3b82f6">${initial(name)}</div>
+                div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(name)}">${initial(name)}</div>
                     <div class="f-name">${escapeHtml(name)}</div>`;
                 div.onclick = () => showFriendDetail(f);
                 panel.appendChild(div);
@@ -372,7 +642,8 @@ async function showFriendRequests() {
         for (const r of requests) {
             const div = document.createElement('div');
             div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-light)';
-            div.innerHTML = `<div class="f-avatar" style="background:#f39c12">U</div>
+            const reqName = '用户 #' + r.fromUserId;
+            div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(reqName)}">U</div>
                 <div style="flex:1"><div style="font-size:14px;font-weight:500">用户 #${r.fromUserId}</div>
                 <div style="font-size:12px;color:var(--text-tertiary)">${escapeHtml(r.message || '请求加你为好友')}</div></div>
                 <button class="btn btn-primary btn-sm" onclick="acceptRequest(${r.id})">同意</button>
@@ -398,7 +669,9 @@ async function deleteFriend(friendId) {
     await fetch(`/api/friends/${friendId}`, { method: 'DELETE' });
     showToast('已删除');
     loadFriendsView();
-    document.getElementById('contentArea').innerHTML = '<div class="im-empty"><div class="im-empty-icon">👥</div><p>选择一个好友查看详情</p></div>';
+    document.getElementById('contentArea').innerHTML = `<div class="im-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="48" height="48" style="opacity:0.25;margin-bottom:12px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <p>选择一个好友查看详情</p></div>`;
 }
 async function setFriendRemark(friendId) {
     const remark = prompt('输入备注名:');
@@ -429,7 +702,10 @@ async function searchUsersForFriend(keyword) {
             div.className = 'search-user-item';
             div.innerHTML = `<div class="su-av">${initial(name)}</div>
                 <div class="su-info"><div class="su-name">${escapeHtml(name)}</div><div class="su-username">@${escapeHtml(u.username)}</div></div>
-                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();sendFriendRequest(${u.id})">加好友</button>`;
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();sendFriendRequest(${u.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" style="margin-right:2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    加好友
+                </button>`;
             area.appendChild(div);
         }
     } catch (e) { console.error(e); }
@@ -451,7 +727,7 @@ async function loadGroupsView() {
     // 创建群按钮
     const createBtn = document.createElement('button');
     createBtn.className = 'panel-btn';
-    createBtn.innerHTML = '➕ 创建群聊';
+    createBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 创建群聊`;
     createBtn.onclick = () => showCreateGroup();
     panel.appendChild(createBtn);
     try {
@@ -461,7 +737,9 @@ async function loadGroupsView() {
         for (const g of groups) {
             const div = document.createElement('div');
             div.className = 'group-item';
-            div.innerHTML = `<div class="g-avatar">👥</div>
+            div.innerHTML = `<div class="g-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:#fff"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
                 <div><div class="g-name">${escapeHtml(g.name)}</div>
                 <div class="g-notice">${escapeHtml(g.notice || '暂无公告')}</div></div>`;
             div.onclick = () => showGroupDetail(g.id);
@@ -533,7 +811,9 @@ async function dissolveGroup(groupId) {
     await fetch(`/api/groups/${groupId}`, { method: 'DELETE' });
     showToast('已解散');
     loadGroupsView();
-    document.getElementById('contentArea').innerHTML = '<div class="im-empty"><div class="im-empty-icon">🏠</div><p>选择一个群查看详情</p></div>';
+    document.getElementById('contentArea').innerHTML = `<div class="im-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="48" height="48" style="opacity:0.25;margin-bottom:12px"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        <p>选择一个群查看详情</p></div>`;
 }
 
 async function showCreateGroup() {
@@ -603,6 +883,13 @@ async function loadProfileView() {
                     <div class="form-group"><label>原密码</label><input type="password" class="input" id="oldPwd" placeholder="请输入原密码"></div>
                     <div class="form-group"><label>新密码</label><input type="password" class="input" id="newPwd" placeholder="请输入新密码"></div>
                     <button class="btn btn-ghost" onclick="updatePassword()">修改密码</button>
+                    <hr style="margin:20px 0;border:none;border-top:1px solid var(--border-light)">
+                    <a href="/logout" style="text-decoration:none;display:block">
+                        <button class="btn btn-danger btn-block" style="gap:8px">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            退出登录
+                        </button>
+                    </a>
                 </div>
             </div>`;
     } catch (e) { console.error(e); }

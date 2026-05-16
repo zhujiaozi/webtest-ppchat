@@ -6,26 +6,26 @@
 /* --- 日间主题 (默认) --- */
 :root,
 [data-theme="light"] {
-    --bg-primary: #f5f5f5;
+    --bg-primary: #f0f2f5;
     --bg-secondary: #ffffff;
-    --bg-tertiary: #e8e8e8;
-    --bg-hover: #f0f0f0;
-    --bg-active: #d9d9d9;
-    --bg-nav: #2e2e2e;
-    --bg-nav-hover: #3a3a3a;
-    --bg-nav-active: #1aad19;
+    --bg-tertiary: #e4e6eb;
+    --bg-hover: #e8eaed;
+    --bg-active: #d2d5da;
+    --bg-nav: #1a1a2e;
+    --bg-nav-hover: #252540;
+    --bg-nav-active: #07c160;
     --bg-input: #ffffff;
     --bg-card: #ffffff;
     --bg-overlay: rgba(0,0,0,0.45);
     --text-primary: #1a1a1a;
-    --text-secondary: #666666;
-    --text-tertiary: #999999;
+    --text-secondary: #555555;
+    --text-tertiary: #888888;
     --text-inverse: #ffffff;
     --text-link: #576b95;
     --text-nav: #cccccc;
     --text-nav-active: #ffffff;
-    --border-color: #e0e0e0;
-    --border-light: #eeeeee;
+    --border-color: #d0d0d0;
+    --border-light: #e0e0e0;
     --accent: #07c160;
     --accent-hover: #06ad56;
     --accent-light: #e8f8ee;
@@ -36,9 +36,9 @@
     --bubble-self-text: #1a1a1a;
     --bubble-other: #ffffff;
     --bubble-other-text: #1a1a1a;
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
@@ -133,6 +133,7 @@ html, body {
 a { color: var(--text-link); text-decoration: none; }
 a:hover { color: var(--accent); }
 img { max-width: 100%; display: block; }
+svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 
