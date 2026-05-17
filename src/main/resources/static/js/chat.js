@@ -20,6 +20,7 @@ let currentChat = null;         // 当前打开的聊天 { id, name, isGroup }
 let friendsData = null;         // 缓存好友数据
 let groupsData = null;          // 缓存群数据
 let groupSubscriptions = {};    // 已订阅的群 STOMP
+let isLoadingChat = false;      // 防止重复加载聊天
 
 // ========== 初始化 ==========
 async function init() {
