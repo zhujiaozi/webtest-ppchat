@@ -9,7 +9,7 @@ async function loadChatView() {
         friendsData = data;
         const friends = data.friends || [];
         for (const f of friends) {
-            const name = f.remark || ('好友 #' + f.friendId);
+            const name = f.remark || f.friendName || ('好友 #' + f.friendId);
             // 获取未读消息数
             let unreadCount = 0;
             try {

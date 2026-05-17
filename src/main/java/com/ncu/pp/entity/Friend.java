@@ -23,6 +23,9 @@ public class Friend {
     @Column(length = 50)
     private String remark;
 
+    @Transient
+    private String friendName;
+
     private LocalDateTime createdAt;
 
     @PrePersist

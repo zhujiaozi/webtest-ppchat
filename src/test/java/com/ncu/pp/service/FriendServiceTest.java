@@ -3,9 +3,11 @@ package com.ncu.pp.service;
 import com.ncu.pp.entity.Friend;
 import com.ncu.pp.entity.FriendGroup;
 import com.ncu.pp.entity.FriendRequest;
+import com.ncu.pp.entity.User;
 import com.ncu.pp.repository.FriendGroupRepository;
 import com.ncu.pp.repository.FriendRepository;
 import com.ncu.pp.repository.FriendRequestRepository;
+import com.ncu.pp.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +34,9 @@ class FriendServiceTest {
 
     @Mock
     private FriendRequestRepository friendRequestRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private FriendService friendService;
@@ -67,11 +72,18 @@ class FriendServiceTest {
         List<Friend> friends = Arrays.asList(testFriend);
         when(friendRepository.findByUserId(1L)).thenReturn(friends);
 
+        User friendUser = new User();
+        friendUser.setId(2L);
+        friendUser.setUsername("friend1");
+        friendUser.setNickname("Friend One");
+        when(userRepository.findAllById(List.of(2L))).thenReturn(Arrays.asList(friendUser));
+
         List<Friend> result = friendService.getFriends(1L);
 
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(2L, result.get(0).getFriendId());
+        assertEquals("Friend One", result.get(0).getFriendName());
         verify(friendRepository).findByUserId(1L);
     }
 

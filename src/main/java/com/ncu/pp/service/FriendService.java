@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class FriendService {
@@ -73,8 +75,8 @@ public class FriendService {
         Long toId = request.getToUserId();
         FriendGroup fromGroup = getDefaultGroup(fromId);
         FriendGroup toGroup = getDefaultGroup(toId);
-        addFriend(fromId, toId, toGroup.getId());
-        addFriend(toId, fromId, fromGroup.getId());
+        addFriend(fromId, toId, fromGroup.getId());
+        addFriend(toId, fromId, toGroup.getId());
     }
 
     public void rejectRequest(Long requestId) {
@@ -84,7 +86,16 @@ public class FriendService {
     }
 
     public List<Friend> getFriends(Long userId) {
-        return friendRepository.findByUserId(userId);
+        List<Friend> friends = friendRepository.findByUserId(userId);
+        if (!friends.isEmpty()) {
+            List<Long> friendIds = friends.stream().map(Friend::getFriendId).toList();
+            Map<Long, String> nameMap = userRepository.findAllById(friendIds).stream()
+                    .collect(Collectors.toMap(
+                            User::getId,
+                            u -> u.getNickname() != null ? u.getNickname() : u.getUsername()));
+            friends.forEach(f -> f.setFriendName(nameMap.get(f.getFriendId())));
+        }
+        return friends;
     }
 
     public List<Friend> getFriendsByGroup(Long userId, Long groupId) {

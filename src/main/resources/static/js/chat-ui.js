@@ -137,10 +137,6 @@ async function loadDrawerContent() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    init();
-});
-
 function exportChat() {
     if (!currentChat || currentChat.isGroup) return;
     window.open(`/api/chat/private/${currentChat.id}/export`);

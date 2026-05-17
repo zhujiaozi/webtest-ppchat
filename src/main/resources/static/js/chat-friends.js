@@ -26,7 +26,7 @@ async function loadFriendsView() {
             title.textContent = `${g.name} (${groupFriends.length})`;
             panel.appendChild(title);
             for (const f of groupFriends) {
-                const name = f.remark || ('好友 #' + f.friendId);
+                const name = f.remark || f.friendName || ('好友 #' + f.friendId);
                 const div = document.createElement('div');
                 div.className = 'friend-item';
                 div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(name)}">${initial(name)}</div>
@@ -39,7 +39,7 @@ async function loadFriendsView() {
 }
 
 function showFriendDetail(f) {
-    const name = f.remark || ('好友 #' + f.friendId);
+    const name = f.remark || f.friendName || ('好友 #' + f.friendId);
     const content = document.getElementById('contentArea');
     content.innerHTML = `
         <div class="im-chat-header">
