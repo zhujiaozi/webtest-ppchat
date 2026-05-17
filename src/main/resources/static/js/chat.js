@@ -341,19 +341,26 @@ async function _openChatImpl(id, name, isGroup) {
 
     // 加载消息
     const box = document.getElementById('imMessages');
+    if (!box) {
+        console.error('[openChat] imMessages element not found');
+        return;
+    }
+    box.innerHTML = ''; // 清空旧消息
     if (!isGroup) {
         try {
             const res = await fetch(`/api/chat/private/${id}`);
             const msgs = await res.json();
+            console.log(`[openChat] Loaded ${msgs.length} private messages for user ${id}`);
             msgs.forEach(m => appendChatMessage({ senderId: m.senderId, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
             fetch(`/api/chat/private/${id}/read`, { method: 'POST' });
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error('[openChat] Failed to load private messages:', e); }
     } else {
         try {
             const res = await fetch(`/api/groups/${id}/messages`);
             const msgs = await res.json();
+            console.log(`[openChat] Loaded ${msgs.length} group messages for group ${id}`);
             msgs.forEach(m => appendChatMessage({ senderId: m.senderId, sender: m.sender, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error('[openChat] Failed to load group messages:', e); }
         if (!groupSubscriptions[id] && stompClient && wsConnected) {
             stompClient.subscribe(`/topic/group/${id}`, (msg) => {
                 const message = JSON.parse(msg.body);
