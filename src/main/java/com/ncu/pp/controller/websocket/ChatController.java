@@ -44,8 +44,6 @@ public class ChatController {
         }
         messagingTemplate.convertAndSendToUser(
                 message.getReceiverId().toString(), "/queue/private", message);
-        messagingTemplate.convertAndSendToUser(
-                message.getSenderId().toString(), "/queue/private", message);
     }
 
     @MessageMapping("/chat/group")
