@@ -42,6 +42,10 @@ public class ChatService {
         privateMessageRepository.markAsRead(senderId, receiverId);
     }
 
+    public long getUnreadCount(Long senderId, Long receiverId) {
+        return privateMessageRepository.countByReceiverIdAndSenderIdAndStatus(receiverId, senderId, 0);
+    }
+
     public String exportConversation(Long userId1, Long userId2) {
         List<PrivateMessage> messages = getConversation(userId1, userId2);
         StringBuilder sb = new StringBuilder();

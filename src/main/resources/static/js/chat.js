@@ -134,6 +134,8 @@ function connectWebSocket() {
         console.log('[WS] 已连接');
         stompClient.subscribe('/user/queue/private', (msg) => {
             const message = JSON.parse(msg.body);
+            // 过滤自己发送的消息（避免重复显示）
+            if (message.senderId == userId) return;
             if (currentChat && !currentChat.isGroup &&
                 (message.senderId == currentChat.id || message.receiverId == currentChat.id)) {
                 appendChatMessage(message);
@@ -221,11 +223,18 @@ async function loadChatView() {
         const friends = data.friends || [];
         for (const f of friends) {
             const name = f.remark || ('好友 #' + f.friendId);
+            // 获取未读消息数
+            let unreadCount = 0;
+            try {
+                const unreadRes = await fetch(`/api/chat/private/${f.friendId}/unread`);
+                unreadCount = await unreadRes.json();
+            } catch (e) {}
             const div = document.createElement('div');
             div.className = 'conv-item' + (currentChat && !currentChat.isGroup && currentChat.id == f.friendId ? ' active' : '');
             div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(name)}">${initial(name)}</div>
                 <div class="conv-body"><div class="conv-name">${escapeHtml(name)}</div>
-                <div class="conv-preview">点击开始聊天</div></div>`;
+                <div class="conv-preview">点击开始聊天</div></div>
+                ${unreadCount > 0 ? `<div class="conv-badge">${unreadCount}</div>` : ''}`;
             div.onclick = () => openChat(f.friendId, name, false);
             panel.appendChild(div);
         }
@@ -491,10 +500,25 @@ function initVoiceBtn() {
             recorder.onstop = () => {
                 clearInterval(countdownTimer);
                 const duration = Math.round((Date.now() - startTime) / 1000);
+                if (duration < 1) {
+                    showToast('录音时间太短', 'error');
+                    stream.getTracks().forEach(t => t.stop());
+                    btn.classList.remove('recording');
+                    btn.innerHTML = micIcon;
+                    recording = false;
+                    return;
+                }
                 const blob = new Blob(chunks, { type: 'audio/webm' });
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     if (!currentChat) return;
+                    // 立即显示语音消息（乐观更新）
+                    appendChatMessage({
+                        senderId: userId, sender: userName,
+                        content: `[语音消息 ${duration}s]`,
+                        msgType: 1, audioData: reader.result,
+                        createdAt: new Date().toISOString()
+                    });
                     stompClient.send(
                         currentChat.isGroup ? '/app/chat/group' : '/app/chat/private', {},
                         JSON.stringify({
@@ -764,9 +788,9 @@ async function showGroupDetail(groupId) {
             <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:16px">群ID: ${group.id} · 创建于 ${formatTime(group.createdAt)}</div>
             <div style="margin-bottom:16px">
                 <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">群公告</label>
-                <div style="display:flex;gap:8px">
-                    <input type="text" class="input" id="groupNotice" value="${escapeHtml(group.notice || '')}" placeholder="设置群公告" style="font-size:13px">
-                    <button class="btn btn-ghost btn-sm" onclick="updateGroupNotice(${group.id})">更新</button>
+                <div style="display:flex;gap:8px;align-items:flex-start">
+                    <textarea class="input" id="groupNotice" placeholder="设置群公告" style="font-size:13px;flex:1;min-height:60px;resize:vertical">${escapeHtml(group.notice || '')}</textarea>
+                    <button class="btn btn-ghost btn-sm" onclick="updateGroupNotice(${group.id})" style="margin-top:2px">更新</button>
                 </div>
             </div>
             <div style="margin-bottom:16px">
@@ -882,7 +906,10 @@ async function loadProfileView() {
                     <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">修改密码</h3>
                     <div class="form-group"><label>原密码</label><input type="password" class="input" id="oldPwd" placeholder="请输入原密码"></div>
                     <div class="form-group"><label>新密码</label><input type="password" class="input" id="newPwd" placeholder="请输入新密码"></div>
-                    <button class="btn btn-ghost" onclick="updatePassword()">修改密码</button>
+                    <button class="btn btn-primary" onclick="updatePassword()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="margin-right:4px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        修改密码
+                    </button>
                     <hr style="margin:20px 0;border:none;border-top:1px solid var(--border-light)">
                     <a href="/logout" style="text-decoration:none;display:block">
                         <button class="btn btn-danger btn-block" style="gap:8px">

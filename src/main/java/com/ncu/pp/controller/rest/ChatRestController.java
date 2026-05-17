@@ -40,6 +40,12 @@ public class ChatRestController {
         chatService.markAsRead(friendId, user.getId());
     }
 
+    @GetMapping("/private/{friendId}/unread")
+    public long getUnreadCount(@PathVariable Long friendId, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        return chatService.getUnreadCount(friendId, user.getId());
+    }
+
     @GetMapping("/private/{friendId}/export")
     public ResponseEntity<byte[]> export(@PathVariable Long friendId, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
