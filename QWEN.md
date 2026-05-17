@@ -54,7 +54,7 @@ src/main/java/com/ncu/pp/
 ├── service/
 │   ├── UserService.java            # 注册/登录/资料管理
 │   ├── FriendService.java          # 好友分组/申请/删除/移动
-│   ├── ChatService.java            # 私聊消息/搜索/导出
+│   ├── ChatService.java            # 私聊消息/搜索/导出/未读计数
 │   ├── GroupService.java           # 群聊 CRUD/成员管理
 │   └── FileService.java            # 文件上传
 ├── controller/
@@ -88,7 +88,7 @@ src/main/resources/
 └── static/
     ├── css/style.css               # 主题系统（light/dark/system）
     └── js/
-        ├── chat.js                 # SPA 核心逻辑（~850 行）
+        ├── chat.js                 # SPA 核心逻辑（~1050 行）
         ├── theme.js                # 主题切换 + Toast
         └── icons.js                # SVG 图标系统
 ```
@@ -130,6 +130,7 @@ src/main/resources/
 | 可拖动分割线 | — | chat.js initResizer | ✅ |
 | WebSocket 连接状态指示器 | — | chat.js updateWsStatus | ✅ |
 | 粒子背景效果 | — | chat.js initParticles | ✅ |
+| 自定义模态框 | — | chat.js showModal/showInputDialog | ✅ |
 
 ---
 
@@ -141,9 +142,12 @@ src/main/resources/
 - **白天模式对比度增强**：调整了白天模式下的颜色变量，增强了边框和阴影的对比度
 - **左栏深色保持**：左侧导航栏在白天模式下保持深色（#1a1a2e），与 QQ 风格一致
 - **粒子效果**：添加了 20 个浮动粒子作为背景装饰
+- **气泡 hover 动效**：消息气泡悬停时放大并加深阴影
+- **详情卡片全屏**：右侧详情卡片占满整个右栏宽度
 
 ### 功能修复
-- **消息重复显示**：WebSocket 订阅时过滤自己发送的消息，避免乐观更新后再次显示
+- **消息重复显示**：WebSocket 订阅时过滤自己发送的消息（私聊+群聊），避免乐观更新后再次显示
+- **消息发送防抖**：添加 300ms 防抖，防止快速点击重复发送
 - **语音消息**：录音结束后立即显示语音消息（乐观更新），并添加最短时长检查（1秒）
 - **快速点击防护**：添加 `isLoadingChat` 标志防止快速点击导致聊天记录重复加载
 - **群公告输入框**：从单行 input 改为多行 textarea（最小高度 60px）
@@ -153,9 +157,10 @@ src/main/resources/
 - **未读消息计数**：聊天列表中显示每个好友的未读消息数量（红色徽章）
 - **WebSocket 状态指示器**：左下角头像下方显示连接状态（绿色=已连接，黄色=连接中，红色=断开）
 - **主题切换器位置调整**：移到用户头像上方，布局更紧凑
+- **自定义模态框**：替换所有浏览器原生 `prompt()` 和 `confirm()` 为自定义模态框
 
 ### 测试
-- **JUnit 测试**：新增 UserServiceTest（11个测试用例）和 ChatServiceTest（7个测试用例），全部通过
+- **JUnit 测试**：新增 UserServiceTest（11个）、ChatServiceTest（7个）、FriendServiceTest（13个）、GroupServiceTest（14个），共 46 个测试用例全部通过
 
 ---
 
