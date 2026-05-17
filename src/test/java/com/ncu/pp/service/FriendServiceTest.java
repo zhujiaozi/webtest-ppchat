@@ -130,7 +130,12 @@ class FriendServiceTest {
 
     @Test
     void moveFriend_MovesToNewGroup() {
+        FriendGroup targetGroup = new FriendGroup();
+        targetGroup.setId(3L);
+        targetGroup.setUserId(1L);
+        targetGroup.setName("Target Group");
         when(friendRepository.findByUserIdAndFriendId(1L, 2L)).thenReturn(Optional.of(testFriend));
+        when(friendGroupRepository.findById(3L)).thenReturn(Optional.of(targetGroup));
         when(friendRepository.save(any(Friend.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         friendService.moveFriend(1L, 2L, 3L);
