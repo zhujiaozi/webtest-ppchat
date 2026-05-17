@@ -365,6 +365,8 @@ async function _openChatImpl(id, name, isGroup) {
         if (!groupSubscriptions[id] && stompClient && wsConnected) {
             stompClient.subscribe(`/topic/group/${id}`, (msg) => {
                 const message = JSON.parse(msg.body);
+                // 过滤自己发送的消息（避免重复显示）
+                if (message.senderId == userId) return;
                 if (currentChat && currentChat.isGroup && currentChat.id == id) {
                     appendChatMessage(message);
                 }
@@ -984,7 +986,7 @@ async function loadProfileView() {
             <div class="im-detail">
                 <div class="im-detail-card">
                     <div class="profile-avatar-area">
-                        <div class="av">${user.avatar ? `<img src="${user.avatar}" style="width:72px;height:72px;border-radius:50%;object-fit:cover">` : initial(user.nickname || user.username)}</div>
+                        <div class="av" style="background:${avatarGradient(user.nickname || user.username)}">${user.avatar ? `<img src="${user.avatar}" style="width:72px;height:72px;border-radius:50%;object-fit:cover">` : initial(user.nickname || user.username)}</div>
                         <div style="font-size:16px;font-weight:600">${escapeHtml(user.nickname || user.username)}</div>
                         <div style="font-size:12px;color:var(--text-tertiary)">@${escapeHtml(user.username)}</div>
                         <label style="font-size:12px;color:var(--text-link);cursor:pointer;margin-top:6px">
