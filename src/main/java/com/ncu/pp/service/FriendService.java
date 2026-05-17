@@ -4,6 +4,7 @@ import com.ncu.pp.entity.*;
 import com.ncu.pp.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -47,8 +48,10 @@ public class FriendService {
 
     public String sendRequest(Long fromUserId, Long toUserId, String message) {
         if (fromUserId.equals(toUserId)) return "不能添加自己为好友";
-        if (friendRepository.findByUserIdAndFriendId(fromUserId, toUserId).isPresent()) return "已经是好友了";
-        if (friendRequestRepository.existsByFromUserIdAndToUserIdAndStatus(fromUserId, toUserId, 0)) return "已发送过申请";
+        if (friendRepository.findByUserIdAndFriendId(fromUserId, toUserId).isPresent())
+            return "已经是好友了";
+        if (friendRequestRepository.existsByFromUserIdAndToUserIdAndStatus(fromUserId, toUserId, 0))
+            return "已发送过申请";
         FriendRequest request = new FriendRequest();
         request.setFromUserId(fromUserId);
         request.setToUserId(toUserId);
@@ -114,11 +117,11 @@ public class FriendService {
         friendRepository.save(friend);
     }
 
-    public List<User> searchUsers(String keyword) {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getUsername().contains(keyword) ||
-                             (u.getNickname() != null && u.getNickname().contains(keyword)))
-                .toList();
+    /**
+     * 使用数据库查询替代全表扫描，避免内存过滤
+     */
+    public List<User> searchUsers(String keyword, Long excludeUserId) {
+        return userRepository.searchByKeyword(keyword, excludeUserId);
     }
 
     private FriendGroup getDefaultGroup(Long userId) {

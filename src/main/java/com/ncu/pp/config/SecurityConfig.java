@@ -15,10 +15,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * 项目使用自定义 Session 拦截器做登录鉴权。
+     * 这里仅关闭 Spring Security 默认登录页和 CSRF，避免其拦截 Thymeleaf/REST/WebSocket 请求。
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();
     }
 }

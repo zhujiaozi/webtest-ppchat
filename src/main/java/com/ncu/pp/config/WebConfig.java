@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import java.nio.file.Paths;
 
 @Configuration
@@ -22,8 +23,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns(
                         "/login", "/register",
-                        "/css/**", "/js/**", "/images/**", "/uploads/**",
-                        "/favicon.ico", "/ws/**", "/api/**"
+                        "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico"
                 );
     }
 

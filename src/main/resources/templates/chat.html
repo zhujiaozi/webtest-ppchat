@@ -551,7 +551,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-<script th:src="@{/js/chat.js}"></script>
+<script th:src="@{/js/chat-core.js}"></script>
+<script th:src="@{/js/chat-ui.js}"></script>
+<script th:src="@{/js/chat-view.js}"></script>
+<script th:src="@{/js/chat-friends.js}"></script>
+<script th:src="@{/js/chat-groups.js}"></script>
+<script th:src="@{/js/chat-profile.js}"></script>
 <script>
     document.getElementById('theme-area').appendChild(ThemeManager.createSwitcher());
 </script>

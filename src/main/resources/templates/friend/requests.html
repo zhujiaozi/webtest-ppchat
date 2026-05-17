@@ -1,56 +1,36 @@
-<!DOCTYPE html>
-<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>好友申请 — PP Chat</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-    <script th:src="@{/js/theme.js}"></script>
-</head>
-<body>
-<div class="mgmt-page">
-    <header class="mgmt-header">
-        <span class="brand">PP Chat</span>
-        <div class="nav-links">
-            <a th:href="@{/chat}">聊天</a>
-            <a th:href="@{/friends}" class="active">好友</a>
-            <a th:href="@{/groups}">群聊</a>
-            <a th:href="@{/profile}">个人中心</a>
-            <span id="theme-area"></span>
-        </div>
-    </header>
-
+<div th:replace="~{common/layout :: layout(title='好友申请 — PP Chat', content=~{::#content})}">
+  <div id="content">
     <div class="mgmt-body">
-        <aside class="mgmt-sidebar">
-            <a th:href="@{/friends}" class="btn btn-ghost btn-block" style="justify-content:flex-start">← 返回好友列表</a>
-        </aside>
+      <aside class="mgmt-sidebar">
+        <a th:href="@{/friends}" class="btn btn-ghost btn-block" style="justify-content:flex-start">← 返回好友列表</a>
+      </aside>
 
-        <div class="mgmt-content">
-            <div class="card" style="padding:20px">
-                <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">待处理的好友申请</h3>
-                <div th:if="${#lists.isEmpty(requests)}" class="empty-state" style="height:auto;padding:40px">
-                    <p>暂无待处理的好友申请</p>
-                </div>
-                <div th:each="r : ${requests}" class="request-item">
-                    <div class="avatar avatar-placeholder" th:text="${#strings.substring('U', 0, 1)}"></div>
-                    <div class="request-info">
-                        <div class="request-name" th:text="'用户 #' + ${r.fromUserId}"></div>
-                        <div class="request-msg" th:if="${r.message}" th:text="${r.message}"></div>
-                        <div class="request-time" th:text="${r.createdAt}"></div>
-                    </div>
-                    <div class="request-actions">
-                        <form th:action="@{/friends/request/accept/{id}(id=${r.id})}" method="post" style="display:inline">
-                            <button type="submit" class="btn btn-primary btn-sm">同意</button>
-                        </form>
-                        <form th:action="@{/friends/request/reject/{id}(id=${r.id})}" method="post" style="display:inline">
-                            <button type="submit" class="btn btn-ghost btn-sm">拒绝</button>
-                        </form>
-                    </div>
-                </div>
+      <div class="mgmt-content">
+        <div class="card" style="padding:20px">
+          <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">待处理的好友申请</h3>
+
+          <div th:if="${#lists.isEmpty(requests)}" class="empty-state" style="height:auto;padding:40px">
+            <p>暂无待处理的好友申请</p>
+          </div>
+
+          <div th:each="r : ${requests}" class="request-item">
+            <div class="avatar avatar-placeholder" th:text="${#strings.substring('U', 0, 1)}"></div>
+            <div class="request-info">
+              <div class="request-name" th:text="'用户 #' + ${r.fromUserId}"></div>
+              <div class="request-msg" th:if="${r.message}" th:text="${r.message}"></div>
+              <div class="request-time" th:text="${r.createdAt}"></div>
             </div>
+            <div class="request-actions">
+              <form th:action="@{/friends/request/accept/{id}(id=${r.id})}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-primary btn-sm">同意</button>
+              </form>
+              <form th:action="@{/friends/request/reject/{id}(id=${r.id})}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-ghost btn-sm">拒绝</button>
+              </form>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </div>
-<script>document.getElementById('theme-area').appendChild(ThemeManager.createSwitcher());</script>
-</body>
-</html>

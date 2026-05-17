@@ -14,6 +14,17 @@ if (!userId) {
     window.location.href = '/login';
 }
 
+// 全局 fetch 封装：未登录(401)时自动跳转登录页
+const _originalFetch = window.fetch;
+window.fetch = async function(...args) {
+    const res = await _originalFetch.apply(this, args);
+    if (res.status === 401) {
+        window.location.href = '/login';
+        return new Promise(() => {});
+    }
+    return res;
+};
+
 let stompClient = null;
 let currentView = 'chat';      // 当前左侧选中的视图
 let currentChat = null;         // 当前打开的聊天 { id, name, isGroup }
@@ -390,7 +401,7 @@ function appendChatMessage(msg) {
         const durationMatch = (msg.content || '').match(/(\d+)s/);
         const durationText = durationMatch ? ` ${durationMatch[1]}s` : '';
         div.innerHTML = `<div class="msg-av" style="background:${avatarGradient(isMine ? userName : senderName)}">${isMine ? initial(userName) : initial(senderName || '?')}</div>
-            <div>${senderHtml}<div class="im-msg-bubble"><button onclick="playAudio('${msg.audioData}')" style="background:none;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px">
+            <div>${senderHtml}<div class="im-msg-bubble"><button data-src="${msg.audioData}" onclick="playAudio(this.dataset.src)" style="background:none;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg> 播放语音${durationText}
             </button></div></div>`;
     } else {
@@ -401,7 +412,7 @@ function appendChatMessage(msg) {
     box.scrollTop = box.scrollHeight;
 }
 
-function playAudio(base64) { new Audio(base64).play(); }
+function playAudio(src) { new Audio(src).play(); }
 
 // ========== 信息抽屉 ==========
 function toggleInfoDrawer(forceState) {
@@ -742,11 +753,17 @@ async function showFriendRequests() {
         if (requests.length === 0) { list.innerHTML = '<p style="color:var(--text-tertiary);text-align:center">暂无待处理的好友申请</p>'; return; }
         list.innerHTML = '';
         for (const r of requests) {
+            // 获取申请人信息
+            let reqName = '用户 #' + r.fromUserId;
+            try {
+                const userRes = await fetch(`/api/profile/${r.fromUserId}`);
+                const userData = await userRes.json();
+                reqName = userData.nickname || userData.username;
+            } catch (e) {}
             const div = document.createElement('div');
             div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-light)';
-            const reqName = '用户 #' + r.fromUserId;
-            div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(reqName)}">U</div>
-                <div style="flex:1"><div style="font-size:14px;font-weight:500">用户 #${r.fromUserId}</div>
+            div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(reqName)}">${initial(reqName)}</div>
+                <div style="flex:1"><div style="font-size:14px;font-weight:500">${escapeHtml(reqName)}</div>
                 <div style="font-size:12px;color:var(--text-tertiary)">${escapeHtml(r.message || '请求加你为好友')}</div></div>
                 <button class="btn btn-primary btn-sm" onclick="acceptRequest(${r.id})">同意</button>
                 <button class="btn btn-ghost btn-sm" onclick="rejectRequest(${r.id})">拒绝</button>`;

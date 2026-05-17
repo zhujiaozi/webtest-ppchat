@@ -24,7 +24,7 @@ public class FriendPageController {
         model.addAttribute("groups", friendService.getGroups(user.getId()));
         model.addAttribute("friends", friendService.getFriends(user.getId()));
         if (keyword != null && !keyword.isEmpty()) {
-            model.addAttribute("searchResults", friendService.searchUsers(keyword));
+            model.addAttribute("searchResults", friendService.searchUsers(keyword, user.getId()));
             model.addAttribute("keyword", keyword);
         }
         return "friend/list";

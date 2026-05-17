@@ -6,13 +6,21 @@ spring:
     url: jdbc:mysql://mysql6.sqlpub.com:3311/gove_sqlpub?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: iamgove
     password: AtnWe0aw7DAwB0gX
+    hikari:
+      pool-name: PPChatHikariPool
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      validation-timeout: 5000
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
   thymeleaf:
     cache: false
   servlet:

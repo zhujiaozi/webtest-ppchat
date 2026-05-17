@@ -28,10 +28,11 @@ public class FriendRestController {
         return result;
     }
 
-    /** 搜索用户 */
+    /** 搜索用户（排除自己） */
     @GetMapping("/search")
-    public List<User> search(@RequestParam String keyword) {
-        return friendService.searchUsers(keyword);
+    public List<User> search(@RequestParam String keyword, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        return friendService.searchUsers(keyword, user.getId());
     }
 
     /** 发送好友申请 */

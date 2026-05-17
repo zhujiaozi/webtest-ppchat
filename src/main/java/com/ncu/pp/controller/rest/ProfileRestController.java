@@ -27,6 +27,12 @@ public class ProfileRestController {
         return (User) session.getAttribute("currentUser");
     }
 
+    /** 获取指定用户信息（用于好友申请详情页显示昵称） */
+    @GetMapping("/{userId}")
+    public User getUserById(@PathVariable Long userId) {
+        return userService.getById(userId);
+    }
+
     /** 更新昵称 */
     @PutMapping("/nickname")
     public Map<String, Object> updateNickname(@RequestBody Map<String, String> body, HttpSession session) {
