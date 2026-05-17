@@ -150,7 +150,14 @@ function connectWebSocket() {
 }
 
 // ========== 发送消息 ==========
+let lastSendTime = 0;
+const SEND_DEBOUNCE = 300; // 300ms 防抖
+
 function sendMessage() {
+    const now = Date.now();
+    if (now - lastSendTime < SEND_DEBOUNCE) return; // 防抖：300ms 内只能发送一次
+    lastSendTime = now;
+
     const input = document.getElementById('imMsgInput');
     if (!input) return;
     const content = input.value.trim();
@@ -259,6 +266,16 @@ async function loadChatView() {
 }
 
 async function openChat(id, name, isGroup) {
+    if (isLoadingChat) return;
+    isLoadingChat = true;
+    try {
+        await _openChatImpl(id, name, isGroup);
+    } finally {
+        isLoadingChat = false;
+    }
+}
+
+async function _openChatImpl(id, name, isGroup) {
     currentChat = { id, name, isGroup };
     // 高亮
     document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
@@ -308,6 +325,11 @@ async function openChat(id, name, isGroup) {
         this.style.height = Math.min(this.scrollHeight, 100) + 'px';
     });
     initVoiceBtn();
+    // 绑定发送按钮（防止重复绑定）
+    const sendBtn = document.querySelector('.send-btn');
+    if (sendBtn) {
+        sendBtn.onclick = sendMessage;
+    }
 
     // 加载消息
     const box = document.getElementById('imMessages');
@@ -456,20 +478,58 @@ function exportChat() {
     window.open(`/api/chat/private/${currentChat.id}/export`);
 }
 
+// ========== 自定义模态框 ==========
+function showModal(title, bodyHtml, footerHtml) {
+    const modal = document.getElementById('imModal');
+    if (!modal) return;
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = bodyHtml;
+    document.getElementById('modalFooter').innerHTML = footerHtml || '';
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    const modal = document.getElementById('imModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function showInputDialog(title, placeholder, onConfirm) {
+    showModal(title, `
+        <input type="text" id="modalInput" class="input" placeholder="${placeholder}" style="width:100%;font-size:14px">
+    `, `
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmInputDialog()">确定</button>
+    `);
+    window._modalCallback = onConfirm;
+    setTimeout(() => document.getElementById('modalInput')?.focus(), 100);
+}
+
+function confirmInputDialog() {
+    const input = document.getElementById('modalInput');
+    if (!input) return;
+    const value = input.value.trim();
+    if (!value) return;
+    closeModal();
+    if (window._modalCallback) {
+        window._modalCallback(value);
+        window._modalCallback = null;
+    }
+}
+
 function searchChatHistory() {
     if (!currentChat) return;
-    const keyword = prompt('输入搜索关键词:');
-    if (!keyword) return;
-    const url = currentChat.isGroup
-        ? `/api/groups/${currentChat.id}/messages/search?keyword=${encodeURIComponent(keyword)}`
-        : `/api/chat/private/${currentChat.id}/search?keyword=${encodeURIComponent(keyword)}`;
-    fetch(url).then(r => r.json()).then(msgs => {
-        const box = document.getElementById('imMessages');
-        box.innerHTML = '';
-        if (msgs.length === 0) {
-            box.innerHTML = '<div class="im-empty"><p>未找到匹配的消息</p></div>';
-        }
-        msgs.forEach(m => appendChatMessage({ senderId: m.senderId, sender: m.sender, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
+    showInputDialog('搜索聊天记录', '输入搜索关键词...', (keyword) => {
+        const url = currentChat.isGroup
+            ? `/api/groups/${currentChat.id}/messages/search?keyword=${encodeURIComponent(keyword)}`
+            : `/api/chat/private/${currentChat.id}/search?keyword=${encodeURIComponent(keyword)}`;
+        fetch(url).then(r => r.json()).then(msgs => {
+            const box = document.getElementById('imMessages');
+            box.innerHTML = '';
+            if (msgs.length === 0) {
+                box.innerHTML = '<div class="im-empty"><p>未找到匹配的消息</p></div>';
+            }
+            msgs.forEach(m => appendChatMessage({ senderId: m.senderId, sender: m.sender, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
+        });
     });
 }
 
@@ -698,18 +758,18 @@ async function deleteFriend(friendId) {
         <p>选择一个好友查看详情</p></div>`;
 }
 async function setFriendRemark(friendId) {
-    const remark = prompt('输入备注名:');
-    if (!remark) return;
-    await fetch(`/api/friends/${friendId}/remark`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ remark }) });
-    showToast('备注已更新');
-    loadFriendsView();
+    showInputDialog('设置备注', '输入备注名...', async (remark) => {
+        await fetch(`/api/friends/${friendId}/remark`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ remark }) });
+        showToast('备注已更新');
+        loadFriendsView();
+    });
 }
 async function moveFriend(friendId) {
-    const groupId = prompt('输入目标分组ID:');
-    if (!groupId) return;
-    await fetch(`/api/friends/${friendId}/move`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groupId: parseInt(groupId) }) });
-    showToast('已移动');
-    loadFriendsView();
+    showInputDialog('移动分组', '输入目标分组ID...', async (groupId) => {
+        await fetch(`/api/friends/${friendId}/move`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groupId: parseInt(groupId) }) });
+        showToast('已移动');
+        loadFriendsView();
+    });
 }
 
 async function searchUsersForFriend(keyword) {
@@ -735,11 +795,12 @@ async function searchUsersForFriend(keyword) {
     } catch (e) { console.error(e); }
 }
 async function sendFriendRequest(toUserId) {
-    const message = prompt('验证消息（可留空）:') || '';
-    const res = await fetch('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toUserId, message }) });
-    const data = await res.json();
-    if (data.success) showToast('好友申请已发送');
-    else showToast(data.error || '发送失败', 'error');
+    showInputDialog('发送好友申请', '验证消息（可留空）...', async (message) => {
+        const res = await fetch('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toUserId, message: message || '' }) });
+        const data = await res.json();
+        if (data.success) showToast('好友申请已发送');
+        else showToast(data.error || '发送失败', 'error');
+    });
 }
 
 // ============================================================
@@ -818,20 +879,40 @@ async function updateGroupNotice(groupId) {
     showToast('群公告已更新');
 }
 async function kickMember(groupId, userId) {
-    if (!confirm('确定踢出该成员？')) return;
+    showModal('确认操作', '<p>确定踢出该成员？</p>', `
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmKickMember(${groupId},${userId})">确定踢出</button>
+    `);
+}
+async function confirmKickMember(groupId, userId) {
+    closeModal();
     await fetch(`/api/groups/${groupId}/members/${userId}`, { method: 'DELETE' });
     showToast('已踢出');
     showGroupDetail(groupId);
 }
+
 async function leaveGroup(groupId) {
-    if (!confirm('确定退出该群聊？')) return;
+    showModal('确认操作', '<p>确定退出该群聊？</p>', `
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmLeaveGroup(${groupId})">确定退出</button>
+    `);
+}
+async function confirmLeaveGroup(groupId) {
+    closeModal();
     await fetch(`/api/groups/${groupId}/leave`, { method: 'POST' });
     showToast('已退出');
     loadGroupsView();
     document.getElementById('contentArea').innerHTML = '<div class="im-empty"><div class="im-empty-icon">🏠</div><p>选择一个群查看详情</p></div>';
 }
+
 async function dissolveGroup(groupId) {
-    if (!confirm('确定解散该群聊？此操作不可撤销！')) return;
+    showModal('确认操作', '<p style="color:var(--danger);font-weight:600">确定解散该群聊？此操作不可撤销！</p>', `
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmDissolveGroup(${groupId})">确定解散</button>
+    `);
+}
+async function confirmDissolveGroup(groupId) {
+    closeModal();
     await fetch(`/api/groups/${groupId}`, { method: 'DELETE' });
     showToast('已解散');
     loadGroupsView();

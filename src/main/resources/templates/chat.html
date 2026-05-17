@@ -210,6 +210,11 @@
         .im-msg-bubble {
             padding: 8px 12px; border-radius: 8px;
             font-size: 13px; line-height: 1.6; word-break: break-word;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .im-msg-bubble:hover {
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(0,0,0,.1);
         }
         .im-msg-row:not(.self) .im-msg-bubble {
             background: var(--bubble-other); color: var(--bubble-other-text);
@@ -295,11 +300,11 @@
         .sp-result .sp-text mark { background: var(--warning); border-radius: 2px; padding: 0 2px; }
 
         /* 好友详情 / 群详情 / 个人中心 — 右侧内容 */
-        .im-detail { flex: 1; overflow-y: auto; padding: 24px; display: flex; justify-content: center; align-items: flex-start; }
+        .im-detail { flex: 1; overflow-y: auto; padding: 0; display: flex; }
         .im-detail-card {
-            max-width: 480px; width: 100%; padding: 24px;
-            background: var(--bg-card); border-radius: 10px;
-            box-shadow: var(--shadow-sm);
+            width: 100%; min-height: 100%; padding: 24px;
+            background: var(--bg-card);
+            box-sizing: border-box;
         }
         .im-detail-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
         .im-detail .profile-avatar-area {
@@ -423,6 +428,43 @@
             font-size: 10px; padding: 2px 8px;
             background: var(--accent-light); color: var(--accent); border-radius: 10px;
         }
+
+        /* ===== 自定义模态框 ===== */
+        .im-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
+        }
+        .im-modal.hidden { display: none; }
+        .im-modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+        }
+        .im-modal-content {
+            position: relative; background: var(--bg-card); border-radius: 12px;
+            min-width: 320px; max-width: 480px; width: 90%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            animation: modalSlideIn 0.2s ease;
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .im-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+        }
+        .im-modal-header span { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+        .modal-close {
+            width: 28px; height: 28px; border: none; background: transparent;
+            border-radius: 6px; cursor: pointer; color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: var(--bg-hover); }
+        .im-modal-body { padding: 20px; }
+        .im-modal-footer {
+            display: flex; gap: 8px; justify-content: flex-end;
+            padding: 12px 20px; border-top: 1px solid var(--border-light);
+        }
     </style>
 </head>
 <body>
@@ -490,6 +532,21 @@
         </div>
         <div class="im-drawer-body" id="drawerBody"></div>
     </aside>
+
+    <!-- 自定义模态框 -->
+    <div class="im-modal hidden" id="imModal">
+        <div class="im-modal-overlay" onclick="closeModal()"></div>
+        <div class="im-modal-content">
+            <div class="im-modal-header">
+                <span id="modalTitle">提示</span>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="im-modal-body" id="modalBody"></div>
+            <div class="im-modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
