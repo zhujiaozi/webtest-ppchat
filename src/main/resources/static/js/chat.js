@@ -3,8 +3,16 @@
  * 四个视图: chat / friends / groups / profile
  */
 const APP = document.querySelector('.im-app');
-const userId = parseInt(APP.dataset.userId);
-const userName = APP.dataset.userName;
+if (!APP) {
+    console.error('[PP Chat] .im-app element not found');
+}
+const userId = APP ? parseInt(APP.dataset.userId) : 0;
+const userName = APP ? (APP.dataset.userName || 'User') : 'User';
+
+if (!userId) {
+    console.warn('[PP Chat] User not logged in, redirecting to login...');
+    window.location.href = '/login';
+}
 
 let stompClient = null;
 let currentView = 'chat';      // 当前左侧选中的视图
