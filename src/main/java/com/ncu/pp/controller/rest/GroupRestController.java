@@ -49,7 +49,7 @@ public class GroupRestController {
             item.put("role", m.getRole());
             item.put("joinedAt", m.getJoinedAt());
             User u = userService.getById(m.getUserId());
-            item.put("nickname", u != null ? (u.getNickname() != null ? u.getNickname() : u.getUsername()) : "用户" + m.getUserId());
+            item.put("nickname", u != null ? u.getDisplayName() : "用户" + m.getUserId());
             members.add(item);
         }
         result.put("members", members);
@@ -58,13 +58,23 @@ public class GroupRestController {
     }
 
     @PutMapping("/{id}/notice")
-    public ApiResponse<Void> updateNotice(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ApiResponse<Void> updateNotice(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        GroupChat group = groupService.getGroup(id);
+        if (group == null || !group.getOwnerId().equals(user.getId())) {
+            throw new IllegalArgumentException("只有群主可以修改群公告");
+        }
         groupService.updateNotice(id, body.get("notice"));
         return ApiResponse.ok();
     }
 
     @DeleteMapping("/{id}/members/{userId}")
-    public ApiResponse<Void> kickMember(@PathVariable Long id, @PathVariable Long userId) {
+    public ApiResponse<Void> kickMember(@PathVariable Long id, @PathVariable Long userId, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        GroupChat group = groupService.getGroup(id);
+        if (group == null || !group.getOwnerId().equals(user.getId())) {
+            throw new IllegalArgumentException("只有群主可以踢出成员");
+        }
         groupService.removeMember(id, userId);
         return ApiResponse.ok();
     }
@@ -104,7 +114,7 @@ public class GroupRestController {
             item.put("audioData", m.getAudioData());
             item.put("createdAt", m.getCreatedAt());
             User u = userService.getById(m.getSenderId());
-            item.put("sender", u != null ? (u.getNickname() != null ? u.getNickname() : u.getUsername()) : "用户");
+            item.put("sender", u != null ? u.getDisplayName() : "用户");
             result.add(item);
         }
         return result;

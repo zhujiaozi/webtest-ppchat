@@ -18,7 +18,7 @@ public interface PrivateMessageRepository extends JpaRepository<PrivateMessage, 
     @Query("SELECT m FROM PrivateMessage m WHERE " +
            "((m.senderId = ?1 AND m.receiverId = ?2) OR " +
            "(m.senderId = ?2 AND m.receiverId = ?1)) " +
-           "AND m.content LIKE %?3% ORDER BY m.createdAt ASC")
+           "AND m.content LIKE CONCAT('%', ?3, '%') ORDER BY m.createdAt ASC")
     List<PrivateMessage> searchInConversation(Long userId1, Long userId2, String keyword);
 
     long countByReceiverIdAndSenderIdAndStatus(Long receiverId, Long senderId, Integer status);

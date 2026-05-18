@@ -6,7 +6,9 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "pp_group_member")
+@Table(name = "pp_group_member", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"groupId", "userId"})
+})
 public class GroupMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
