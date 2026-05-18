@@ -1,118 +1,109 @@
 package com.ncu.pp.controller.rest;
 
+import com.ncu.pp.dto.ApiResponse;
 import com.ncu.pp.entity.*;
 import com.ncu.pp.service.FriendService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
-import java.util.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/friends")
 public class FriendRestController {
-
     private final FriendService friendService;
 
     public FriendRestController(FriendService friendService) {
         this.friendService = friendService;
     }
 
-    /** 获取好友列表（按分组） */
     @GetMapping
-    public Map<String, Object> getFriends(HttpSession session) {
+    public ApiResponse<Map<String, Object>> getFriends(HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        List<FriendGroup> groups = friendService.getGroups(user.getId());
-        List<Friend> friends = friendService.getFriends(user.getId());
         Map<String, Object> result = new HashMap<>();
-        result.put("groups", groups);
-        result.put("friends", friends);
-        return result;
+        result.put("groups", friendService.getGroups(user.getId()));
+        result.put("friends", friendService.getFriends(user.getId()));
+        return ApiResponse.ok(result);
     }
 
-    /** 搜索用户（排除自己） */
     @GetMapping("/search")
-    public List<User> search(@RequestParam String keyword, HttpSession session) {
+    public ApiResponse<List<User>> search(@RequestParam String keyword, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        return friendService.searchUsers(keyword, user.getId());
+        return ApiResponse.ok(friendService.searchUsers(keyword, user.getId()));
     }
 
-    /** 发送好友申请 */
     @PostMapping("/request")
-    public Map<String, Object> sendRequest(@RequestBody Map<String, Object> body, HttpSession session) {
+    public ApiResponse<Map<String, Object>> sendRequest(@RequestBody Map<String, Object> body, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         Long toUserId = Long.valueOf(body.get("toUserId").toString());
         String message = (String) body.getOrDefault("message", "");
-        Map<String, Object> result = new HashMap<>();
         String error = friendService.sendRequest(user.getId(), toUserId, message);
+        Map<String, Object> result = new HashMap<>();
         result.put("success", error == null);
         if (error != null) result.put("error", error);
-        return result;
+        return ApiResponse.ok(result);
     }
 
-    /** 获取待处理的好友申请 */
     @GetMapping("/requests")
-    public List<FriendRequest> getRequests(HttpSession session) {
+    public ApiResponse<List<FriendRequest>> getRequests(HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        return friendService.getPendingRequests(user.getId());
+        return ApiResponse.ok(friendService.getPendingRequests(user.getId()));
     }
 
-    /** 同意好友申请 */
     @PostMapping("/requests/{id}/accept")
-    public Map<String, Boolean> acceptRequest(@PathVariable Long id) {
+    public ApiResponse<Void> acceptRequest(@PathVariable Long id) {
         friendService.acceptRequest(id);
-        return Collections.singletonMap("success", true);
+        return ApiResponse.ok();
     }
 
-    /** 拒绝好友申请 */
     @PostMapping("/requests/{id}/reject")
-    public Map<String, Boolean> rejectRequest(@PathVariable Long id) {
+    public ApiResponse<Void> rejectRequest(@PathVariable Long id) {
         friendService.rejectRequest(id);
-        return Collections.singletonMap("success", true);
+        return ApiResponse.ok();
     }
 
-    /** 创建分组 */
     @PostMapping("/groups")
-    public FriendGroup createGroup(@RequestBody Map<String, String> body, HttpSession session) {
+    public ApiResponse<FriendGroup> createGroup(@RequestBody Map<String, String> body, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        return friendService.createGroup(user.getId(), body.get("name"));
+        return ApiResponse.ok(friendService.createGroup(user.getId(), body.get("name")));
     }
 
-    /** 重命名分组 */
     @PutMapping("/groups/{id}")
-    public Map<String, Boolean> renameGroup(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ApiResponse<Void> renameGroup(@PathVariable Long id, @RequestBody Map<String, String> body) {
         friendService.renameGroup(id, body.get("name"));
-        return Collections.singletonMap("success", true);
+        return ApiResponse.ok();
     }
 
-    /** 删除分组 */
     @DeleteMapping("/groups/{id}")
-    public Map<String, Boolean> deleteGroup(@PathVariable Long id) {
+    public ApiResponse<Void> deleteGroup(@PathVariable Long id) {
         friendService.deleteGroup(id);
-        return Collections.singletonMap("success", true);
+        return ApiResponse.ok();
     }
 
-    /** 删除好友 */
     @DeleteMapping("/{friendId}")
-    public Map<String, Boolean> deleteFriend(@PathVariable Long friendId, HttpSession session) {
+    public ApiResponse<Void> deleteFriend(@PathVariable Long friendId, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         friendService.deleteFriend(user.getId(), friendId);
-        return Collections.singletonMap("success", true);
+        return ApiResponse.ok();
     }
 
-    /** 移动好友到分组 */
     @PutMapping("/{friendId}/move")
-    public Map<String, Boolean> moveFriend(@PathVariable Long friendId,
-                                            @RequestBody Map<String, Long> body, HttpSession session) {
+    public ApiResponse<Void> moveFriend(@PathVariable Long friendId,
+                                        @RequestBody Map<String, Long> body,
+                                        HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         friendService.moveFriend(user.getId(), friendId, body.get("groupId"));
-        return Collections.singletonMap("success", true);
+        return ApiResponse.ok();
     }
 
-    /** 设置好友备注 */
     @PutMapping("/{friendId}/remark")
-    public Map<String, Boolean> setRemark(@PathVariable Long friendId,
-                                           @RequestBody Map<String, String> body, HttpSession session) {
+    public ApiResponse<Void> setRemark(@PathVariable Long friendId,
+                                       @RequestBody Map<String, String> body,
+                                       HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         friendService.setRemark(user.getId(), friendId, body.get("remark"));
-        return Collections.singletonMap("success", true);
+        return ApiResponse.ok();
     }
 }
