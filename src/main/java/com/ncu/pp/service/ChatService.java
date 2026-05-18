@@ -5,7 +5,10 @@ import com.ncu.pp.entity.User;
 import com.ncu.pp.repository.PrivateMessageRepository;
 import com.ncu.pp.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
@@ -19,6 +22,7 @@ public class ChatService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public PrivateMessage savePrivateMessage(Long senderId, Long receiverId, String content,
                                               Integer msgType, String audioData) {
         PrivateMessage msg = new PrivateMessage();
@@ -38,6 +42,7 @@ public class ChatService {
         return privateMessageRepository.searchInConversation(userId1, userId2, keyword);
     }
 
+    @Transactional
     public void markAsRead(Long senderId, Long receiverId) {
         privateMessageRepository.markAsRead(senderId, receiverId);
     }
@@ -48,10 +53,14 @@ public class ChatService {
 
     public String exportConversation(Long userId1, Long userId2) {
         List<PrivateMessage> messages = getConversation(userId1, userId2);
+        // 批量查询用户信息，避免 N+1
+        List<Long> senderIds = messages.stream().map(PrivateMessage::getSenderId).distinct().toList();
+        Map<Long, User> userMap = userRepository.findAllById(senderIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
         StringBuilder sb = new StringBuilder();
         for (PrivateMessage m : messages) {
-            User sender = userRepository.findById(m.getSenderId()).orElse(null);
-            String name = sender != null ? (sender.getNickname() != null ? sender.getNickname() : sender.getUsername()) : "未知";
+            User sender = userMap.get(m.getSenderId());
+            String name = sender != null ? sender.getDisplayName() : "未知";
             sb.append(String.format("[%s] %s: %s\n",
                     m.getCreatedAt(), name,
                     m.getMsgType() == 1 ? "[语音消息]" : m.getContent()));

@@ -21,6 +21,7 @@ public class GroupService {
         this.groupMessageRepository = groupMessageRepository;
     }
 
+    @Transactional
     public GroupChat createGroup(String name, Long ownerId, List<Long> memberIds) {
         GroupChat group = new GroupChat();
         group.setName(name);
@@ -33,6 +34,7 @@ public class GroupService {
         return group;
     }
 
+    @Transactional
     public void addMember(Long groupId, Long userId, Integer role) {
         if (groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)) return;
         GroupMember member = new GroupMember();
@@ -58,21 +60,24 @@ public class GroupService {
     }
 
     public List<GroupChat> getUserGroups(Long userId) {
-        return groupMemberRepository.findByUserId(userId).stream()
-                .map(m -> groupChatRepository.findById(m.getGroupId()).orElse(null))
-                .filter(g -> g != null).toList();
+        List<Long> groupIds = groupMemberRepository.findByUserId(userId).stream()
+                .map(GroupMember::getGroupId).distinct().toList();
+        if (groupIds.isEmpty()) return List.of();
+        return groupChatRepository.findAllById(groupIds);
     }
 
     public GroupChat getGroup(Long groupId) { return groupChatRepository.findById(groupId).orElse(null); }
     public List<GroupMember> getMembers(Long groupId) { return groupMemberRepository.findByGroupId(groupId); }
     public boolean isMember(Long groupId, Long userId) { return groupMemberRepository.existsByGroupIdAndUserId(groupId, userId); }
 
+    @Transactional
     public void updateNotice(Long groupId, String notice) {
         GroupChat group = groupChatRepository.findById(groupId).orElseThrow();
         group.setNotice(notice);
         groupChatRepository.save(group);
     }
 
+    @Transactional
     public GroupMessage saveGroupMessage(Long groupId, Long senderId, String content, Integer msgType, String audioData) {
         GroupMessage msg = new GroupMessage();
         msg.setGroupId(groupId);

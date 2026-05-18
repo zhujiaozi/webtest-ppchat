@@ -71,13 +71,23 @@ public class FriendRestController {
     }
 
     @PutMapping("/groups/{id}")
-    public ApiResponse<Void> renameGroup(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ApiResponse<Void> renameGroup(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        FriendGroup group = friendService.getGroupById(id);
+        if (group == null || !group.getUserId().equals(user.getId())) {
+            throw new IllegalArgumentException("无权操作该分组");
+        }
         friendService.renameGroup(id, body.get("name"));
         return ApiResponse.ok();
     }
 
     @DeleteMapping("/groups/{id}")
-    public ApiResponse<Void> deleteGroup(@PathVariable Long id) {
+    public ApiResponse<Void> deleteGroup(@PathVariable Long id, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        FriendGroup group = friendService.getGroupById(id);
+        if (group == null || !group.getUserId().equals(user.getId())) {
+            throw new IllegalArgumentException("无权操作该分组");
+        }
         friendService.deleteGroup(id);
         return ApiResponse.ok();
     }

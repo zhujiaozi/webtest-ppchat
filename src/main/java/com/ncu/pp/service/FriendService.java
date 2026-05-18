@@ -31,6 +31,11 @@ public class FriendService {
         return friendGroupRepository.findByUserIdOrderBySortOrder(userId);
     }
 
+    public FriendGroup getGroupById(Long groupId) {
+        return friendGroupRepository.findById(groupId).orElse(null);
+    }
+
+    @Transactional
     public FriendGroup createGroup(Long userId, String name) {
         FriendGroup group = new FriendGroup();
         group.setUserId(userId);
@@ -38,13 +43,21 @@ public class FriendService {
         return friendGroupRepository.save(group);
     }
 
+    @Transactional
     public void renameGroup(Long groupId, String newName) {
         FriendGroup group = friendGroupRepository.findById(groupId).orElseThrow();
         group.setName(newName);
         friendGroupRepository.save(group);
     }
 
+    @Transactional
     public void deleteGroup(Long groupId) {
+        // 先将该分组下的所有好友移至未分组
+        List<Friend> friendsInGroup = friendRepository.findByGroupId(groupId);
+        for (Friend friend : friendsInGroup) {
+            friend.setGroupId(null);
+            friendRepository.save(friend);
+        }
         friendGroupRepository.deleteById(groupId);
     }
 
@@ -79,6 +92,7 @@ public class FriendService {
         addFriend(toId, fromId, toGroup.getId());
     }
 
+    @Transactional
     public void rejectRequest(Long requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId).orElseThrow();
         request.setStatus(2);
@@ -92,7 +106,7 @@ public class FriendService {
             Map<Long, String> nameMap = userRepository.findAllById(friendIds).stream()
                     .collect(Collectors.toMap(
                             User::getId,
-                            u -> u.getNickname() != null ? u.getNickname() : u.getUsername()));
+                            u -> u.getDisplayName()));
             friends.forEach(f -> f.setFriendName(nameMap.get(f.getFriendId())));
         }
         return friends;
@@ -102,6 +116,7 @@ public class FriendService {
         return friendRepository.findByUserIdAndGroupId(userId, groupId);
     }
 
+    @Transactional
     public void addFriend(Long userId, Long friendId, Long groupId) {
         Friend friend = new Friend();
         friend.setUserId(userId);
@@ -116,6 +131,7 @@ public class FriendService {
         friendRepository.deleteByUserIdAndFriendId(friendId, userId);
     }
 
+    @Transactional
     public void moveFriend(Long userId, Long friendId, Long newGroupId) {
         Friend friend = friendRepository.findByUserIdAndFriendId(userId, friendId).orElseThrow();
         if (newGroupId != null) {
@@ -129,6 +145,7 @@ public class FriendService {
         friendRepository.save(friend);
     }
 
+    @Transactional
     public void setRemark(Long userId, Long friendId, String remark) {
         Friend friend = friendRepository.findByUserIdAndFriendId(userId, friendId).orElseThrow();
         friend.setRemark(remark);

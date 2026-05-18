@@ -58,7 +58,7 @@ public class ChatController {
 
         User sender = userRepository.findById(message.getSenderId()).orElse(null);
         if (sender != null) {
-            message.setSender(sender.getNickname() != null ? sender.getNickname() : sender.getUsername());
+            message.setSender(sender.getDisplayName());
         }
 
         messagingTemplate.convertAndSendToUser(
@@ -86,7 +86,7 @@ public class ChatController {
 
         User sender = userRepository.findById(message.getSenderId()).orElse(null);
         if (sender != null) {
-            message.setSender(sender.getNickname() != null ? sender.getNickname() : sender.getUsername());
+            message.setSender(sender.getDisplayName());
         }
 
         messagingTemplate.convertAndSend(

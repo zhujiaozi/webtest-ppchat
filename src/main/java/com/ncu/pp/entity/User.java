@@ -45,4 +45,8 @@ public class User {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    public String getDisplayName() {
+        return nickname != null && !nickname.isEmpty() ? nickname : username;
+    }
 }
