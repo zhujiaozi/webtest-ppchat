@@ -44,7 +44,14 @@ public class FriendService {
         friendGroupRepository.save(group);
     }
 
+    @Transactional
     public void deleteGroup(Long groupId) {
+        // 先将该分组下的所有好友移至未分组
+        List<Friend> friendsInGroup = friendRepository.findByGroupId(groupId);
+        for (Friend friend : friendsInGroup) {
+            friend.setGroupId(null);
+            friendRepository.save(friend);
+        }
         friendGroupRepository.deleteById(groupId);
     }
 

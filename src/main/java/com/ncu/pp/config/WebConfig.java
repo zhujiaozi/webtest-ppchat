@@ -1,6 +1,7 @@
 package com.ncu.pp.config;
 
 import com.ncu.pp.interceptor.LoginInterceptor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -12,6 +13,9 @@ import java.nio.file.Paths;
 public class WebConfig implements WebMvcConfigurer {
 
     private final LoginInterceptor loginInterceptor;
+
+    @Value("${app.upload-dir}")
+    private String uploadDir;
 
     public WebConfig(LoginInterceptor loginInterceptor) {
         this.loginInterceptor = loginInterceptor;
@@ -29,8 +33,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String uploadPath = Paths.get(System.getProperty("user.dir"), "uploads").toAbsolutePath().toUri().toString();
+        // 使用配置的 upload-dir，支持绝对路径和相对路径
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath();
+        String uploadUri = uploadPath.toUri().toString();
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(uploadPath);
+                .addResourceLocations(uploadUri);
     }
 }

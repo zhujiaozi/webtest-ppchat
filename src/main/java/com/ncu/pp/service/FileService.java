@@ -108,7 +108,10 @@ public class FileService {
         Path dir = projectRoot.resolve(uploadDir);
         if (!Files.exists(dir)) Files.createDirectories(dir);
 
-        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+        // 清理原始文件名：移除空格和特殊字符，只保留字母、数字、下划线、连字符和点
+        String originalFilename = file.getOriginalFilename();
+        String safeFilename = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9_.\\-]", "_") : "file";
+        String filename = UUID.randomUUID() + "_" + safeFilename;
         Path filepath = dir.resolve(filename);
         file.transferTo(filepath.toFile());
         return "/uploads/" + filename;

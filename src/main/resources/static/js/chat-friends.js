@@ -14,6 +14,12 @@ async function loadFriendsView() {
         reqBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 好友申请`;
         reqBtn.onclick = () => showFriendRequests();
         panel.appendChild(reqBtn);
+        // 创建分组按钮
+        const createGroupBtn = document.createElement('button');
+        createGroupBtn.className = 'panel-btn';
+        createGroupBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新建分组`;
+        createGroupBtn.onclick = () => createGroup();
+        panel.appendChild(createGroupBtn);
         // 搜索结果区
         const searchArea = document.createElement('div');
         searchArea.id = 'friendSearchArea';
@@ -22,10 +28,21 @@ async function loadFriendsView() {
         const renderedFriendIds = new Set();
         for (const g of groups) {
             const groupFriends = friends.filter(f => f.groupId === g.id);
+            const titleRow = document.createElement('div');
+            titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border-light)';
             const title = document.createElement('div');
             title.className = 'im-panel-section-title';
+            title.style.cssText = 'flex:1;font-size:13px;font-weight:600;color:var(--text-secondary)';
             title.textContent = `${g.name} (${groupFriends.length})`;
-            panel.appendChild(title);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-ghost btn-sm';
+            deleteBtn.style.cssText = 'padding:4px 8px;font-size:11px';
+            deleteBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+            deleteBtn.title = '删除分组';
+            deleteBtn.onclick = (e) => { e.stopPropagation(); deleteGroup(g.id, g.name); };
+            titleRow.appendChild(title);
+            titleRow.appendChild(deleteBtn);
+            panel.appendChild(titleRow);
             for (const f of groupFriends) {
                 renderedFriendIds.add(f.friendId);
                 const name = f.remark || f.friendName || ('好友 #' + f.friendId);
@@ -202,6 +219,34 @@ async function sendFriendRequest(toUserId) {
         if (data.success) showToast('好友申请已发送');
         else showToast(data.error || '发送失败', 'error');
     });
+}
+
+async function createGroup() {
+    showInputDialog('新建分组', '输入分组名称...', async (name) => {
+        if (!name || !name.trim()) {
+            showToast('分组名称不能为空', 'error');
+            return;
+        }
+        const res = await fetch('/api/friends/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name.trim() }) });
+        const data = await res.json();
+        if (data.id) {
+            showToast('分组已创建');
+            loadFriendsView();
+        } else {
+            showToast('创建失败', 'error');
+        }
+    });
+}
+
+async function deleteGroup(groupId, groupName) {
+    if (!confirm(`确定删除分组"${groupName}"？该分组下的好友将被移至未分组。`)) return;
+    try {
+        await fetch(`/api/friends/groups/${groupId}`, { method: 'DELETE' });
+        showToast('分组已删除');
+        loadFriendsView();
+    } catch (e) {
+        showToast('删除失败', 'error');
+    }
 }
 
 // ============================================================
