@@ -135,7 +135,7 @@ async function showCreateGroup() {
                 ${friends.length === 0 ? '<p style="color:var(--text-tertiary);font-size:13px">暂无好友</p>' :
                     friends.map(f => `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;cursor:pointer">
                         <input type="checkbox" name="newGroupMembers" value="${f.friendId}" style="accent-color:var(--accent)">
-                        ${escapeHtml(f.remark || ('好友 #' + f.friendId))}</label>`).join('')}
+                        ${escapeHtml(f.remark || f.friendName || ('好友 #' + f.friendId))}</label>`).join('')}
             </div>
             <button class="btn btn-primary" onclick="doCreateGroup()">创建</button>
         </div></div>`;

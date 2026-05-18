@@ -15,7 +15,7 @@
             </div>
             <div th:each="f : ${friends}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-light)">
               <input type="checkbox" name="memberIds" th:value="${f.friendId}" style="width:16px;height:16px;accent-color:var(--accent)">
-              <span th:text="${f.remark ?: '好友 #' + f.friendId}" style="font-size:14px"></span>
+              <span th:text="${f.remark ?: f.friendName ?: '好友 #' + f.friendId}" style="font-size:14px"></span>
             </div>
           </div>
           <div style="display:flex;gap:12px;margin-top:24px">

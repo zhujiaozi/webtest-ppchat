@@ -19,6 +19,7 @@ async function loadFriendsView() {
         searchArea.id = 'friendSearchArea';
         panel.appendChild(searchArea);
         // 按分组显示好友
+        const renderedFriendIds = new Set();
         for (const g of groups) {
             const groupFriends = friends.filter(f => f.groupId === g.id);
             const title = document.createElement('div');
@@ -26,6 +27,24 @@ async function loadFriendsView() {
             title.textContent = `${g.name} (${groupFriends.length})`;
             panel.appendChild(title);
             for (const f of groupFriends) {
+                renderedFriendIds.add(f.friendId);
+                const name = f.remark || f.friendName || ('好友 #' + f.friendId);
+                const div = document.createElement('div');
+                div.className = 'friend-item';
+                div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(name)}">${initial(name)}</div>
+                    <div class="f-name">${escapeHtml(name)}</div>`;
+                div.onclick = () => showFriendDetail(f);
+                panel.appendChild(div);
+            }
+        }
+        // 未分组好友
+        const ungrouped = friends.filter(f => !renderedFriendIds.has(f.friendId));
+        if (ungrouped.length > 0) {
+            const title = document.createElement('div');
+            title.className = 'im-panel-section-title';
+            title.textContent = `未分组 (${ungrouped.length})`;
+            panel.appendChild(title);
+            for (const f of ungrouped) {
                 const name = f.remark || f.friendName || ('好友 #' + f.friendId);
                 const div = document.createElement('div');
                 div.className = 'friend-item';
@@ -125,11 +144,32 @@ async function setFriendRemark(friendId) {
 }
 
 async function moveFriend(friendId) {
-    showInputDialog('移动分组', '输入目标分组ID...', async (groupId) => {
-        await fetch(`/api/friends/${friendId}/move`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groupId: parseInt(groupId) }) });
-        showToast('已移动');
-        loadFriendsView();
+    const groups = friendsData?.groups || [];
+    let bodyHtml = '<p style="margin-bottom:12px;font-size:13px;color:var(--text-secondary)">选择目标分组：</p>';
+    if (groups.length === 0) {
+        bodyHtml += '<p style="color:var(--text-tertiary);font-size:13px">暂无分组，请先在好友管理页面创建分组</p>';
+    } else {
+        for (const g of groups) {
+            bodyHtml += `<div style="padding:10px 12px;margin-bottom:4px;border-radius:8px;cursor:pointer;transition:background 0.15s;font-size:13px"
+                onmouseover="this.style.background='var(--bg-hover)'"
+                onmouseout="this.style.background='transparent'"
+                onclick="confirmMoveFriend(${friendId}, ${g.id})">${escapeHtml(g.name)}</div>`;
+        }
+    }
+    showModal('移动分组', bodyHtml,
+        `<button class="btn btn-ghost" onclick="confirmMoveFriend(${friendId}, null)">移至未分组</button>
+         <button class="btn btn-ghost" onclick="closeModal()">取消</button>`);
+}
+
+async function confirmMoveFriend(friendId, groupId) {
+    closeModal();
+    await fetch(`/api/friends/${friendId}/move`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId })
     });
+    showToast('已移动');
+    loadFriendsView();
 }
 
 async function searchUsersForFriend(keyword) {

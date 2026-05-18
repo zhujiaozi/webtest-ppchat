@@ -118,6 +118,13 @@ public class FriendService {
 
     public void moveFriend(Long userId, Long friendId, Long newGroupId) {
         Friend friend = friendRepository.findByUserIdAndFriendId(userId, friendId).orElseThrow();
+        if (newGroupId != null) {
+            FriendGroup group = friendGroupRepository.findById(newGroupId).orElseThrow(
+                    () -> new IllegalArgumentException("分组不存在"));
+            if (!group.getUserId().equals(userId)) {
+                throw new IllegalArgumentException("无权操作该分组");
+            }
+        }
         friend.setGroupId(newGroupId);
         friendRepository.save(friend);
     }

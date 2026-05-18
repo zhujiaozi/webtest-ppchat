@@ -47,27 +47,50 @@
           </div>
         </div>
 
-        <!-- 好友列表 -->
+        <!-- 好友列表（按分组显示） -->
         <div class="card" style="padding:20px">
           <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">我的好友</h3>
           <div th:if="${#lists.isEmpty(friends)}" style="color:var(--text-tertiary);font-size:13px;padding:20px 0;text-align:center">
             还没有好友，搜索用户名添加吧
           </div>
           <div class="friend-list">
-            <div th:each="f : ${friends}" class="friend-item">
-              <div class="avatar avatar-placeholder" th:text="${#strings.substring(f.remark ?: 'U', 0, 1)}"></div>
-              <div class="friend-info">
-                <div class="friend-name" th:text="${f.remark ?: '好友 #' + f.friendId}"></div>
-                <div class="friend-remark" th:text="'分组ID: ' + ${f.groupId}"></div>
+            <th:block th:each="g : ${groups}">
+              <div style="font-size:12px;font-weight:600;color:var(--text-tertiary);padding:10px 0 6px;text-transform:uppercase;letter-spacing:0.5px"
+                   th:text="${g.name} + ' (' + ${#lists.size(friends.?[groupId == g.id])} + ')'"></div>
+              <div th:each="f : ${friends.?[groupId == g.id]}" class="friend-item">
+                <div class="avatar avatar-placeholder" th:text="${#strings.substring(f.remark ?: f.friendName ?: 'U', 0, 1)}"></div>
+                <div class="friend-info">
+                  <div class="friend-name" th:text="${f.remark ?: f.friendName ?: '好友 #' + f.friendId}"></div>
+                  <div class="friend-remark" th:text="${g.name}"></div>
+                </div>
+                <div class="friend-actions">
+                  <a th:href="@{/chat}" class="btn btn-sm btn-primary">聊天</a>
+                  <form th:action="@{/friends/delete/{id}(id=${f.friendId})}" method="post" style="display:inline"
+                        onsubmit="return confirm('确定删除该好友？')">
+                    <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                  </form>
+                </div>
               </div>
-              <div class="friend-actions">
-                <a th:href="@{/chat}" class="btn btn-sm btn-primary">聊天</a>
-                <form th:action="@{/friends/delete/{id}(id=${f.friendId})}" method="post" style="display:inline"
-                      onsubmit="return confirm('确定删除该好友？')">
-                  <button type="submit" class="btn btn-sm btn-danger">删除</button>
-                </form>
+            </th:block>
+            <!-- 未分组好友 -->
+            <th:block th:if="${not #lists.isEmpty(friends.?[groupId == null])}">
+              <div style="font-size:12px;font-weight:600;color:var(--text-tertiary);padding:10px 0 6px;text-transform:uppercase;letter-spacing:0.5px"
+                   th:text="'未分组 (' + ${#lists.size(friends.?[groupId == null])} + ')'"></div>
+              <div th:each="f : ${friends.?[groupId == null]}" class="friend-item">
+                <div class="avatar avatar-placeholder" th:text="${#strings.substring(f.remark ?: f.friendName ?: 'U', 0, 1)}"></div>
+                <div class="friend-info">
+                  <div class="friend-name" th:text="${f.remark ?: f.friendName ?: '好友 #' + f.friendId}"></div>
+                  <div class="friend-remark" style="color:var(--text-tertiary);font-size:12px">未分组</div>
+                </div>
+                <div class="friend-actions">
+                  <a th:href="@{/chat}" class="btn btn-sm btn-primary">聊天</a>
+                  <form th:action="@{/friends/delete/{id}(id=${f.friendId})}" method="post" style="display:inline"
+                        onsubmit="return confirm('确定删除该好友？')">
+                    <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                  </form>
+                </div>
               </div>
-            </div>
+            </th:block>
           </div>
         </div>
 
