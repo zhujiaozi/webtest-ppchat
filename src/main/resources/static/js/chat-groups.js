@@ -10,7 +10,7 @@ async function loadGroupsView() {
     panel.appendChild(createBtn);
     try {
         const res = await fetch('/api/groups');
-        const groups = await res.json();
+        const groups = await parseApiResponse(res);
         groupsData = groups;
         for (const g of groups) {
             const div = document.createElement('div');
@@ -32,7 +32,7 @@ async function showGroupDetail(groupId) {
         <div class="im-detail"><div class="im-detail-card"><p style="color:var(--text-tertiary)">加载中...</p></div></div>`;
     try {
         const res = await fetch(`/api/groups/${groupId}`);
-        const data = await res.json();
+        const data = await parseApiResponse(res);
         const group = data.group;
         const members = data.members || [];
         const isOwner = data.isOwner;
@@ -124,7 +124,7 @@ async function showCreateGroup() {
     let friends = [];
     try {
         const res = await fetch('/api/friends');
-        const data = await res.json();
+        const data = await parseApiResponse(res);
         friends = data.friends || [];
     } catch (e) {}
     content.innerHTML = `<div class="im-chat-header"><span class="ch-title">创建群聊</span></div>
@@ -146,7 +146,7 @@ async function doCreateGroup() {
     if (!name) { showToast('请输入群名称', 'error'); return; }
     const memberIds = [...document.querySelectorAll('input[name=newGroupMembers]:checked')].map(cb => parseInt(cb.value));
     const res = await fetch('/api/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, memberIds }) });
-    const group = await res.json();
+    const group = await parseApiResponse(res);
     showToast('群聊创建成功');
     switchView('groups');
 }

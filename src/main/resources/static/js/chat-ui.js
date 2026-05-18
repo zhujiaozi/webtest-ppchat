@@ -75,7 +75,7 @@ async function loadDrawerContent() {
         body.innerHTML = '<p style="color:var(--text-tertiary);text-align:center">加载中...</p>';
         try {
             const res = await fetch(`/api/groups/${currentChat.id}`);
-            const data = await res.json();
+            const data = await parseApiResponse(res);
             const group = data.group;
             const members = data.members || [];
             body.innerHTML = `

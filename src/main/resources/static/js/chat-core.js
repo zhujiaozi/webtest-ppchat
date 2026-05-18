@@ -26,6 +26,16 @@ window.fetch = async function(...args) {
     return res;
 };
 
+async function parseApiResponse(res) {
+    const payload = await res.json();
+    if (payload && typeof payload === 'object' &&
+        'code' in payload && 'message' in payload && 'data' in payload) {
+        if (payload.code >= 400) throw new Error(payload.message || '请求失败');
+        return payload.data;
+    }
+    return payload;
+}
+
 let stompClient = null;
 let currentView = 'chat';      // 当前左侧选中的视图
 let currentChat = null;         // 当前打开的聊天 { id, name, isGroup }

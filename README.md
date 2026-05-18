@@ -456,3 +456,27 @@ node --check      -> 6 个聊天模块语法检查通过
 - 课程：Web 程序设计 / Java EE
 - 学校：南昌大学
 - 技术路线：Spring Boot + Thymeleaf + MySQL + WebSocket
+
+---
+
+## 16. 最近改动
+
+本次维护补充了两类工程化改进：
+
+1. **上传目录治理**
+   - 将 `uploads/` 加入 `.gitignore`
+   - 通过 `.gitkeep` 保留目录结构，避免运行时头像、语音文件进入 Git 仓库
+
+2. **REST 接口规范化**
+   - 新增统一响应结构 `ApiResponse<T>`
+   - 新增 REST 全局异常处理器
+   - 将聊天、好友、群组、个人中心接口统一为固定返回格式
+   - 前端聊天模块同步适配统一响应结构
+   - 补充统一响应与控制器相关单元测试
+
+本次修改后：
+
+```text
+mvn test      -> Tests run: 55, Failures: 0, Errors: 0, Skipped: 0
+node --check  -> 聊天相关脚本语法检查通过
+```

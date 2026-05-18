@@ -5,7 +5,7 @@ async function loadProfileView() {
     const content = document.getElementById('contentArea');
     try {
         const res = await fetch('/api/profile');
-        const user = await res.json();
+        const user = await parseApiResponse(res);
         content.innerHTML = `
             <div class="im-chat-header"><span class="ch-title">个人中心</span></div>
             <div class="im-detail">
@@ -59,9 +59,9 @@ async function uploadAvatar() {
     const fd = new FormData();
     fd.append('file', file);
     const res = await fetch('/api/profile/avatar', { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) { showToast('头像已更新'); loadProfileView(); }
-    else showToast('上传失败', 'error');
+    await parseApiResponse(res);
+    showToast('头像已更新');
+    loadProfileView();
 }
 
 async function updatePassword() {
@@ -69,8 +69,11 @@ async function updatePassword() {
     const newPassword = document.getElementById('newPwd').value;
     if (!oldPassword || !newPassword) { showToast('请填写完整', 'error'); return; }
     const res = await fetch('/api/profile/password', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oldPassword, newPassword }) });
-    const data = await res.json();
-    if (data.success) showToast('密码已修改');
-    else showToast(data.error || '修改失败', 'error');
+    try {
+        await parseApiResponse(res);
+        showToast('密码已修改');
+    } catch (e) {
+        showToast(e.message || '修改失败', 'error');
+    }
 }
 
