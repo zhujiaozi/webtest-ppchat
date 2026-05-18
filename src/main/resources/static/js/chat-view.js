@@ -5,7 +5,7 @@ async function loadChatView() {
     // 加载好友列表作为会话
     try {
         const res = await fetch('/api/friends');
-        const data = await res.json();
+        const data = await parseApiResponse(res);
         friendsData = data;
         const friends = data.friends || [];
         for (const f of friends) {
@@ -14,7 +14,7 @@ async function loadChatView() {
             let unreadCount = 0;
             try {
                 const unreadRes = await fetch(`/api/chat/private/${f.friendId}/unread`);
-                unreadCount = await unreadRes.json();
+                unreadCount = await parseApiResponse(unreadRes);
             } catch (e) {}
             const div = document.createElement('div');
             div.className = 'conv-item' + (currentChat && !currentChat.isGroup && currentChat.id == f.friendId ? ' active' : '');
@@ -29,7 +29,7 @@ async function loadChatView() {
     // 加载群聊
     try {
         const res = await fetch('/api/groups');
-        const groups = await res.json();
+        const groups = await parseApiResponse(res);
         groupsData = groups;
         for (const g of groups) {
             const div = document.createElement('div');
@@ -121,7 +121,7 @@ async function _openChatImpl(id, name, isGroup) {
     if (!isGroup) {
         try {
             const res = await fetch(`/api/chat/private/${id}`);
-            const msgs = await res.json();
+            const msgs = await parseApiResponse(res);
             console.log(`[openChat] Loaded ${msgs.length} private messages for user ${id}`);
             msgs.forEach(m => appendChatMessage({ senderId: m.senderId, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
             fetch(`/api/chat/private/${id}/read`, { method: 'POST' });
@@ -129,7 +129,7 @@ async function _openChatImpl(id, name, isGroup) {
     } else {
         try {
             const res = await fetch(`/api/groups/${id}/messages`);
-            const msgs = await res.json();
+            const msgs = await parseApiResponse(res);
             console.log(`[openChat] Loaded ${msgs.length} group messages for group ${id}`);
             msgs.forEach(m => appendChatMessage({ senderId: m.senderId, sender: m.sender, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
         } catch (e) { console.error('[openChat] Failed to load group messages:', e); }
@@ -182,7 +182,7 @@ function searchChatHistory() {
         const url = currentChat.isGroup
             ? `/api/groups/${currentChat.id}/messages/search?keyword=${encodeURIComponent(keyword)}`
             : `/api/chat/private/${currentChat.id}/search?keyword=${encodeURIComponent(keyword)}`;
-        fetch(url).then(r => r.json()).then(msgs => {
+        fetch(url).then(parseApiResponse).then(msgs => {
             const box = document.getElementById('imMessages');
             box.innerHTML = '';
             if (msgs.length === 0) {
@@ -294,7 +294,7 @@ async function searchUsersForChat(keyword) {
     panel.innerHTML = '';
     try {
         const res = await fetch(`/api/friends/search?keyword=${encodeURIComponent(keyword)}`);
-        const users = await res.json();
+        const users = await parseApiResponse(res);
         users.forEach(u => {
             const name = u.nickname || u.username;
             const div = document.createElement('div');

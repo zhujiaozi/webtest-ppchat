@@ -4,7 +4,7 @@ async function loadFriendsView() {
     panel.innerHTML = '';
     try {
         const res = await fetch('/api/friends');
-        const data = await res.json();
+        const data = await parseApiResponse(res);
         friendsData = data;
         const groups = data.groups || [];
         const friends = data.friends || [];
@@ -69,7 +69,7 @@ async function showFriendRequests() {
         <div class="im-detail"><div class="im-detail-card" id="requestList"><p style="color:var(--text-tertiary)">加载中...</p></div></div>`;
     try {
         const res = await fetch('/api/friends/requests');
-        const requests = await res.json();
+        const requests = await parseApiResponse(res);
         const list = document.getElementById('requestList');
         if (requests.length === 0) { list.innerHTML = '<p style="color:var(--text-tertiary);text-align:center">暂无待处理的好友申请</p>'; return; }
         list.innerHTML = '';
@@ -78,7 +78,7 @@ async function showFriendRequests() {
             let reqName = '用户 #' + r.fromUserId;
             try {
                 const userRes = await fetch(`/api/profile/${r.fromUserId}`);
-                const userData = await userRes.json();
+                const userData = await parseApiResponse(userRes);
                 reqName = userData.nickname || userData.username;
             } catch (e) {}
             const div = document.createElement('div');
@@ -138,7 +138,7 @@ async function searchUsersForFriend(keyword) {
     area.innerHTML = '';
     try {
         const res = await fetch(`/api/friends/search?keyword=${encodeURIComponent(keyword)}`);
-        const users = await res.json();
+        const users = await parseApiResponse(res);
         if (users.length === 0) { area.innerHTML = '<div style="padding:12px;color:var(--text-tertiary);font-size:13px">未找到用户</div>'; return; }
         for (const u of users) {
             const name = u.nickname || u.username;
@@ -158,7 +158,7 @@ async function searchUsersForFriend(keyword) {
 async function sendFriendRequest(toUserId) {
     showInputDialog('发送好友申请', '验证消息（可留空）...', async (message) => {
         const res = await fetch('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toUserId, message: message || '' }) });
-        const data = await res.json();
+        const data = await parseApiResponse(res);
         if (data.success) showToast('好友申请已发送');
         else showToast(data.error || '发送失败', 'error');
     });
