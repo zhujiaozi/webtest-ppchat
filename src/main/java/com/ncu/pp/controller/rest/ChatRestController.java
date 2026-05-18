@@ -1,5 +1,6 @@
 package com.ncu.pp.controller.rest;
 
+import com.ncu.pp.dto.ApiResponse;
 import com.ncu.pp.entity.PrivateMessage;
 import com.ncu.pp.entity.User;
 import com.ncu.pp.service.ChatService;
@@ -8,13 +9,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/chat")
 public class ChatRestController {
-
     private final ChatService chatService;
 
     public ChatRestController(ChatService chatService) {
@@ -22,28 +23,30 @@ public class ChatRestController {
     }
 
     @GetMapping("/private/{friendId}")
-    public List<PrivateMessage> getConversation(@PathVariable Long friendId, HttpSession session) {
+    public ApiResponse<List<PrivateMessage>> getConversation(@PathVariable Long friendId, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        return chatService.getConversation(user.getId(), friendId);
+        return ApiResponse.ok(chatService.getConversation(user.getId(), friendId));
     }
 
     @GetMapping("/private/{friendId}/search")
-    public List<PrivateMessage> search(@PathVariable Long friendId,
-                                       @RequestParam String keyword, HttpSession session) {
+    public ApiResponse<List<PrivateMessage>> search(@PathVariable Long friendId,
+                                                    @RequestParam String keyword,
+                                                    HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        return chatService.searchConversation(user.getId(), friendId, keyword);
+        return ApiResponse.ok(chatService.searchConversation(user.getId(), friendId, keyword));
     }
 
     @PostMapping("/private/{friendId}/read")
-    public void markAsRead(@PathVariable Long friendId, HttpSession session) {
+    public ApiResponse<Void> markAsRead(@PathVariable Long friendId, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         chatService.markAsRead(friendId, user.getId());
+        return ApiResponse.ok();
     }
 
     @GetMapping("/private/{friendId}/unread")
-    public long getUnreadCount(@PathVariable Long friendId, HttpSession session) {
+    public ApiResponse<Long> getUnreadCount(@PathVariable Long friendId, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        return chatService.getUnreadCount(friendId, user.getId());
+        return ApiResponse.ok(chatService.getUnreadCount(friendId, user.getId()));
     }
 
     @GetMapping("/private/{friendId}/export")

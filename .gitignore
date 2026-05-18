@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Runtime uploads ###
+uploads/*
+!uploads/.gitkeep
+!uploads/audio/
+uploads/audio/*
+!uploads/audio/.gitkeep

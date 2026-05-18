@@ -1,78 +1,65 @@
 package com.ncu.pp.controller.rest;
 
+import com.ncu.pp.dto.ApiResponse;
 import com.ncu.pp.entity.User;
 import com.ncu.pp.service.FileService;
 import com.ncu.pp.service.UserService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/profile")
 public class ProfileRestController {
-
     private final UserService userService;
     private final FileService fileService;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public ProfileRestController(UserService userService, FileService fileService) {
         this.userService = userService;
         this.fileService = fileService;
     }
 
-    /** 获取当前用户信息 */
     @GetMapping
-    public User getProfile(HttpSession session) {
-        return (User) session.getAttribute("currentUser");
+    public ApiResponse<User> getProfile(HttpSession session) {
+        return ApiResponse.ok((User) session.getAttribute("currentUser"));
     }
 
-    /** 获取指定用户信息（用于好友申请详情页显示昵称） */
     @GetMapping("/{userId}")
-    public User getUserById(@PathVariable Long userId) {
-        return userService.getById(userId);
+    public ApiResponse<User> getUserById(@PathVariable Long userId) {
+        return ApiResponse.ok(userService.getById(userId));
     }
 
-    /** 更新昵称 */
     @PutMapping("/nickname")
-    public Map<String, Object> updateNickname(@RequestBody Map<String, String> body, HttpSession session) {
+    public ApiResponse<User> updateNickname(@RequestBody Map<String, String> body, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         user.setNickname(body.get("nickname"));
         userService.updateProfile(user);
         session.setAttribute("currentUser", user);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("user", user);
-        return result;
+        return ApiResponse.ok(user);
     }
 
-    /** 更新头像 */
     @PostMapping("/avatar")
-    public Map<String, Object> updateAvatar(@RequestParam MultipartFile file, HttpSession session) throws IOException {
+    public ApiResponse<String> updateAvatar(@RequestParam MultipartFile file, HttpSession session) throws IOException {
         User user = (User) session.getAttribute("currentUser");
         String avatarUrl = fileService.upload(file);
         user.setAvatar(avatarUrl);
         userService.updateProfile(user);
         session.setAttribute("currentUser", user);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("avatar", avatarUrl);
-        return result;
+        return ApiResponse.ok(avatarUrl);
     }
 
-    /** 修改密码 */
     @PutMapping("/password")
-    public Map<String, Object> updatePassword(@RequestBody Map<String, String> body, HttpSession session) {
+    public ApiResponse<Void> updatePassword(@RequestBody Map<String, String> body, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        Map<String, Object> result = new HashMap<>();
-        if (!new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
-                .matches(body.get("oldPassword"), user.getPassword())) {
-            result.put("success", false);
-            result.put("error", "原密码错误");
-            return result;
+        if (!passwordEncoder.matches(body.get("oldPassword"), user.getPassword())) {
+            throw new IllegalArgumentException("原密码错误");
         }
         userService.updatePassword(user, body.get("newPassword"));
-        result.put("success", true);
-        return result;
+        return ApiResponse.ok();
     }
 }
