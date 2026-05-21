@@ -138,8 +138,12 @@ async function loadDrawerContent() {
 }
 
 function exportChat() {
-    if (!currentChat || currentChat.isGroup) return;
-    window.open(`/api/chat/private/${currentChat.id}/export`);
+    if (!currentChat) return;
+    if (currentChat.isGroup) {
+        window.open(`/api/groups/${currentChat.id}/export`);
+    } else {
+        window.open(`/api/chat/private/${currentChat.id}/export`);
+    }
 }
 
 // ========== 自定义模态框 ==========

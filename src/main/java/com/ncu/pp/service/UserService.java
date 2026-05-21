@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -48,6 +49,10 @@ public class UserService {
         return userRepository.findById(id).orElse(null);
     }
 
+    public List<User> getByIds(List<Long> ids) {
+        return userRepository.findAllById(ids);
+    }
+
     public User getByUsername(String username) {
         return userRepository.findByUsername(username);
     }
@@ -63,5 +68,14 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+    }
+
+    public String resetPassword(String username, String newPassword) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) return "用户不存在";
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+        return null;
     }
 }

@@ -12,13 +12,16 @@ public class GroupService {
     private final GroupChatRepository groupChatRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupMessageRepository groupMessageRepository;
+    private final GroupInvitationRepository groupInvitationRepository;
 
     public GroupService(GroupChatRepository groupChatRepository,
                         GroupMemberRepository groupMemberRepository,
-                        GroupMessageRepository groupMessageRepository) {
+                        GroupMessageRepository groupMessageRepository,
+                        GroupInvitationRepository groupInvitationRepository) {
         this.groupChatRepository = groupChatRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.groupMessageRepository = groupMessageRepository;
+        this.groupInvitationRepository = groupInvitationRepository;
     }
 
     @Transactional
@@ -90,4 +93,36 @@ public class GroupService {
 
     public List<GroupMessage> getGroupMessages(Long groupId) { return groupMessageRepository.findByGroupIdOrderByCreatedAtAsc(groupId); }
     public List<GroupMessage> searchGroupMessages(Long groupId, String keyword) { return groupMessageRepository.findByGroupIdAndContentContainingOrderByCreatedAtAsc(groupId, keyword); }
+
+    @Transactional
+    public GroupInvitation sendInvitation(Long groupId, Long fromUserId, Long toUserId) {
+        if (isMember(groupId, toUserId)) return null;
+        if (groupInvitationRepository.existsByGroupIdAndToUserIdAndStatus(groupId, toUserId, 0)) return null;
+        GroupInvitation inv = new GroupInvitation();
+        inv.setGroupId(groupId);
+        inv.setFromUserId(fromUserId);
+        inv.setToUserId(toUserId);
+        return groupInvitationRepository.save(inv);
+    }
+
+    @Transactional
+    public void acceptInvitation(Long invitationId, Long userId) {
+        GroupInvitation inv = groupInvitationRepository.findById(invitationId).orElseThrow();
+        if (!inv.getToUserId().equals(userId)) throw new IllegalArgumentException("无权操作");
+        inv.setStatus(1);
+        groupInvitationRepository.save(inv);
+        addMember(inv.getGroupId(), userId, 0);
+    }
+
+    @Transactional
+    public void rejectInvitation(Long invitationId, Long userId) {
+        GroupInvitation inv = groupInvitationRepository.findById(invitationId).orElseThrow();
+        if (!inv.getToUserId().equals(userId)) throw new IllegalArgumentException("无权操作");
+        inv.setStatus(2);
+        groupInvitationRepository.save(inv);
+    }
+
+    public List<GroupInvitation> getPendingInvitations(Long userId) {
+        return groupInvitationRepository.findByToUserIdAndStatus(userId, 0);
+    }
 }

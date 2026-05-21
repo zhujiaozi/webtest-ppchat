@@ -1,5 +1,6 @@
 /** PP Chat — Groups */
-async function loadGroupsView() {
+async function loadGroupsView(gen) {
+    const isStale = () => gen !== viewGeneration;
     const panel = document.getElementById('panelList');
     panel.innerHTML = '';
     // 创建群按钮
@@ -10,6 +11,7 @@ async function loadGroupsView() {
     panel.appendChild(createBtn);
     try {
         const res = await fetch('/api/groups');
+        if (isStale()) return;
         const groups = await parseApiResponse(res);
         groupsData = groups;
         for (const g of groups) {
@@ -58,8 +60,9 @@ async function showGroupDetail(groupId) {
                     </div>`).join('')}
                 </div>
             </div>
-            <div style="display:flex;gap:8px;padding-top:16px;border-top:1px solid var(--border-light)">
+            <div style="display:flex;gap:8px;padding-top:16px;border-top:1px solid var(--border-light);flex-wrap:wrap">
                 <button class="btn btn-primary" onclick="openChat(${group.id},'${escapeHtml(group.name)}',true);switchView('chat')">进入聊天</button>
+                <button class="btn btn-ghost" onclick="exportGroupChat(${group.id})">导出聊天记录</button>
                 <button class="btn btn-ghost" onclick="leaveGroup(${group.id})">退出群聊</button>
                 ${isOwner ? `<button class="btn btn-danger" onclick="dissolveGroup(${group.id})">解散群聊</button>` : ''}
             </div>`;
@@ -97,7 +100,7 @@ async function confirmLeaveGroup(groupId) {
     closeModal();
     await fetch(`/api/groups/${groupId}/leave`, { method: 'POST' });
     showToast('已退出');
-    loadGroupsView();
+    loadGroupsView(viewGeneration);
     document.getElementById('contentArea').innerHTML = '<div class="im-empty"><div class="im-empty-icon">🏠</div><p>选择一个群查看详情</p></div>';
 }
 
@@ -112,15 +115,18 @@ async function confirmDissolveGroup(groupId) {
     closeModal();
     await fetch(`/api/groups/${groupId}`, { method: 'DELETE' });
     showToast('已解散');
-    loadGroupsView();
+    loadGroupsView(viewGeneration);
     document.getElementById('contentArea').innerHTML = `<div class="im-empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="48" height="48" style="opacity:0.25;margin-bottom:12px"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
         <p>选择一个群查看详情</p></div>`;
 }
 
+function exportGroupChat(groupId) {
+    window.open(`/api/groups/${groupId}/export`);
+}
+
 async function showCreateGroup() {
     const content = document.getElementById('contentArea');
-    // 加载好友列表供选择
     let friends = [];
     try {
         const res = await fetch('/api/friends');
@@ -150,8 +156,3 @@ async function doCreateGroup() {
     showToast('群聊创建成功');
     switchView('groups');
 }
-
-// ============================================================
-//  个人中心视图
-// ============================================================
-

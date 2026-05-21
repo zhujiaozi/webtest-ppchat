@@ -159,6 +159,10 @@ public class FriendService {
         return userRepository.searchByKeyword(keyword, excludeUserId);
     }
 
+    public List<User> searchFriends(String keyword, Long userId) {
+        return userRepository.searchFriendsByKeyword(keyword, userId);
+    }
+
     private FriendGroup getDefaultGroup(Long userId) {
         List<FriendGroup> groups = friendGroupRepository.findByUserIdOrderBySortOrder(userId);
         if (groups.isEmpty()) {

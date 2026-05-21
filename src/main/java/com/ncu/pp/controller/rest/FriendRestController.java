@@ -3,9 +3,11 @@ package com.ncu.pp.controller.rest;
 import com.ncu.pp.dto.ApiResponse;
 import com.ncu.pp.entity.*;
 import com.ncu.pp.service.FriendService;
+import com.ncu.pp.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,9 +16,11 @@ import java.util.Map;
 @RequestMapping("/api/friends")
 public class FriendRestController {
     private final FriendService friendService;
+    private final UserService userService;
 
-    public FriendRestController(FriendService friendService) {
+    public FriendRestController(FriendService friendService, UserService userService) {
         this.friendService = friendService;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -34,6 +38,12 @@ public class FriendRestController {
         return ApiResponse.ok(friendService.searchUsers(keyword, user.getId()));
     }
 
+    @GetMapping("/search-friends")
+    public ApiResponse<List<User>> searchFriends(@RequestParam String keyword, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        return ApiResponse.ok(friendService.searchFriends(keyword, user.getId()));
+    }
+
     @PostMapping("/request")
     public ApiResponse<Map<String, Object>> sendRequest(@RequestBody Map<String, Object> body, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
@@ -47,9 +57,23 @@ public class FriendRestController {
     }
 
     @GetMapping("/requests")
-    public ApiResponse<List<FriendRequest>> getRequests(HttpSession session) {
+    public ApiResponse<List<Map<String, Object>>> getRequests(HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
-        return ApiResponse.ok(friendService.getPendingRequests(user.getId()));
+        List<FriendRequest> requests = friendService.getPendingRequests(user.getId());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (FriendRequest r : requests) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", r.getId());
+            item.put("fromUserId", r.getFromUserId());
+            item.put("toUserId", r.getToUserId());
+            item.put("message", r.getMessage());
+            item.put("status", r.getStatus());
+            item.put("createdAt", r.getCreatedAt());
+            User sender = userService.getById(r.getFromUserId());
+            item.put("fromUserName", sender != null ? sender.getDisplayName() : "用户" + r.getFromUserId());
+            result.add(item);
+        }
+        return ApiResponse.ok(result);
     }
 
     @PostMapping("/requests/{id}/accept")

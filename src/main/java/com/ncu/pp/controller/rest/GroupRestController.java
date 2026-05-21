@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -86,6 +87,54 @@ public class GroupRestController {
         return ApiResponse.ok();
     }
 
+    @PostMapping("/{id}/invite")
+    public ApiResponse<Void> inviteMember(@PathVariable Long id, @RequestBody Map<String, Long> body, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        Long toUserId = body.get("userId");
+        GroupChat group = groupService.getGroup(id);
+        if (group == null || !group.getOwnerId().equals(user.getId())) {
+            throw new IllegalArgumentException("只有群主可以邀请成员");
+        }
+        groupService.sendInvitation(id, user.getId(), toUserId);
+        return ApiResponse.ok();
+    }
+
+    @GetMapping("/invitations")
+    public ApiResponse<List<Map<String, Object>>> getInvitations(HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        List<GroupInvitation> invitations = groupService.getPendingInvitations(user.getId());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (GroupInvitation inv : invitations) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", inv.getId());
+            item.put("groupId", inv.getGroupId());
+            item.put("fromUserId", inv.getFromUserId());
+            item.put("toUserId", inv.getToUserId());
+            item.put("status", inv.getStatus());
+            item.put("createdAt", inv.getCreatedAt());
+            User sender = userService.getById(inv.getFromUserId());
+            item.put("fromUserName", sender != null ? sender.getDisplayName() : "用户");
+            GroupChat group = groupService.getGroup(inv.getGroupId());
+            item.put("groupName", group != null ? group.getName() : "群聊");
+            result.add(item);
+        }
+        return ApiResponse.ok(result);
+    }
+
+    @PostMapping("/invitations/{id}/accept")
+    public ApiResponse<Void> acceptInvitation(@PathVariable Long id, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        groupService.acceptInvitation(id, user.getId());
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/invitations/{id}/reject")
+    public ApiResponse<Void> rejectInvitation(@PathVariable Long id, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        groupService.rejectInvitation(id, user.getId());
+        return ApiResponse.ok();
+    }
+
     @DeleteMapping("/{id}")
     public ApiResponse<Void> dissolveGroup(@PathVariable Long id, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
@@ -103,7 +152,33 @@ public class GroupRestController {
         return ApiResponse.ok(enrichMessages(groupService.searchGroupMessages(id, keyword)));
     }
 
+    @GetMapping("/{id}/export")
+    public org.springframework.http.ResponseEntity<byte[]> exportGroupChat(@PathVariable Long id) {
+        List<GroupMessage> messages = groupService.getGroupMessages(id);
+        List<Long> senderIds = messages.stream().map(GroupMessage::getSenderId).distinct().toList();
+        Map<Long, String> senderNameMap = senderIds.isEmpty() ? Map.of() :
+                userService.getByIds(senderIds).stream()
+                        .collect(Collectors.toMap(User::getId, User::getDisplayName));
+        StringBuilder sb = new StringBuilder();
+        for (GroupMessage m : messages) {
+            String name = senderNameMap.getOrDefault(m.getSenderId(), "用户");
+            sb.append(String.format("[%s] %s: %s\n", m.getCreatedAt(), name,
+                    m.getMsgType() == 1 ? "[语音消息]" : m.getContent()));
+        }
+        byte[] bytes = sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=group-chat.txt")
+                .contentType(org.springframework.http.MediaType.TEXT_PLAIN)
+                .body(bytes);
+    }
+
     private List<Map<String, Object>> enrichMessages(List<GroupMessage> messages) {
+        // 批量加载发送者信息，避免 N+1
+        List<Long> senderIds = messages.stream().map(GroupMessage::getSenderId).distinct().toList();
+        Map<Long, String> senderNameMap = senderIds.isEmpty() ? Map.of() :
+                userService.getByIds(senderIds).stream()
+                        .collect(Collectors.toMap(User::getId, User::getDisplayName));
+
         List<Map<String, Object>> result = new ArrayList<>();
         for (GroupMessage m : messages) {
             Map<String, Object> item = new HashMap<>();
@@ -113,8 +188,7 @@ public class GroupRestController {
             item.put("msgType", m.getMsgType());
             item.put("audioData", m.getAudioData());
             item.put("createdAt", m.getCreatedAt());
-            User u = userService.getById(m.getSenderId());
-            item.put("sender", u != null ? u.getDisplayName() : "用户");
+            item.put("sender", senderNameMap.getOrDefault(m.getSenderId(), "用户"));
             result.add(item);
         }
         return result;

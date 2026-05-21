@@ -30,6 +30,13 @@ spring:
     encoding:
       charset: UTF-8
       force: true
+  websocket:
+    messaging:
+      send-buffer-size-limit: 1048576
+      message-size-limit: 1048576
+  messaging:
+    stomp:
+      buffer-size-limit: 1048576
 
 app:
   upload-dir: ./uploads/

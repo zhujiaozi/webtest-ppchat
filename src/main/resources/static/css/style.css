@@ -214,16 +214,32 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 .theme-switcher {
     display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 3px; background: var(--bg-tertiary); border-radius: var(--radius-md);
+    padding: 3px; background: rgba(255,255,255,.08); border-radius: var(--radius-md);
+}
+.landing-header .theme-switcher,
+.index-header .theme-switcher,
+.mgmt-header .theme-switcher {
+    flex-direction: row;
+    background: var(--bg-tertiary);
+}
+.landing-header .theme-switcher button,
+.index-header .theme-switcher button,
+.mgmt-header .theme-switcher button {
+    width: 32px; height: 32px; font-size: 14px;
+}
+.landing-header .theme-switcher button.active,
+.index-header .theme-switcher button.active,
+.mgmt-header .theme-switcher button.active {
+    background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-sm);
 }
 .theme-switcher button {
-    width: 32px; height: 32px;
+    width: 24px; height: 24px;
     display: flex; align-items: center; justify-content: center;
     border: none; border-radius: var(--radius-sm);
     background: transparent; color: var(--text-tertiary);
-    cursor: pointer; font-size: 14px; transition: all 0.2s;
+    cursor: pointer; font-size: 12px; transition: all 0.2s;
 }
-.theme-switcher button.active { background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+.theme-switcher button.active { background: rgba(255,255,255,.15); color: #fff; box-shadow: none; }
 
 /* ============================================
    登录 / 注册页
@@ -231,33 +247,59 @@ textarea.input { resize: vertical; min-height: 80px; }
 .auth-page {
     display: flex; align-items: center; justify-content: center;
     min-height: 100vh; padding: 20px;
-    background: linear-gradient(135deg, #07c160 0%, #06ad56 50%, #059a4c 100%);
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    position: relative; overflow: hidden;
+}
+.auth-page::before {
+    content: ''; position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 20%, rgba(91,141,239,.15), transparent 40%),
+                radial-gradient(circle at 70% 80%, rgba(65,211,189,.12), transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(155,89,182,.08), transparent 50%);
+    animation: authBgFloat 20s ease-in-out infinite;
+}
+@keyframes authBgFloat {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(2%, -2%) rotate(1deg); }
+    66% { transform: translate(-1%, 1%) rotate(-1deg); }
 }
 .auth-card {
     width: 100%; max-width: 400px; padding: 40px 36px;
-    background: var(--bg-card); border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-lg);
+    background: rgba(255,255,255,.08); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    position: relative; z-index: 1;
 }
 .auth-card .logo {
     text-align: center; margin-bottom: 32px;
 }
 .auth-card .logo h1 {
-    font-size: 28px; font-weight: 700; color: var(--accent);
+    font-size: 28px; font-weight: 700; color: #fff;
     margin-bottom: 4px;
 }
 .auth-card .logo p {
-    font-size: 13px; color: var(--text-tertiary);
+    font-size: 13px; color: rgba(255,255,255,.6);
 }
 .auth-card .error-msg {
     padding: 10px 14px; margin-bottom: 16px;
-    background: #fef0f0; color: var(--danger);
+    background: rgba(250,81,81,.15); color: #ff8e92;
     border-radius: var(--radius-md); font-size: 13px;
-    border: 1px solid #fde2e2;
+    border: 1px solid rgba(250,81,81,.3);
 }
 .auth-card .form-footer {
     text-align: center; margin-top: 20px;
-    font-size: 13px; color: var(--text-tertiary);
+    font-size: 13px; color: rgba(255,255,255,.5);
 }
+.auth-card .form-footer a { color: rgba(108,167,255,.9); }
+.auth-card label { color: rgba(255,255,255,.7); }
+.auth-card .input {
+    background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15);
+    color: #fff;
+}
+.auth-card .input::placeholder { color: rgba(255,255,255,.35); }
+.auth-card .input:focus { border-color: rgba(91,141,239,.6); }
 
 /* ============================================
    首页 (index)
@@ -636,3 +678,89 @@ textarea.input { resize: vertical; min-height: 80px; }
 .profile-stat { text-align: center; }
 .profile-stat .stat-value { font-size: 20px; font-weight: 700; color: var(--accent); }
 .profile-stat .stat-label { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+/* ============================================
+   Landing Page
+   ============================================ */
+.landing-page {
+    min-height: 100vh; display: flex; flex-direction: column;
+    background: var(--bg-primary);
+}
+.landing-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 60px;
+    background: var(--bg-secondary); border-bottom: 1px solid var(--border-light);
+    position: sticky; top: 0; z-index: 10;
+}
+.landing-header .brand { font-size: 20px; font-weight: 700; color: var(--accent); }
+.landing-header .nav-links { display: flex; align-items: center; gap: 12px; }
+.landing-header .nav-links a {
+    padding: 6px 14px; border-radius: var(--radius-md);
+    color: var(--text-secondary); font-size: 14px; transition: all 0.2s;
+}
+.landing-header .nav-links a:hover { color: var(--text-primary); }
+.landing-hero {
+    display: flex; align-items: center; justify-content: center;
+    padding: 80px 20px; text-align: center; position: relative;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    overflow: hidden;
+}
+.landing-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(91,141,239,.2), transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(65,211,189,.15), transparent 50%);
+}
+.landing-hero-content { position: relative; z-index: 1; max-width: 600px; }
+.landing-hero-content h1 {
+    font-size: 48px; font-weight: 800; color: #fff;
+    margin-bottom: 12px; letter-spacing: -1px;
+}
+.landing-tagline {
+    font-size: 20px; color: rgba(255,255,255,.85); margin-bottom: 16px; font-weight: 500;
+}
+.landing-desc {
+    font-size: 15px; color: rgba(255,255,255,.6); margin-bottom: 36px; line-height: 1.8;
+}
+.landing-actions { display: flex; gap: 12px; justify-content: center; }
+.landing-actions .btn-ghost {
+    background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: #fff;
+}
+.landing-actions .btn-ghost:hover { background: rgba(255,255,255,.18); }
+.landing-features {
+    padding: 60px 24px; flex: 1;
+    display: flex; align-items: center; justify-content: center;
+}
+.landing-features-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px; max-width: 960px; width: 100%;
+}
+.landing-feature-card {
+    padding: 28px; background: var(--bg-card);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.landing-feature-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.landing-feature-card .lf-icon { font-size: 32px; margin-bottom: 14px; }
+.landing-feature-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+.landing-feature-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+.landing-footer {
+    padding: 20px; text-align: center;
+    font-size: 12px; color: var(--text-tertiary);
+    border-top: 1px solid var(--border-light);
+}
+
+/* ============================================
+   消息发送状态指示器
+   ============================================ */
+.msg-status-indicator {
+    display: inline-flex; align-items: center; margin-left: 6px;
+    vertical-align: middle; flex-shrink: 0;
+}
+.msg-status-indicator.msg-sending { opacity: 0.6; }
+.msg-status-indicator.msg-failed { color: var(--danger); cursor: pointer; }
+.msg-status-indicator.msg-failed:hover { opacity: 0.8; }
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.spin { animation: spin 1s linear infinite; }

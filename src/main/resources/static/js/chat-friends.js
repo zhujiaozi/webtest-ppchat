@@ -1,19 +1,15 @@
 /** PP Chat — Friends */
-async function loadFriendsView() {
+async function loadFriendsView(gen) {
+    const isStale = () => gen !== viewGeneration;
     const panel = document.getElementById('panelList');
     panel.innerHTML = '';
     try {
         const res = await fetch('/api/friends');
+        if (isStale()) return;
         const data = await parseApiResponse(res);
         friendsData = data;
         const groups = data.groups || [];
         const friends = data.friends || [];
-        // 好友申请按钮
-        const reqBtn = document.createElement('button');
-        reqBtn.className = 'panel-btn';
-        reqBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 好友申请`;
-        reqBtn.onclick = () => showFriendRequests();
-        panel.appendChild(reqBtn);
         // 创建分组按钮
         const createGroupBtn = document.createElement('button');
         createGroupBtn.className = 'panel-btn';
@@ -85,7 +81,7 @@ function showFriendDetail(f) {
         <div class="im-detail">
             <div class="im-detail-card">
                 <div class="profile-avatar-area">
-                    <div class="av">${initial(name)}</div>
+                    <div class="av" style="background:${avatarGradient(name)}">${initial(name)}</div>
                     <div style="font-size:16px;font-weight:600">${escapeHtml(name)}</div>
                     <div style="font-size:12px;color:var(--text-tertiary)">ID: ${f.friendId}</div>
                 </div>
@@ -99,54 +95,121 @@ function showFriendDetail(f) {
         </div>`;
 }
 
-async function showFriendRequests() {
+// 好友申请视图：左栏=申请列表(条目)，右栏=搜索加好友+申请详情(操作)
+async function loadFriendRequestsView(gen) {
+    const isStale = () => gen !== viewGeneration;
+    const panel = document.getElementById('panelList');
+    panel.innerHTML = '';
+    // 右栏默认显示搜索加好友
     const content = document.getElementById('contentArea');
-    content.innerHTML = `<div class="im-chat-header"><span class="ch-title">好友申请</span></div>
-        <div class="im-detail"><div class="im-detail-card" id="requestList"><p style="color:var(--text-tertiary)">加载中...</p></div></div>`;
+    content.innerHTML = `<div class="im-chat-header"><span class="ch-title">添加好友</span></div>
+        <div class="im-detail"><div class="im-detail-card">
+            <h2>搜索添加好友</h2>
+            <div class="form-group"><label>搜索用户</label>
+                <div style="display:flex;gap:8px">
+                    <input type="text" class="input" id="addFriendSearch" placeholder="输入用户名或昵称" style="flex:1">
+                    <button class="btn btn-primary" onclick="doSearchUserToAdd()">搜索</button>
+                </div>
+            </div>
+            <div id="addFriendResults"></div>
+        </div></div>`;
+
     try {
         const res = await fetch('/api/friends/requests');
+        if (isStale()) return;
         const requests = await parseApiResponse(res);
-        const list = document.getElementById('requestList');
-        if (requests.length === 0) { list.innerHTML = '<p style="color:var(--text-tertiary);text-align:center">暂无待处理的好友申请</p>'; return; }
-        list.innerHTML = '';
-        for (const r of requests) {
-            // 获取申请人信息
-            let reqName = '用户 #' + r.fromUserId;
-            try {
-                const userRes = await fetch(`/api/profile/${r.fromUserId}`);
-                const userData = await parseApiResponse(userRes);
-                reqName = userData.nickname || userData.username;
-            } catch (e) {}
-            const div = document.createElement('div');
-            div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-light)';
-            div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(reqName)}">${initial(reqName)}</div>
-                <div style="flex:1"><div style="font-size:14px;font-weight:500">${escapeHtml(reqName)}</div>
-                <div style="font-size:12px;color:var(--text-tertiary)">${escapeHtml(r.message || '请求加你为好友')}</div></div>
-                <button class="btn btn-primary btn-sm" onclick="acceptRequest(${r.id})">同意</button>
-                <button class="btn btn-ghost btn-sm" onclick="rejectRequest(${r.id})">拒绝</button>`;
-            list.appendChild(div);
+        if (requests.length === 0) {
+            panel.innerHTML = '<div style="padding:16px;color:var(--text-tertiary);font-size:13px;text-align:center">暂无待处理的好友申请</div>';
+            return;
         }
+        for (const r of requests) {
+            const reqName = r.fromUserName || ('用户 #' + r.fromUserId);
+            const div = document.createElement('div');
+            div.className = 'conv-item' + (r._active ? ' active' : '');
+            div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(reqName)}">${initial(reqName)}</div>
+                <div class="conv-body"><div class="conv-name">${escapeHtml(reqName)}</div>
+                <div class="conv-preview">${escapeHtml(r.message || '请求加你为好友')}</div></div>`;
+            div.onclick = () => showRequestDetail(r);
+            panel.appendChild(div);
+        }
+        // 去掉侧边栏好友申请红点
+        const navBtn = document.querySelector('.im-nav-btn[data-view="friendRequests"] .nav-req-badge');
+        if (navBtn) navBtn.remove();
     } catch (e) { console.error(e); }
+}
+
+function showRequestDetail(r) {
+    const reqName = r.fromUserName || ('用户 #' + r.fromUserId);
+    // 高亮选中项
+    document.querySelectorAll('.im-panel-list .conv-item').forEach(el => el.classList.remove('active'));
+    const items = document.querySelectorAll('.im-panel-list .conv-item');
+    items.forEach(el => {
+        const nameEl = el.querySelector('.conv-name');
+        if (nameEl && nameEl.textContent === reqName) el.classList.add('active');
+    });
+    const content = document.getElementById('contentArea');
+    content.innerHTML = `
+        <div class="im-chat-header"><span class="ch-title">好友申请</span></div>
+        <div class="im-detail"><div class="im-detail-card">
+            <div class="profile-avatar-area">
+                <div class="av" style="background:${avatarGradient(reqName)}">${initial(reqName)}</div>
+                <div style="font-size:16px;font-weight:600">${escapeHtml(reqName)}</div>
+                <div style="font-size:12px;color:var(--text-tertiary)">ID: ${r.fromUserId}</div>
+            </div>
+            <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">${escapeHtml(r.message || '请求加你为好友')}</div>
+            <div style="display:flex;gap:8px;justify-content:center">
+                <button class="btn btn-primary" onclick="acceptRequest(${r.id})">同意</button>
+                <button class="btn btn-danger" onclick="rejectRequest(${r.id})">拒绝</button>
+            </div>
+        </div></div>`;
+}
+
+async function doSearchUserToAdd() {
+    const keyword = document.getElementById('addFriendSearch').value.trim();
+    if (!keyword) return;
+    const results = document.getElementById('addFriendResults');
+    results.innerHTML = '<p style="color:var(--text-tertiary);font-size:13px">搜索中...</p>';
+    try {
+        const res = await fetch(`/api/friends/search?keyword=${encodeURIComponent(keyword)}`);
+        const users = await parseApiResponse(res);
+        if (users.length === 0) { results.innerHTML = '<p style="color:var(--text-tertiary);font-size:13px">未找到用户</p>'; return; }
+        results.innerHTML = '';
+        for (const u of users) {
+            const name = u.nickname || u.username;
+            const div = document.createElement('div');
+            div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--border-light)';
+            div.innerHTML = `<div class="su-av" style="width:36px;height:36px;border-radius:6px;flex-shrink:0;background:${avatarGradient(name)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px">${initial(name)}</div>
+                <div style="flex:1"><div style="font-size:13px;font-weight:500">${escapeHtml(name)}</div><div style="font-size:11px;color:var(--text-tertiary)">@${escapeHtml(u.username)}</div></div>
+                <button class="btn btn-primary btn-sm" onclick="sendFriendRequest(${u.id})">加好友</button>`;
+            results.appendChild(div);
+        }
+    } catch (e) { results.innerHTML = '<p style="color:var(--danger);font-size:13px">搜索失败</p>'; }
 }
 
 async function acceptRequest(id) {
     await fetch(`/api/friends/requests/${id}/accept`, { method: 'POST' });
     showToast('已同意好友申请');
-    showFriendRequests();
-    loadFriendsView();
+    loadFriendRequestsView(viewGeneration);
 }
 
 async function rejectRequest(id) {
     await fetch(`/api/friends/requests/${id}/reject`, { method: 'POST' });
     showToast('已拒绝');
-    showFriendRequests();
+    loadFriendRequestsView(viewGeneration);
 }
 
 async function deleteFriend(friendId) {
-    if (!confirm('确定删除该好友？')) return;
+    showModal('确认删除', '<p>确定删除该好友？删除后将同时从对方好友列表中移除。</p>', `
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmDeleteFriend(${friendId})">确定删除</button>
+    `);
+}
+
+async function confirmDeleteFriend(friendId) {
+    closeModal();
     await fetch(`/api/friends/${friendId}`, { method: 'DELETE' });
     showToast('已删除');
-    loadFriendsView();
+    loadFriendsView(viewGeneration);
     document.getElementById('contentArea').innerHTML = `<div class="im-empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="48" height="48" style="opacity:0.25;margin-bottom:12px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         <p>选择一个好友查看详情</p></div>`;
@@ -156,7 +219,7 @@ async function setFriendRemark(friendId) {
     showInputDialog('设置备注', '输入备注名...', async (remark) => {
         await fetch(`/api/friends/${friendId}/remark`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ remark }) });
         showToast('备注已更新');
-        loadFriendsView();
+        loadFriendsView(viewGeneration);
     });
 }
 
@@ -186,7 +249,7 @@ async function confirmMoveFriend(friendId, groupId) {
         body: JSON.stringify({ groupId })
     });
     showToast('已移动');
-    loadFriendsView();
+    loadFriendsView(viewGeneration);
 }
 
 async function searchUsersForFriend(keyword) {
@@ -203,10 +266,7 @@ async function searchUsersForFriend(keyword) {
             div.className = 'search-user-item';
             div.innerHTML = `<div class="su-av">${initial(name)}</div>
                 <div class="su-info"><div class="su-name">${escapeHtml(name)}</div><div class="su-username">@${escapeHtml(u.username)}</div></div>
-                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();sendFriendRequest(${u.id})">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" style="margin-right:2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    加好友
-                </button>`;
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();sendFriendRequest(${u.id})">加好友</button>`;
             area.appendChild(div);
         }
     } catch (e) { console.error(e); }
@@ -228,10 +288,10 @@ async function createGroup() {
             return;
         }
         const res = await fetch('/api/friends/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name.trim() }) });
-        const data = await res.json();
-        if (data.id) {
+        const result = await parseApiResponse(res);
+        if (result && result.id) {
             showToast('分组已创建');
-            loadFriendsView();
+            loadFriendsView(viewGeneration);
         } else {
             showToast('创建失败', 'error');
         }
@@ -239,17 +299,19 @@ async function createGroup() {
 }
 
 async function deleteGroup(groupId, groupName) {
-    if (!confirm(`确定删除分组"${groupName}"？该分组下的好友将被移至未分组。`)) return;
+    showModal('删除分组', `<p>确定删除分组"${escapeHtml(groupName)}"？该分组下的好友将被移至未分组。</p>`, `
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmDeleteGroup(${groupId})">确定删除</button>
+    `);
+}
+
+async function confirmDeleteGroup(groupId) {
+    closeModal();
     try {
         await fetch(`/api/friends/groups/${groupId}`, { method: 'DELETE' });
         showToast('分组已删除');
-        loadFriendsView();
+        loadFriendsView(viewGeneration);
     } catch (e) {
         showToast('删除失败', 'error');
     }
 }
-
-// ============================================================
-//  群聊视图
-// ============================================================
-

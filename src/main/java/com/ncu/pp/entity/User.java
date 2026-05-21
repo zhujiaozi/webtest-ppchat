@@ -1,5 +1,6 @@
 package com.ncu.pp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class User {
     @Column(unique = true, nullable = false, length = 50)
     private String username;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -23,6 +25,13 @@ public class User {
 
     @Column(length = 500)
     private String avatar;
+
+    @Column(length = 200)
+    private String securityQuestion;
+
+    @Column(length = 200)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String securityAnswer;
 
     @Column(columnDefinition = "INT DEFAULT 0")
     private Integer status = 0;
