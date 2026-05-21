@@ -51,6 +51,14 @@ public class ChatService {
         return privateMessageRepository.countByReceiverIdAndSenderIdAndStatus(receiverId, senderId, 0);
     }
 
+    public Map<Long, Long> getUnreadCountsMap(Long receiverId) {
+        return privateMessageRepository.countUnreadGroupedBySender(receiverId).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
     public String exportConversation(Long userId1, Long userId2) {
         List<PrivateMessage> messages = getConversation(userId1, userId2);
         // 批量查询用户信息，避免 N+1

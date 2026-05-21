@@ -158,7 +158,7 @@ class GroupServiceTest {
         // Arrange
         List<GroupMember> members = Arrays.asList(testMember);
         when(groupMemberRepository.findByUserId(2L)).thenReturn(members);
-        when(groupChatRepository.findById(1L)).thenReturn(Optional.of(testGroup));
+        when(groupChatRepository.findAllById(any())).thenReturn(Arrays.asList(testGroup));
 
         // Act
         List<GroupChat> result = groupService.getUserGroups(2L);

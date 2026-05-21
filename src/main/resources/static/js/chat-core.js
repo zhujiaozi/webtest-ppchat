@@ -49,7 +49,7 @@ async function init() {
     bindGlobalEvents();
     initResizer();
     initParticles();
-    await loadChatView();
+    await loadChatView(viewGeneration);
     connectWebSocket();
 }
 
@@ -62,13 +62,16 @@ function bindGlobalEvents() {
         searchInput.addEventListener('input', function () {
             const keyword = this.value.trim();
             if (currentView === 'chat') {
-                if (!keyword) loadChatView();
+                if (!keyword) loadChatView(viewGeneration);
                 else searchUsersForChat(keyword);
             } else if (currentView === 'friends') {
-                if (!keyword) loadFriendsView();
+                if (!keyword) loadFriendsView(viewGeneration);
                 else searchUsersForFriend(keyword);
             } else if (currentView === 'groups') {
-                if (!keyword) loadGroupsView();
+                if (!keyword) loadGroupsView(viewGeneration);
+            } else if (currentView === 'friendRequests') {
+                // 好友申请视图搜索加好友
+                if (keyword) searchUsersForFriendFromRequests(keyword);
             }
         });
     }
@@ -78,22 +81,25 @@ function bindGlobalEvents() {
 
 function switchView(view) {
     currentView = view;
+    const gen = ++viewGeneration;
     document.querySelectorAll('.im-nav-btn[data-view]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.view === view);
     });
     const searchInput = document.getElementById('panelSearchInput');
     if (searchInput) {
         searchInput.value = '';
-        searchInput.placeholder = { chat: '搜索联系人...', friends: '搜索用户...', groups: '搜索群聊...', profile: '' }[view] || '搜索...';
+        searchInput.placeholder = { chat: '搜索联系人...', friends: '搜索用户...', groups: '搜索群聊...', friendRequests: '搜索用户加好友...', profile: '' }[view] || '搜索...';
     }
     switch (view) {
-        case 'chat': loadChatView(); break;
-        case 'friends': loadFriendsView(); break;
-        case 'groups': loadGroupsView(); break;
-        case 'profile': loadProfileView(); break;
+        case 'chat': loadChatView(gen); break;
+        case 'friends': loadFriendsView(gen); break;
+        case 'groups': loadGroupsView(gen); break;
+        case 'friendRequests': loadFriendRequestsView(gen); break;
+        case 'profile': loadProfileView(gen); break;
     }
 }
 let wsConnected = false;
+let viewGeneration = 0;    // 防止异步视图加载竞争
 
 function updateWsStatus() {
     const indicator = document.getElementById('ws-status');
@@ -155,13 +161,22 @@ function sendMessage() {
         isGroup: currentChat.isGroup
     };
     try {
-        // 立即显示自己的消息（乐观更新）
-        appendChatMessage({ ...message, createdAt: new Date().toISOString() });
+        // 立即显示自己的消息（乐观更新，带发送状态）
+        const msgId = 'msg-' + Date.now();
+        appendChatMessage({ ...message, createdAt: new Date().toISOString(), _msgId: msgId, _status: 'sending' });
         stompClient.send(
             currentChat.isGroup ? '/app/chat/group' : '/app/chat/private',
             {},
             JSON.stringify(message)
         );
+        // 3秒后清除发送状态
+        setTimeout(() => {
+            const el = document.getElementById(msgId);
+            if (el) {
+                const indicator = el.querySelector('.msg-status-indicator');
+                if (indicator) { indicator.innerHTML = ''; indicator.className = ''; }
+            }
+        }, 3000);
         input.value = '';
         input.style.height = 'auto';
         input.focus();
@@ -206,3 +221,44 @@ function avatarGradient(str) {
 document.addEventListener('DOMContentLoaded', () => {
     init();
 });
+
+async function checkFriendRequestBadge() {
+    try {
+        const res = await fetch('/api/friends/requests');
+        const requests = await parseApiResponse(res);
+        const navBtn = document.querySelector('.im-nav-btn[data-view="friendRequests"]');
+        if (!navBtn) return;
+        const existing = navBtn.querySelector('.nav-req-badge');
+        if (requests && requests.length > 0) {
+            if (!existing) {
+                const badge = document.createElement('span');
+                badge.className = 'nav-req-badge';
+                badge.style.cssText = 'position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid rgba(24,34,56,.92)';
+                navBtn.appendChild(badge);
+            }
+        } else {
+            if (existing) existing.remove();
+        }
+    } catch (e) {}
+}
+
+async function searchUsersForFriendFromRequests(keyword) {
+    const results = document.getElementById('addFriendResults');
+    if (!results) return;
+    results.innerHTML = '<p style="color:var(--text-tertiary);font-size:13px">搜索中...</p>';
+    try {
+        const res = await fetch(`/api/friends/search?keyword=${encodeURIComponent(keyword)}`);
+        const users = await parseApiResponse(res);
+        if (users.length === 0) { results.innerHTML = '<p style="color:var(--text-tertiary);font-size:13px">未找到用户</p>'; return; }
+        results.innerHTML = '';
+        for (const u of users) {
+            const name = u.nickname || u.username;
+            const div = document.createElement('div');
+            div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--border-light)';
+            div.innerHTML = `<div style="width:36px;height:36px;border-radius:6px;flex-shrink:0;background:${avatarGradient(name)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px">${initial(name)}</div>
+                <div style="flex:1"><div style="font-size:13px;font-weight:500">${escapeHtml(name)}</div><div style="font-size:11px;color:var(--text-tertiary)">@${escapeHtml(u.username)}</div></div>
+                <button class="btn btn-primary btn-sm" onclick="sendFriendRequest(${u.id})">加好友</button>`;
+            results.appendChild(div);
+        }
+    } catch (e) { results.innerHTML = '<p style="color:var(--danger);font-size:13px">搜索失败</p>'; }
+}

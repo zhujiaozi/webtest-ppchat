@@ -63,7 +63,30 @@ public class PageController {
     }
 
     @GetMapping("/")
-    public String index() {
-        return "redirect:/chat";
+    public String index(HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        if (user != null) {
+            return "redirect:/chat";
+        }
+        return "landing";
+    }
+
+    @GetMapping("/forgot-password")
+    public String forgotPasswordPage() {
+        return "forgot-password";
+    }
+
+    @PostMapping("/forgot-password")
+    public String doForgotPassword(@RequestParam String username,
+                                    @RequestParam String newPassword,
+                                    Model model) {
+        String error = userService.resetPassword(username, newPassword);
+        if (error != null) {
+            model.addAttribute("error", error);
+            model.addAttribute("username", username);
+            return "forgot-password";
+        }
+        model.addAttribute("success", "密码已重置，请使用新密码登录");
+        return "forgot-password";
     }
 }

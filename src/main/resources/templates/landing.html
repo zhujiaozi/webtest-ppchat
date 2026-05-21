@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PP Chat — 在线聊天系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/theme.js}"></script>
+</head>
+<body>
+<div class="landing-page">
+    <header class="landing-header">
+        <span class="brand">PP Chat</span>
+        <div class="nav-links">
+            <a th:href="@{/login}">登录</a>
+            <a th:href="@{/register}" class="btn btn-primary btn-sm">注册</a>
+            <span id="theme-area"></span>
+        </div>
+    </header>
+    <section class="landing-hero">
+        <div class="landing-hero-bg"></div>
+        <div class="landing-hero-content">
+            <h1>PP Chat</h1>
+            <p class="landing-tagline">随时随地，与好友畅聊</p>
+            <p class="landing-desc">一个现代化的在线聊天系统，支持实时消息、语音通话、群组聊天和好友管理</p>
+            <div class="landing-actions">
+                <a th:href="@{/register}" class="btn btn-primary btn-lg">开始使用</a>
+                <a th:href="@{/login}" class="btn btn-ghost btn-lg">立即登录</a>
+            </div>
+        </div>
+    </section>
+    <section class="landing-features">
+        <div class="landing-features-grid">
+            <div class="landing-feature-card">
+                <div class="lf-icon">💬</div>
+                <h3>实时聊天</h3>
+                <p>基于 WebSocket 的实时消息推送，消息即时送达，支持一对一和群聊</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="lf-icon">🎤</div>
+                <h3>语音消息</h3>
+                <p>录制并发送语音消息，最长10秒，让沟通更生动</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="lf-icon">👥</div>
+                <h3>好友管理</h3>
+                <p>搜索添加好友，创建分组管理，设置备注名，轻松维护社交关系</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="lf-icon">🏠</div>
+                <h3>群组聊天</h3>
+                <p>创建群组邀请好友加入，设置群公告，多人实时互动</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="lf-icon">🔍</div>
+                <h3>消息搜索</h3>
+                <p>快速搜索聊天记录，支持按关键词筛选，轻松找到历史消息</p>
+            </div>
+            <div class="landing-feature-card">
+                <div class="lf-icon">🌙</div>
+                <h3>主题切换</h3>
+                <p>支持亮色、暗色和跟随系统三种主题模式，舒适阅读体验</p>
+            </div>
+        </div>
+    </section>
+    <footer class="landing-footer">
+        <p>PP Chat &copy; 2026 — 在线聊天系统</p>
+    </footer>
+</div>
+<script>
+    document.getElementById('theme-area').appendChild(ThemeManager.createSwitcher());
+</script>
+</body>
+</html>

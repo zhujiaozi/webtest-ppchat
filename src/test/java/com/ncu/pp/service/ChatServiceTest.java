@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -134,7 +135,7 @@ class ChatServiceTest {
         // Arrange
         List<PrivateMessage> messages = Arrays.asList(testMessage);
         when(privateMessageRepository.findConversation(1L, 2L)).thenReturn(messages);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
+        when(userRepository.findAllById(any())).thenReturn(Arrays.asList(sender));
 
         // Act
         String result = chatService.exportConversation(1L, 2L);
@@ -150,7 +151,7 @@ class ChatServiceTest {
         // Arrange
         List<PrivateMessage> messages = Arrays.asList(testMessage);
         when(privateMessageRepository.findConversation(1L, 2L)).thenReturn(messages);
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findAllById(any())).thenReturn(Collections.emptyList());
 
         // Act
         String result = chatService.exportConversation(1L, 2L);

@@ -1,10 +1,12 @@
 /** PP Chat — Profile */
-async function loadProfileView() {
+async function loadProfileView(gen) {
+    const isStale = () => gen !== viewGeneration;
     const panel = document.getElementById('panelList');
     panel.innerHTML = '<div style="padding:16px;color:var(--text-tertiary);font-size:13px;text-align:center">个人设置</div>';
     const content = document.getElementById('contentArea');
     try {
         const res = await fetch('/api/profile');
+        if (isStale()) return;
         const user = await parseApiResponse(res);
         content.innerHTML = `
             <div class="im-chat-header"><span class="ch-title">个人中心</span></div>
@@ -14,23 +16,20 @@ async function loadProfileView() {
                         <div class="av" style="background:${avatarGradient(user.nickname || user.username)}">${user.avatar ? `<img src="${user.avatar}" style="width:72px;height:72px;border-radius:50%;object-fit:cover">` : initial(user.nickname || user.username)}</div>
                         <div style="font-size:16px;font-weight:600">${escapeHtml(user.nickname || user.username)}</div>
                         <div style="font-size:12px;color:var(--text-tertiary)">@${escapeHtml(user.username)}</div>
-                        <label style="font-size:12px;color:var(--text-link);cursor:pointer;margin-top:6px">
-                            更换头像 <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="uploadAvatar()">
-                        </label>
                     </div>
                     <div class="profile-stats">
                         <div class="profile-stat"><div class="sv">${user.loginCount || 0}</div><div class="sl">登录次数</div></div>
                         <div class="profile-stat"><div class="sv">${user.lastLogin ? formatTime(user.lastLogin) : '--'}</div><div class="sl">最近登录</div></div>
                     </div>
                     <div class="form-group"><label>昵称</label>
-                        <div style="display:flex;gap:8px"><input type="text" class="input" id="profileNickname" value="${escapeHtml(user.nickname || '')}">
+                        <div style="display:flex;gap:8px"><input type="text" class="input" id="profileNickname" value="${escapeHtml(user.nickname || '')}" style="flex:1">
                         <button class="btn btn-ghost btn-sm" onclick="updateNickname()">保存</button></div>
                     </div>
                     <hr style="margin:20px 0;border:none;border-top:1px solid var(--border-light)">
                     <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">修改密码</h3>
                     <div class="form-group"><label>原密码</label><input type="password" class="input" id="oldPwd" placeholder="请输入原密码"></div>
                     <div class="form-group"><label>新密码</label><input type="password" class="input" id="newPwd" placeholder="请输入新密码"></div>
-                    <button class="btn btn-primary" onclick="updatePassword()">
+                    <button class="btn btn-primary btn-block" onclick="updatePassword()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="margin-right:4px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         修改密码
                     </button>
@@ -61,7 +60,7 @@ async function uploadAvatar() {
     const res = await fetch('/api/profile/avatar', { method: 'POST', body: fd });
     await parseApiResponse(res);
     showToast('头像已更新');
-    loadProfileView();
+    loadProfileView(viewGeneration);
 }
 
 async function updatePassword() {
@@ -72,8 +71,9 @@ async function updatePassword() {
     try {
         await parseApiResponse(res);
         showToast('密码已修改');
+        document.getElementById('oldPwd').value = '';
+        document.getElementById('newPwd').value = '';
     } catch (e) {
         showToast(e.message || '修改失败', 'error');
     }
 }
-

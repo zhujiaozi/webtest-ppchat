@@ -18,4 +18,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.id <> :excludeId AND " +
            "(u.username LIKE %:keyword% OR u.nickname LIKE %:keyword%)")
     List<User> searchByKeyword(@Param("keyword") String keyword, @Param("excludeId") Long excludeId);
+
+    @Query("SELECT u FROM User u WHERE u.id <> :excludeId AND " +
+           "(u.username LIKE %:keyword% OR u.nickname LIKE %:keyword%) AND " +
+           "u.id IN (SELECT f.friendId FROM Friend f WHERE f.userId = :excludeId)")
+    List<User> searchFriendsByKeyword(@Param("keyword") String keyword, @Param("excludeId") Long excludeId);
 }

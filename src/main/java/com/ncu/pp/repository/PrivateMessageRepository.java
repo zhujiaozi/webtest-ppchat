@@ -4,6 +4,7 @@ import com.ncu.pp.entity.PrivateMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
@@ -22,6 +23,9 @@ public interface PrivateMessageRepository extends JpaRepository<PrivateMessage, 
     List<PrivateMessage> searchInConversation(Long userId1, Long userId2, String keyword);
 
     long countByReceiverIdAndSenderIdAndStatus(Long receiverId, Long senderId, Integer status);
+
+    @Query("SELECT m.senderId, COUNT(m) FROM PrivateMessage m WHERE m.receiverId = :receiverId AND m.status = 0 GROUP BY m.senderId")
+    List<Object[]> countUnreadGroupedBySender(@Param("receiverId") Long receiverId);
 
     @Modifying
     @Transactional

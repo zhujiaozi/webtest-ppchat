@@ -1,23 +1,28 @@
 /** PP Chat — Chat View */
-async function loadChatView() {
+async function loadChatView(gen) {
+    const isStale = () => gen !== viewGeneration;
     const panel = document.getElementById('panelList');
     panel.innerHTML = '';
     // 加载好友列表作为会话
     try {
         const res = await fetch('/api/friends');
+        if (isStale()) return;
         const data = await parseApiResponse(res);
         friendsData = data;
         const friends = data.friends || [];
+        // 批量获取未读消息数
+        let unreadMap = {};
+        try {
+            const unreadRes = await fetch('/api/chat/private/unread-all');
+            if (isStale()) return;
+            unreadMap = await parseApiResponse(unreadRes) || {};
+        } catch (e) {}
         for (const f of friends) {
             const name = f.remark || f.friendName || ('好友 #' + f.friendId);
-            // 获取未读消息数
-            let unreadCount = 0;
-            try {
-                const unreadRes = await fetch(`/api/chat/private/${f.friendId}/unread`);
-                unreadCount = await parseApiResponse(unreadRes);
-            } catch (e) {}
+            const unreadCount = unreadMap[f.friendId] || 0;
             const div = document.createElement('div');
             div.className = 'conv-item' + (currentChat && !currentChat.isGroup && currentChat.id == f.friendId ? ' active' : '');
+            div.dataset.friendId = f.friendId;
             div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(name)}">${initial(name)}</div>
                 <div class="conv-body"><div class="conv-name">${escapeHtml(name)}</div>
                 <div class="conv-preview">点击开始聊天</div></div>
@@ -26,14 +31,17 @@ async function loadChatView() {
             panel.appendChild(div);
         }
     } catch (e) { console.error('加载好友失败', e); }
+    if (isStale()) return;
     // 加载群聊
     try {
         const res = await fetch('/api/groups');
+        if (isStale()) return;
         const groups = await parseApiResponse(res);
         groupsData = groups;
         for (const g of groups) {
             const div = document.createElement('div');
             div.className = 'conv-item' + (currentChat && currentChat.isGroup && currentChat.id == g.id ? ' active' : '');
+            div.dataset.groupId = g.id;
             div.innerHTML = `<div class="conv-avatar-ph" style="background:#4a90d9">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:#fff"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
             </div>
@@ -43,6 +51,8 @@ async function loadChatView() {
             panel.appendChild(div);
         }
     } catch (e) { console.error('加载群聊失败', e); }
+    // 检查好友申请数量，显示红点
+    checkFriendRequestBadge();
 }
 
 async function openChat(id, name, isGroup) {
@@ -74,9 +84,9 @@ async function _openChatImpl(id, name, isGroup) {
                 <button onclick="searchChatHistory()" title="搜索聊天记录">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </button>
-                ${!isGroup ? `<button onclick="exportChat()" title="导出聊天记录">
+                <button onclick="exportChat()" title="导出聊天记录">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                </button>` : ''}
+                </button>
                 <button onclick="toggleInfoDrawer()" title="更多信息">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                 </button>
@@ -125,6 +135,12 @@ async function _openChatImpl(id, name, isGroup) {
             console.log(`[openChat] Loaded ${msgs.length} private messages for user ${id}`);
             msgs.forEach(m => appendChatMessage({ senderId: m.senderId, content: m.content, msgType: m.msgType, audioData: m.audioData, time: m.createdAt }));
             fetch(`/api/chat/private/${id}/read`, { method: 'POST' });
+            // 清除未读红点
+            const activeItem = document.querySelector(`.conv-item[data-friend-id="${id}"]`);
+            if (activeItem) {
+                const badge = activeItem.querySelector('.conv-badge');
+                if (badge) badge.remove();
+            }
         } catch (e) { console.error('[openChat] Failed to load private messages:', e); }
     } else {
         try {
@@ -153,23 +169,37 @@ function appendChatMessage(msg) {
     if (!box) return;
     const isMine = msg.senderId == userId;
     const div = document.createElement('div');
+    const msgId = msg._msgId || ('msg-' + Date.now() + '-' + Math.random().toString(36).slice(2,6));
+    div.id = msgId;
     div.className = 'im-msg-row' + (isMine ? ' self' : '');
-    const senderName = msg.sender || (isMine ? userName : '');
+    const senderName = msg.sender || (isMine ? userName : (currentChat ? currentChat.name : ''));
     const senderHtml = (currentChat && currentChat.isGroup && !isMine && senderName)
         ? `<div class="im-msg-sender">${escapeHtml(senderName)}</div>` : '';
+    const statusHtml = isMine ? `<span class="msg-status-indicator${msg._status === 'sending' ? ' msg-sending' : ''}">${msg._status === 'sending' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" class="spin"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg>' : ''}</span>` : '';
     if (msg.msgType === 1 && msg.audioData) {
         const durationMatch = (msg.content || '').match(/(\d+)s/);
         const durationText = durationMatch ? ` ${durationMatch[1]}s` : '';
         div.innerHTML = `<div class="msg-av" style="background:${avatarGradient(isMine ? userName : senderName)}">${isMine ? initial(userName) : initial(senderName || '?')}</div>
             <div>${senderHtml}<div class="im-msg-bubble"><button data-src="${msg.audioData}" onclick="playAudio(this.dataset.src)" style="background:none;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg> 播放语音${durationText}
-            </button></div></div>`;
+            </button>${statusHtml}</div></div>`;
     } else {
         div.innerHTML = `<div class="msg-av" style="background:${avatarGradient(isMine ? userName : senderName)}">${isMine ? initial(userName) : initial(senderName || '?')}</div>
-            <div>${senderHtml}<div class="im-msg-bubble">${escapeHtml(msg.content || '')}</div></div>`;
+            <div>${senderHtml}<div class="im-msg-bubble">${escapeHtml(msg.content || '')}${statusHtml}</div></div>`;
     }
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
+    return div;
+}
+
+function markMessageFailed(msgId) {
+    const el = typeof msgId === 'string' ? document.getElementById(msgId) : msgId;
+    if (!el) return;
+    const indicator = el.querySelector('.msg-status-indicator');
+    if (indicator) {
+        indicator.className = 'msg-status-indicator msg-failed';
+        indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" title="发送失败"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    }
 }
 
 function playAudio(src) { new Audio(src).play(); }
@@ -233,24 +263,41 @@ function initVoiceBtn() {
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     if (!currentChat) return;
-                    // 立即显示语音消息（乐观更新）
-                    appendChatMessage({
+                    const msgId = 'voice-' + Date.now();
+                    // 立即显示语音消息（乐观更新，带发送中状态）
+                    const msgEl = appendChatMessage({
                         senderId: userId, sender: userName,
                         content: `[语音消息 ${duration}s]`,
                         msgType: 1, audioData: reader.result,
-                        createdAt: new Date().toISOString()
+                        createdAt: new Date().toISOString(),
+                        _msgId: msgId, _status: 'sending'
                     });
-                    stompClient.send(
-                        currentChat.isGroup ? '/app/chat/group' : '/app/chat/private', {},
-                        JSON.stringify({
-                            senderId: userId, sender: userName,
-                            receiverId: currentChat.isGroup ? null : currentChat.id,
-                            receiver: currentChat.id.toString(),
-                            content: `[语音消息 ${duration}s]`,
-                            msgType: 1, audioData: reader.result,
-                            isGroup: currentChat.isGroup
-                        })
-                    );
+                    try {
+                        stompClient.send(
+                            currentChat.isGroup ? '/app/chat/group' : '/app/chat/private', {},
+                            JSON.stringify({
+                                senderId: userId, sender: userName,
+                                receiverId: currentChat.isGroup ? null : currentChat.id,
+                                receiver: currentChat.id.toString(),
+                                content: `[语音消息 ${duration}s]`,
+                                msgType: 1, audioData: reader.result,
+                                isGroup: currentChat.isGroup
+                            })
+                        );
+                        // 5秒后假设发送成功
+                        setTimeout(() => {
+                            const el = document.getElementById(msgId);
+                            if (el) {
+                                const indicator = el.querySelector('.msg-status-indicator');
+                                if (indicator) {
+                                    indicator.innerHTML = '';
+                                    indicator.className = '';
+                                }
+                            }
+                        }, 3000);
+                    } catch (e) {
+                        markMessageFailed(msgId);
+                    }
                 };
                 reader.readAsDataURL(blob);
                 stream.getTracks().forEach(t => t.stop());
@@ -293,7 +340,7 @@ async function searchUsersForChat(keyword) {
     const panel = document.getElementById('panelList');
     panel.innerHTML = '';
     try {
-        const res = await fetch(`/api/friends/search?keyword=${encodeURIComponent(keyword)}`);
+        const res = await fetch(`/api/friends/search-friends?keyword=${encodeURIComponent(keyword)}`);
         const users = await parseApiResponse(res);
         users.forEach(u => {
             const name = u.nickname || u.username;

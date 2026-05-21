@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -47,6 +48,12 @@ public class ChatRestController {
     public ApiResponse<Long> getUnreadCount(@PathVariable Long friendId, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         return ApiResponse.ok(chatService.getUnreadCount(friendId, user.getId()));
+    }
+
+    @GetMapping("/private/unread-all")
+    public ApiResponse<Map<Long, Long>> getAllUnreadCounts(HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        return ApiResponse.ok(chatService.getUnreadCountsMap(user.getId()));
     }
 
     @GetMapping("/private/{friendId}/export")
