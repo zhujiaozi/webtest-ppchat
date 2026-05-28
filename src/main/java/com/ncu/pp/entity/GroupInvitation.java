@@ -6,9 +6,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "pp_group_invitation", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"groupId", "toUserId", "status"})
-})
+@Table(name = "pp_group_invitation")
 public class GroupInvitation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +20,9 @@ public class GroupInvitation {
 
     @Column(nullable = false)
     private Long toUserId;
+
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private Integer type = 0; // 0=邀请(群主邀请别人), 1=申请(别人申请加入)
 
     @Column(columnDefinition = "INT DEFAULT 0")
     private Integer status = 0; // 0=pending, 1=accepted, 2=rejected

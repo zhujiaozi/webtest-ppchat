@@ -57,8 +57,9 @@ public class GroupService {
     public void dissolveGroup(Long groupId, Long userId) {
         GroupChat group = groupChatRepository.findById(groupId).orElseThrow();
         if (!group.getOwnerId().equals(userId)) throw new RuntimeException("只有群主可以解散群");
-        groupMemberRepository.findByGroupId(groupId).forEach(m ->
-            groupMemberRepository.deleteByGroupIdAndUserId(groupId, m.getUserId()));
+        groupMessageRepository.deleteAllByGroupId(groupId);
+        groupMemberRepository.deleteAllByGroupId(groupId);
+        groupInvitationRepository.deleteAllByGroupId(groupId);
         groupChatRepository.deleteById(groupId);
     }
 
@@ -102,6 +103,7 @@ public class GroupService {
         inv.setGroupId(groupId);
         inv.setFromUserId(fromUserId);
         inv.setToUserId(toUserId);
+        inv.setType(0); // 邀请
         return groupInvitationRepository.save(inv);
     }
 
@@ -123,6 +125,42 @@ public class GroupService {
     }
 
     public List<GroupInvitation> getPendingInvitations(Long userId) {
-        return groupInvitationRepository.findByToUserIdAndStatus(userId, 0);
+        return groupInvitationRepository.findByToUserIdAndStatusAndType(userId, 0, 0);
+    }
+
+    @Transactional
+    public GroupInvitation requestJoinGroup(Long groupId, Long userId) {
+        if (isMember(groupId, userId)) return null;
+        GroupChat group = groupChatRepository.findById(groupId).orElse(null);
+        if (group == null) return null;
+        if (group.getOwnerId().equals(userId)) return null;
+        if (groupInvitationRepository.existsByGroupIdAndFromUserIdAndStatus(groupId, userId, 0)) return null;
+        GroupInvitation inv = new GroupInvitation();
+        inv.setGroupId(groupId);
+        inv.setFromUserId(userId);
+        inv.setToUserId(group.getOwnerId());
+        inv.setType(1); // 申请
+        return groupInvitationRepository.save(inv);
+    }
+
+    @Transactional
+    public void acceptJoinRequest(Long invitationId, Long ownerId) {
+        GroupInvitation inv = groupInvitationRepository.findById(invitationId).orElseThrow();
+        if (!inv.getToUserId().equals(ownerId)) throw new IllegalArgumentException("无权操作");
+        inv.setStatus(1);
+        groupInvitationRepository.save(inv);
+        addMember(inv.getGroupId(), inv.getFromUserId(), 0);
+    }
+
+    @Transactional
+    public void rejectJoinRequest(Long invitationId, Long ownerId) {
+        GroupInvitation inv = groupInvitationRepository.findById(invitationId).orElseThrow();
+        if (!inv.getToUserId().equals(ownerId)) throw new IllegalArgumentException("无权操作");
+        inv.setStatus(2);
+        groupInvitationRepository.save(inv);
+    }
+
+    public List<GroupInvitation> getPendingJoinRequests(Long ownerId) {
+        return groupInvitationRepository.findByToUserIdAndStatusAndType(ownerId, 0, 1);
     }
 }

@@ -265,20 +265,20 @@ textarea.input { resize: vertical; min-height: 80px; }
 .theme-switcher button.active { background: rgba(255,255,255,.15); color: #fff; box-shadow: none; }
 
 /* ============================================
-   登录 / 注册页 — 暗色星空 + 玻璃态
+   登录 / 注册页 — 深蓝渐变 + 玻璃态
    ============================================ */
 .auth-page {
     display: flex; align-items: center; justify-content: center;
     min-height: 100vh; padding: 20px;
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background: #0a0a1a;
     position: relative; overflow: hidden;
 }
 .auth-page::before {
-    content: ''; position: absolute; top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: radial-gradient(circle at 25% 25%, rgba(91,141,239,.2), transparent 40%),
-                radial-gradient(circle at 75% 75%, rgba(65,211,189,.15), transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(155,89,182,.1), transparent 50%);
+    content: ''; position: absolute; inset: 0;
+    background:
+        radial-gradient(ellipse 600px 400px at 20% 40%, rgba(91,141,239,.18), transparent),
+        radial-gradient(ellipse 500px 350px at 80% 60%, rgba(65,211,189,.14), transparent),
+        radial-gradient(ellipse 400px 300px at 50% 20%, rgba(155,89,182,.08), transparent);
     animation: authBgFloat 20s ease-in-out infinite;
 }
 @keyframes authBgFloat {
@@ -316,6 +316,13 @@ textarea.input { resize: vertical; min-height: 80px; }
     border: 1px solid rgba(250,81,81,.3);
     animation: fadeSlideUp 0.3s ease both;
 }
+.auth-card .success-msg {
+    padding: 10px 14px; margin-bottom: 16px;
+    background: rgba(7,193,96,.15); color: #4ade80;
+    border-radius: var(--radius-md); font-size: 13px;
+    border: 1px solid rgba(7,193,96,.3);
+    animation: fadeSlideUp 0.3s ease both;
+}
 .auth-card .form-footer {
     text-align: center; margin-top: 24px;
     font-size: 13px; color: rgba(255,255,255,.45);
@@ -340,6 +347,80 @@ textarea.input { resize: vertical; min-height: 80px; }
 }
 .auth-card .btn-primary:hover {
     box-shadow: 0 6px 24px rgba(91,141,239,.45); transform: translateY(-1px);
+}
+
+/* Auth page — light mode */
+[data-theme="light"] .auth-page {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f4f0 50%, #f5f0ff 100%);
+}
+[data-theme="light"] .auth-page::before {
+    background: radial-gradient(circle at 25% 25%, rgba(91,141,239,.12), transparent 40%),
+                radial-gradient(circle at 75% 75%, rgba(65,211,189,.1), transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(155,89,182,.06), transparent 50%);
+}
+[data-theme="light"] .auth-card {
+    background: rgba(255,255,255,.75);
+    border: 1px solid rgba(255,255,255,.8);
+    box-shadow: 0 8px 40px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.9);
+}
+[data-theme="light"] .auth-card .logo h1 {
+    background: linear-gradient(135deg, #5b8def, #41d3bd);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+[data-theme="light"] .auth-card .logo p { color: rgba(0,0,0,.45); }
+[data-theme="light"] .auth-card label { color: rgba(0,0,0,.55); }
+[data-theme="light"] .auth-card .input {
+    background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.1); color: #1a1a2e;
+}
+[data-theme="light"] .auth-card .input:hover { background: rgba(0,0,0,.06); }
+[data-theme="light"] .auth-card .input::placeholder { color: rgba(0,0,0,.3); }
+[data-theme="light"] .auth-card .input:focus {
+    border-color: rgba(91,141,239,.6); box-shadow: 0 0 0 3px rgba(91,141,239,.12); background: #fff;
+}
+[data-theme="light"] .auth-card .error-msg {
+    background: rgba(250,81,81,.1); color: #dc2626; border-color: rgba(250,81,81,.2);
+}
+[data-theme="light"] .auth-card .success-msg {
+    background: rgba(7,193,96,.1); color: #16a34a; border-color: rgba(7,193,96,.2);
+}
+[data-theme="light"] .auth-card .form-footer { color: rgba(0,0,0,.4); }
+[data-theme="light"] .auth-card .form-footer a { color: rgba(91,141,239,.9); }
+[data-theme="light"] .auth-card .form-footer a:hover { color: #4a7de8; }
+
+/* Auth page — system theme (follows OS preference) */
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .auth-page {
+        background: linear-gradient(135deg, #f0f4ff 0%, #e8f4f0 50%, #f5f0ff 100%);
+    }
+    :root:not([data-theme="dark"]) .auth-page::before {
+        background: radial-gradient(circle at 25% 25%, rgba(91,141,239,.12), transparent 40%),
+                    radial-gradient(circle at 75% 75%, rgba(65,211,189,.1), transparent 40%),
+                    radial-gradient(circle at 50% 50%, rgba(155,89,182,.06), transparent 50%);
+    }
+    :root:not([data-theme="dark"]) .auth-card {
+        background: rgba(255,255,255,.75);
+        border: 1px solid rgba(255,255,255,.8);
+        box-shadow: 0 8px 40px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.9);
+    }
+    :root:not([data-theme="dark"]) .auth-card .logo p { color: rgba(0,0,0,.45); }
+    :root:not([data-theme="dark"]) .auth-card label { color: rgba(0,0,0,.55); }
+    :root:not([data-theme="dark"]) .auth-card .input {
+        background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.1); color: #1a1a2e;
+    }
+    :root:not([data-theme="dark"]) .auth-card .input:hover { background: rgba(0,0,0,.06); }
+    :root:not([data-theme="dark"]) .auth-card .input::placeholder { color: rgba(0,0,0,.3); }
+    :root:not([data-theme="dark"]) .auth-card .input:focus {
+        border-color: rgba(91,141,239,.6); box-shadow: 0 0 0 3px rgba(91,141,239,.12); background: #fff;
+    }
+    :root:not([data-theme="dark"]) .auth-card .error-msg {
+        background: rgba(250,81,81,.1); color: #dc2626; border-color: rgba(250,81,81,.2);
+    }
+    :root:not([data-theme="dark"]) .auth-card .success-msg {
+        background: rgba(7,193,96,.1); color: #16a34a; border-color: rgba(7,193,96,.2);
+    }
+    :root:not([data-theme="dark"]) .auth-card .form-footer { color: rgba(0,0,0,.4); }
+    :root:not([data-theme="dark"]) .auth-card .form-footer a { color: rgba(91,141,239,.9); }
+    :root:not([data-theme="dark"]) .auth-card .form-footer a:hover { color: #4a7de8; }
 }
 
 /* ============================================

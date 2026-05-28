@@ -10,12 +10,25 @@ async function loadFriendsView(gen) {
     panel.innerHTML = '';
     friendListData = [];
 
+    const content = document.getElementById('contentArea');
+    content.innerHTML = `<div class="im-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="48" height="48" style="opacity:0.25;margin-bottom:12px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <p>选择一个好友查看详情</p>
+    </div>`;
+
     // 新建分组按钮
     const createGroupBtn = document.createElement('button');
     createGroupBtn.className = 'panel-btn';
     createGroupBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新建分组`;
     createGroupBtn.onclick = () => createGroup();
     panel.appendChild(createGroupBtn);
+
+    // 添加好友按钮
+    const addFriendBtn = document.createElement('button');
+    addFriendBtn.className = 'panel-btn';
+    addFriendBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> 添加好友`;
+    addFriendBtn.onclick = () => showAddFriendPanel();
+    panel.appendChild(addFriendBtn);
 
     try {
         const res = await fetch('/api/friends');
@@ -380,10 +393,7 @@ async function loadNotificationsView(gen) {
     notificationsData = [];
 
     const content = document.getElementById('contentArea');
-    content.innerHTML = `<div class="im-chat-header"><span class="ch-title">通知</span></div>
-        <div class="im-empty"><p>选择左侧通知查看详情</p></div>`;
-
-    // 加载好友申请
+    content.innerHTML = `<div class="im-empty"><p>选择左侧通知查看详情</p></div>`;
     try {
         const res = await fetch('/api/friends/requests');
         if (isStale()) return;
@@ -403,7 +413,7 @@ async function loadNotificationsView(gen) {
         }
     } catch (e) {}
 
-    // 加载群聊邀请
+    // 加载群聊邀请（被邀请）
     try {
         const res = await fetch('/api/groups/invitations');
         if (isStale()) return;
@@ -419,10 +429,31 @@ async function loadNotificationsView(gen) {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18" style="color:#fff"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
                 <div class="conv-body"><div class="conv-name">${escapeHtml(groupName)}</div>
-                <div class="conv-preview" style="color:#4a90d9">群聊邀请 · ${escapeHtml(fromName)}</div></div>`;
+                <div class="conv-preview" style="color:#4a90d9">${escapeHtml(fromName)} 邀请你加入</div></div>`;
             div.onclick = () => showNotificationDetail('group-invitation', inv);
             panel.appendChild(div);
             notificationsData.push({ type: 'group-invitation', data: inv, element: div });
+        }
+    } catch (e) {}
+
+    // 加载入群申请（群主收到的）
+    try {
+        const res = await fetch('/api/groups/join-requests');
+        if (isStale()) return;
+        const joinRequests = await parseApiResponse(res);
+        for (const req of (joinRequests || [])) {
+            const groupName = req.groupName || '群聊';
+            const fromName = req.fromUserName || '用户';
+            const div = document.createElement('div');
+            div.className = 'conv-item';
+            div.dataset.senderName = (groupName + ' ' + fromName).toLowerCase();
+            div.dataset.type = 'join-request';
+            div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(fromName)}">${initial(fromName)}</div>
+                <div class="conv-body"><div class="conv-name">${escapeHtml(groupName)}</div>
+                <div class="conv-preview" style="color:var(--warning)">${escapeHtml(fromName)} 申请加入</div></div>`;
+            div.onclick = () => showNotificationDetail('join-request', req);
+            panel.appendChild(div);
+            notificationsData.push({ type: 'join-request', data: req, element: div });
         }
     } catch (e) {}
 
@@ -431,7 +462,10 @@ async function loadNotificationsView(gen) {
     if (navBtn) navBtn.remove();
 
     if (notificationsData.length === 0) {
-        panel.innerHTML = '<div style="padding:16px;color:var(--text-tertiary);font-size:13px;text-align:center">暂无新通知</div>';
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:16px;color:var(--text-tertiary);font-size:13px;text-align:center';
+        empty.textContent = '暂无新通知';
+        panel.appendChild(empty);
     }
 }
 
@@ -451,10 +485,10 @@ function showNotificationDetail(type, data) {
         content.innerHTML = `
             <div class="im-chat-header"><span class="ch-title">好友申请</span></div>
             <div class="im-detail"><div class="im-detail-card">
-                <div style="text-align:center;margin-bottom:20px">
-                    <div style="width:64px;height:64px;border-radius:16px;background:${avatarGradient(name)};display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:#fff;font-weight:700;font-size:22px">${initial(name)}</div>
-                    <div style="font-size:18px;font-weight:600">${escapeHtml(name)}</div>
-                    <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">用户ID: ${r.fromUserId}</div>
+                <div class="profile-avatar-area">
+                    <div class="av" style="background:${avatarGradient(name)};width:64px;height:64px;border-radius:16px">${initial(name)}</div>
+                    <div style="font-size:18px;font-weight:600;margin-top:10px">${escapeHtml(name)}</div>
+                    <div style="font-size:12px;color:var(--text-tertiary)">用户ID: ${r.fromUserId}</div>
                 </div>
                 <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">${escapeHtml(r.message || '请求加你为好友')}</div>
                 <div style="display:flex;gap:8px;justify-content:center">
@@ -464,20 +498,36 @@ function showNotificationDetail(type, data) {
             </div></div>`;
     } else if (type === 'group-invitation') {
         const inv = data;
+        const fromName = inv.fromUserName || '用户';
         content.innerHTML = `
             <div class="im-chat-header"><span class="ch-title">群聊邀请</span></div>
             <div class="im-detail"><div class="im-detail-card">
-                <div style="text-align:center;margin-bottom:20px">
-                    <div style="width:64px;height:64px;border-radius:16px;background:#4a90d9;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+                <div class="profile-avatar-area">
+                    <div class="av" style="background:#4a90d9;width:64px;height:64px;border-radius:16px">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" width="28" height="28"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
-                    <div style="font-size:18px;font-weight:700">${escapeHtml(inv.groupName || '群聊')}</div>
-                    <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">邀请ID: ${inv.id} · 群ID: ${inv.groupId}</div>
+                    <div style="font-size:18px;font-weight:700;margin-top:10px">${escapeHtml(inv.groupName || '群聊')}</div>
                 </div>
-                <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">${escapeHtml(inv.fromUserName || '用户')} (ID: ${inv.fromUserId}) 邀请你加入</div>
+                <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">${escapeHtml(fromName)} 邀请你加入该群聊</div>
                 <div style="display:flex;gap:8px;justify-content:center">
                     <button class="btn btn-primary" onclick="acceptNotifGroupInvitation(${inv.id})">同意</button>
                     <button class="btn btn-danger" onclick="rejectNotifGroupInvitation(${inv.id})">拒绝</button>
+                </div>
+            </div></div>`;
+    } else if (type === 'join-request') {
+        const req = data;
+        const fromName = req.fromUserName || '用户';
+        content.innerHTML = `
+            <div class="im-chat-header"><span class="ch-title">入群申请</span></div>
+            <div class="im-detail"><div class="im-detail-card">
+                <div class="profile-avatar-area">
+                    <div class="av" style="background:${avatarGradient(fromName)};width:64px;height:64px;border-radius:16px">${initial(fromName)}</div>
+                    <div style="font-size:18px;font-weight:600;margin-top:10px">${escapeHtml(fromName)}</div>
+                </div>
+                <div style="text-align:center;font-size:15px;font-weight:600;margin-bottom:20px">${escapeHtml(req.groupName || '群聊')}</div>
+                <div style="display:flex;gap:8px;justify-content:center">
+                    <button class="btn btn-primary" onclick="acceptJoinRequest(${req.id})">同意入群</button>
+                    <button class="btn btn-danger" onclick="rejectJoinRequest(${req.id})">拒绝</button>
                 </div>
             </div></div>`;
     }
@@ -504,5 +554,17 @@ async function acceptNotifGroupInvitation(id) {
 async function rejectNotifGroupInvitation(id) {
     await fetch(`/api/groups/invitations/${id}/reject`, { method: 'POST' });
     showToast('已拒绝邀请');
+    loadNotificationsView(viewGeneration);
+}
+
+async function acceptJoinRequest(id) {
+    await fetch(`/api/groups/join-requests/${id}/accept`, { method: 'POST' });
+    showToast('已同意入群');
+    loadNotificationsView(viewGeneration);
+}
+
+async function rejectJoinRequest(id) {
+    await fetch(`/api/groups/join-requests/${id}/reject`, { method: 'POST' });
+    showToast('已拒绝');
     loadNotificationsView(viewGeneration);
 }

@@ -31,4 +31,8 @@ public interface PrivateMessageRepository extends JpaRepository<PrivateMessage, 
     @Transactional
     @Query("UPDATE PrivateMessage m SET m.status = 2 WHERE m.senderId = ?1 AND m.receiverId = ?2 AND m.status < 2")
     void markAsRead(Long senderId, Long receiverId);
+
+    @Modifying @Transactional
+    @Query("DELETE FROM PrivateMessage m WHERE m.senderId = ?1 OR m.receiverId = ?1")
+    void deleteAllByUserId(Long userId);
 }

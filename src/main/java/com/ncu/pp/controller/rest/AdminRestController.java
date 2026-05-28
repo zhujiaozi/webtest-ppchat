@@ -77,29 +77,7 @@ public class AdminRestController {
 
     @DeleteMapping("/users/{id}")
     public ApiResponse<Void> deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id);
-        return ApiResponse.ok();
-    }
-
-    @PostMapping("/users/{id}/ban")
-    public ApiResponse<Void> banUser(@PathVariable Long id) {
-        User user = userRepository.findById(id).orElse(null);
-        if (user == null) {
-            return ApiResponse.fail(404, "用户不存在");
-        }
-        user.setStatus(-1);
-        userRepository.save(user);
-        return ApiResponse.ok();
-    }
-
-    @PostMapping("/users/{id}/unban")
-    public ApiResponse<Void> unbanUser(@PathVariable Long id) {
-        User user = userRepository.findById(id).orElse(null);
-        if (user == null) {
-            return ApiResponse.fail(404, "用户不存在");
-        }
-        user.setStatus(0);
-        userRepository.save(user);
+        userService.deleteUserAndData(id);
         return ApiResponse.ok();
     }
 

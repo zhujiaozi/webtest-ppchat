@@ -109,7 +109,6 @@ public class GroupRestController {
             item.put("id", inv.getId());
             item.put("groupId", inv.getGroupId());
             item.put("fromUserId", inv.getFromUserId());
-            item.put("toUserId", inv.getToUserId());
             item.put("status", inv.getStatus());
             item.put("createdAt", inv.getCreatedAt());
             User sender = userService.getById(inv.getFromUserId());
@@ -132,6 +131,50 @@ public class GroupRestController {
     public ApiResponse<Void> rejectInvitation(@PathVariable Long id, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         groupService.rejectInvitation(id, user.getId());
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/{id}/request-join")
+    public ApiResponse<Void> requestJoin(@PathVariable Long id, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        GroupChat group = groupService.getGroup(id);
+        if (group == null) return ApiResponse.fail(404, "群聊不存在");
+        if (groupService.isMember(id, user.getId())) return ApiResponse.fail(400, "你已经是群成员");
+        groupService.requestJoinGroup(id, user.getId());
+        return ApiResponse.ok();
+    }
+
+    @GetMapping("/join-requests")
+    public ApiResponse<List<Map<String, Object>>> getJoinRequests(HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        List<GroupInvitation> requests = groupService.getPendingJoinRequests(user.getId());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (GroupInvitation inv : requests) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", inv.getId());
+            item.put("groupId", inv.getGroupId());
+            item.put("fromUserId", inv.getFromUserId());
+            item.put("createdAt", inv.getCreatedAt());
+            User sender = userService.getById(inv.getFromUserId());
+            item.put("fromUserName", sender != null ? sender.getDisplayName() : "用户");
+            GroupChat group = groupService.getGroup(inv.getGroupId());
+            item.put("groupName", group != null ? group.getName() : "群聊");
+            result.add(item);
+        }
+        return ApiResponse.ok(result);
+    }
+
+    @PostMapping("/join-requests/{id}/accept")
+    public ApiResponse<Void> acceptJoinRequest(@PathVariable Long id, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        groupService.acceptJoinRequest(id, user.getId());
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/join-requests/{id}/reject")
+    public ApiResponse<Void> rejectJoinRequest(@PathVariable Long id, HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        groupService.rejectJoinRequest(id, user.getId());
         return ApiResponse.ok();
     }
 

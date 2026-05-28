@@ -8,17 +8,13 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f3f4f6;color:#1f2937;font-size:14px}
 
-        /* Layout */
         .admin-layout{display:flex;min-height:100vh}
         .sidebar{width:240px;background:#111827;color:#9ca3af;display:flex;flex-direction:column;flex-shrink:0}
         .sidebar .brand{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.06)}
         .sidebar .brand h2{color:#fff;font-size:18px;font-weight:700;letter-spacing:-.5px}
         .sidebar .brand small{color:rgba(255,255,255,.35);font-size:11px;letter-spacing:1px}
         .sidebar nav{flex:1;padding:8px 0;overflow-y:auto}
-        .sidebar nav a{
-            display:flex;align-items:center;gap:10px;padding:10px 24px;color:#9ca3af;text-decoration:none;
-            font-size:13px;transition:all .15s;cursor:pointer;border-left:3px solid transparent;
-        }
+        .sidebar nav a{display:flex;align-items:center;gap:10px;padding:10px 24px;color:#9ca3af;text-decoration:none;font-size:13px;transition:all .15s;cursor:pointer;border-left:3px solid transparent}
         .sidebar nav a:hover{background:rgba(255,255,255,.04);color:#e5e7eb}
         .sidebar nav a.active{background:rgba(99,102,241,.1);color:#818cf8;border-left-color:#6366f1}
         .sidebar .logout{padding:16px 24px;border-top:1px solid rgba(255,255,255,.06)}
@@ -26,15 +22,18 @@
         .sidebar .logout a:hover{color:#fca5a5}
 
         .main{flex:1;padding:28px 32px;overflow-y:auto;background:#f3f4f6}
-        .main h2{margin-bottom:24px;font-size:20px;font-weight:700;color:#111827;letter-spacing:-.3px}
+        .main h2{margin-bottom:20px;font-size:20px;font-weight:700;color:#111827;letter-spacing:-.3px}
+
+        /* Search bar */
+        .search-bar{display:flex;gap:8px;margin-bottom:16px}
+        .search-bar input{flex:1;padding:8px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;transition:border-color .2s;background:#fff}
+        .search-bar input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.08)}
+        .search-bar input::placeholder{color:#9ca3af}
+        .search-bar .result-count{font-size:12px;color:#6b7280;align-self:center;white-space:nowrap}
 
         /* Dashboard */
         .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px}
-        .stat-card{
-            background:#fff;border-radius:12px;padding:20px 24px;
-            box-shadow:0 1px 3px rgba(0,0,0,.04);border:1px solid #e5e7eb;
-            transition:all .2s;
-        }
+        .stat-card{background:#fff;border-radius:12px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.04);border:1px solid #e5e7eb;transition:all .2s}
         .stat-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
         .stat-card .label{font-size:12px;color:#6b7280;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
         .stat-card .value{font-size:28px;font-weight:800;color:#111827}
@@ -46,6 +45,7 @@
         tbody td{padding:12px 16px;border-bottom:1px solid #f3f4f6;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         tbody tr:hover{background:#f9fafb}
         tbody tr:last-child td{border-bottom:none}
+        tbody tr.hidden-row{display:none}
 
         /* Buttons */
         .btn{padding:5px 12px;border:none;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;font-weight:500}
@@ -62,7 +62,6 @@
         /* Status badges */
         .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
         .badge-ok{background:#dcfce7;color:#16a34a}
-        .badge-banned{background:#fee2e2;color:#dc2626}
         .badge-pending{background:#fef3c7;color:#d97706}
 
         /* Modal */
@@ -76,10 +75,7 @@
         .modal-actions{display:flex;gap:8px;justify-content:flex-end}
         .modal-actions .btn{padding:8px 20px;font-size:13px}
 
-        /* Empty state */
         .empty{text-align:center;padding:48px;color:#9ca3af}
-
-        /* View sections */
         .view{display:none}
         .view.active{display:block;animation:fadeIn .2s ease}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -148,39 +144,48 @@
         </div>
         <div id="view-users" class="view">
             <h2>用户管理</h2>
+            <div class="search-bar"><input type="text" id="search-users" placeholder="搜索用户名、昵称、ID..." oninput="filterTable('users')"><span class="result-count" id="count-users"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>用户名</th><th>昵称</th><th>状态</th><th>登录次数</th><th>最后登录</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="tbody-users"></tbody></table></div>
         </div>
         <div id="view-friends" class="view">
             <h2>好友关系</h2>
+            <div class="search-bar"><input type="text" id="search-friends" placeholder="搜索用户ID、好友ID、备注..." oninput="filterTable('friends')"><span class="result-count" id="count-friends"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>用户ID</th><th>好友ID</th><th>分组ID</th><th>备注</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="tbody-friends"></tbody></table></div>
         </div>
         <div id="view-friend-groups" class="view">
             <h2>好友分组</h2>
+            <div class="search-bar"><input type="text" id="search-friend-groups" placeholder="搜索用户ID、分组名..." oninput="filterTable('friend-groups')"><span class="result-count" id="count-friend-groups"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>用户ID</th><th>分组名</th><th>排序</th><th>操作</th></tr></thead><tbody id="tbody-friend-groups"></tbody></table></div>
         </div>
         <div id="view-friend-requests" class="view">
             <h2>好友请求</h2>
+            <div class="search-bar"><input type="text" id="search-friend-requests" placeholder="搜索发送者ID、接收者ID、留言..." oninput="filterTable('friend-requests')"><span class="result-count" id="count-friend-requests"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>发送者ID</th><th>接收者ID</th><th>留言</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-friend-requests"></tbody></table></div>
         </div>
         <div id="view-private-messages" class="view">
             <h2>私聊消息</h2>
+            <div class="search-bar"><input type="text" id="search-private-messages" placeholder="搜索ID、发送者ID、接收者ID、内容..." oninput="filterTable('private-messages')"><span class="result-count" id="count-private-messages"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>发送者ID</th><th>接收者ID</th><th>内容</th><th>类型</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-private-messages"></tbody></table></div>
         </div>
         <div id="view-group-chats" class="view">
             <h2>群聊管理</h2>
+            <div class="search-bar"><input type="text" id="search-group-chats" placeholder="搜索ID、群名、群主ID、公告..." oninput="filterTable('group-chats')"><span class="result-count" id="count-group-chats"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>群名</th><th>群主ID</th><th>公告</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="tbody-group-chats"></tbody></table></div>
         </div>
         <div id="view-group-members" class="view">
             <h2>群成员</h2>
+            <div class="search-bar"><input type="text" id="search-group-members" placeholder="搜索ID、群ID、用户ID..." oninput="filterTable('group-members')"><span class="result-count" id="count-group-members"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>群ID</th><th>用户ID</th><th>角色</th><th>加入时间</th><th>操作</th></tr></thead><tbody id="tbody-group-members"></tbody></table></div>
         </div>
         <div id="view-group-messages" class="view">
             <h2>群消息</h2>
+            <div class="search-bar"><input type="text" id="search-group-messages" placeholder="搜索ID、群ID、发送者ID、内容..." oninput="filterTable('group-messages')"><span class="result-count" id="count-group-messages"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>群ID</th><th>发送者ID</th><th>内容</th><th>类型</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-group-messages"></tbody></table></div>
         </div>
         <div id="view-group-invitations" class="view">
             <h2>群邀请</h2>
-            <div class="table-container"><table><thead><tr><th>ID</th><th>群ID</th><th>邀请者ID</th><th>被邀请者ID</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-group-invitations"></tbody></table></div>
+            <div class="search-bar"><input type="text" id="search-group-invitations" placeholder="搜索ID、群ID、邀请者ID、被邀请者ID..." oninput="filterTable('group-invitations')"><span class="result-count" id="count-group-invitations"></span></div>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>群ID</th><th>邀请者ID</th><th>被邀请者ID</th><th>类型</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-group-invitations"></tbody></table></div>
         </div>
     </div>
 </div>
@@ -207,6 +212,9 @@ function switchView(view) {
     document.getElementById('view-' + view).classList.add('active');
     document.querySelectorAll('#nav a').forEach(a => a.classList.remove('active'));
     document.querySelector('#nav a[data-view="' + view + '"]').classList.add('active');
+    // 清空搜索框
+    const searchInput = document.getElementById('search-' + view);
+    if (searchInput) searchInput.value = '';
     loadView(view);
 }
 
@@ -221,14 +229,14 @@ async function loadView(view) {
     switch (view) {
         case 'dashboard': return loadDashboard();
         case 'users': return loadUsers();
-        case 'friends': return loadGeneric('/friends', 'tbody-friends', renderFriend);
-        case 'friend-groups': return loadGeneric('/friend-groups', 'tbody-friend-groups', renderFriendGroup);
-        case 'friend-requests': return loadGeneric('/friend-requests', 'tbody-friend-requests', renderFriendRequest);
-        case 'private-messages': return loadGeneric('/private-messages', 'tbody-private-messages', renderPrivateMessage);
-        case 'group-chats': return loadGeneric('/group-chats', 'tbody-group-chats', renderGroupChat);
-        case 'group-members': return loadGeneric('/group-members', 'tbody-group-members', renderGroupMember);
-        case 'group-messages': return loadGeneric('/group-messages', 'tbody-group-messages', renderGroupMessage);
-        case 'group-invitations': return loadGeneric('/group-invitations', 'tbody-group-invitations', renderGroupInvitation);
+        case 'friends': return loadGeneric('/friends', 'tbody-friends', renderFriend, 'friends');
+        case 'friend-groups': return loadGeneric('/friend-groups', 'tbody-friend-groups', renderFriendGroup, 'friend-groups');
+        case 'friend-requests': return loadGeneric('/friend-requests', 'tbody-friend-requests', renderFriendRequest, 'friend-requests');
+        case 'private-messages': return loadGeneric('/private-messages', 'tbody-private-messages', renderPrivateMessage, 'private-messages');
+        case 'group-chats': return loadGeneric('/group-chats', 'tbody-group-chats', renderGroupChat, 'group-chats');
+        case 'group-members': return loadGeneric('/group-members', 'tbody-group-members', renderGroupMember, 'group-members');
+        case 'group-messages': return loadGeneric('/group-messages', 'tbody-group-messages', renderGroupMessage, 'group-messages');
+        case 'group-invitations': return loadGeneric('/group-invitations', 'tbody-group-invitations', renderGroupInvitation, 'group-invitations');
     }
 }
 
@@ -249,25 +257,19 @@ async function loadDashboard() {
 async function loadUsers() {
     const res = await api('GET', '/users');
     const tbody = document.getElementById('tbody-users');
-    if (res.code !== 200 || !res.data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无数据</td></tr>'; return; }
+    if (res.code !== 200 || !res.data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无数据</td></tr>'; updateCount('users', 0); return; }
     tbody.innerHTML = res.data.map(u => {
-        const badge = u.status === -1
-            ? '<span class="badge badge-banned">已封禁</span>'
-            : '<span class="badge badge-ok">正常</span>';
-        const banBtn = u.status === -1
-            ? '<button class="btn btn-success btn-sm" onclick="unbanUser(' + u.id + ')">解封</button>'
-            : '<button class="btn btn-warning btn-sm" onclick="banUser(' + u.id + ')">封禁</button>';
-        return '<tr>' +
+        const badge = u.status === -1 ? '<span class="badge" style="background:#fee2e2;color:#dc2626">已封禁</span>' : '<span class="badge badge-ok">正常</span>';
+        return '<tr data-search="' + esc((u.id + ' ' + u.username + ' ' + (u.nickname||'')).toLowerCase()) + '">' +
             '<td>' + u.id + '</td><td>' + esc(u.username) + '</td><td>' + esc(u.nickname || '') + '</td>' +
             '<td>' + badge + '</td><td>' + (u.loginCount || 0) + '</td>' +
             '<td>' + fmtDate(u.lastLogin) + '</td><td>' + fmtDate(u.createdAt) + '</td>' +
-            '<td>' + banBtn + ' <button class="btn btn-primary btn-sm" onclick="showResetModal(' + u.id + ')">重置密码</button> <button class="btn btn-danger btn-sm" onclick="deleteItem(\'/users/' + u.id + '\',\'users\')">删除</button></td>' +
-            '</tr>';
+            '<td><button class="btn btn-primary btn-sm" onclick="showResetModal(' + u.id + ')">重置密码</button> <button class="btn btn-danger btn-sm" onclick="deleteItem(\'/users/' + u.id + '\',\'users\')">删除</button></td></tr>';
     }).join('');
+    updateCount('users', res.data.length);
 }
 
-async function banUser(id) { if (!confirm('确定要封禁该用户？')) return; await api('POST', '/users/' + id + '/ban'); loadUsers(); }
-async function unbanUser(id) { await api('POST', '/users/' + id + '/unban'); loadUsers(); }
+
 
 function showResetModal(id) {
     document.getElementById('reset-user-id').value = id;
@@ -283,13 +285,45 @@ async function doResetPassword() {
     closeModal(); alert('密码已重置');
 }
 
-async function loadGeneric(path, tbodyId, renderFn) {
+async function loadGeneric(path, tbodyId, renderFn, viewName) {
     const res = await api('GET', path);
     const tbody = document.getElementById(tbodyId);
-    if (res.code !== 200 || !res.data.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty">暂无数据</td></tr>'; return; }
-    tbody.innerHTML = res.data.map(item => renderFn(item)).join('');
+    if (res.code !== 200 || !res.data.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty">暂无数据</td></tr>'; updateCount(viewName, 0); return; }
+    tbody.innerHTML = res.data.map(item => {
+        const row = renderFn(item);
+        // 在 tr 标签中注入 data-search 属性
+        return row.replace('<tr>', '<tr data-search="' + esc(getSearchText(item).toLowerCase()) + '">');
+    }).join('');
+    updateCount(viewName, res.data.length);
 }
 
+function getSearchText(item) {
+    return Object.values(item).filter(v => v !== null && v !== undefined).join(' ');
+}
+
+// 搜索过滤
+function filterTable(viewName) {
+    const input = document.getElementById('search-' + viewName);
+    if (!input) return;
+    const kw = input.value.trim().toLowerCase();
+    const tbody = document.getElementById('tbody-' + viewName);
+    if (!tbody) return;
+    let visible = 0;
+    tbody.querySelectorAll('tr').forEach(tr => {
+        const text = tr.dataset.search || '';
+        const show = !kw || text.includes(kw);
+        tr.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    updateCount(viewName, visible);
+}
+
+function updateCount(name, count) {
+    const el = document.getElementById('count-' + name);
+    if (el) el.textContent = count + ' 条记录';
+}
+
+// Renderers
 function renderFriend(f) { return '<tr><td>'+f.id+'</td><td>'+f.userId+'</td><td>'+f.friendId+'</td><td>'+(f.groupId||'-')+'</td><td>'+esc(f.remark||'')+'</td><td>'+fmtDate(f.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/friends/'+f.id+'\',\'friends\')">删除</button></td></tr>'; }
 function renderFriendGroup(g) { return '<tr><td>'+g.id+'</td><td>'+g.userId+'</td><td>'+esc(g.name)+'</td><td>'+g.sortOrder+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/friend-groups/'+g.id+'\',\'friend-groups\')">删除</button></td></tr>'; }
 function renderFriendRequest(r) { const s={0:'待处理',1:'已接受',2:'已拒绝'}; return '<tr><td>'+r.id+'</td><td>'+r.fromUserId+'</td><td>'+r.toUserId+'</td><td>'+esc(r.message||'')+'</td><td>'+(s[r.status]||r.status)+'</td><td>'+fmtDate(r.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/friend-requests/'+r.id+'\',\'friend-requests\')">删除</button></td></tr>'; }
@@ -297,7 +331,7 @@ function renderPrivateMessage(m) { const t={0:'文本',1:'语音'},s={0:'未读'
 function renderGroupChat(g) { return '<tr><td>'+g.id+'</td><td>'+esc(g.name)+'</td><td>'+g.ownerId+'</td><td>'+esc((g.notice||'').substring(0,40))+'</td><td>'+fmtDate(g.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-chats/'+g.id+'\',\'group-chats\')">删除</button></td></tr>'; }
 function renderGroupMember(m) { const r={0:'成员',1:'管理员',2:'群主'}; return '<tr><td>'+m.id+'</td><td>'+m.groupId+'</td><td>'+m.userId+'</td><td>'+(r[m.role]||m.role)+'</td><td>'+fmtDate(m.joinedAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-members/'+m.id+'\',\'group-members\')">删除</button></td></tr>'; }
 function renderGroupMessage(m) { const t={0:'文本',1:'语音'}; const c=m.msgType===1?'[语音消息]':(m.content||'').substring(0,50); return '<tr><td>'+m.id+'</td><td>'+m.groupId+'</td><td>'+m.senderId+'</td><td>'+esc(c)+'</td><td>'+(t[m.msgType]||m.msgType)+'</td><td>'+fmtDate(m.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-messages/'+m.id+'\',\'group-messages\')">删除</button></td></tr>'; }
-function renderGroupInvitation(i) { const s={0:'待处理',1:'已接受',2:'已拒绝'}; return '<tr><td>'+i.id+'</td><td>'+i.groupId+'</td><td>'+i.fromUserId+'</td><td>'+i.toUserId+'</td><td>'+(s[i.status]||i.status)+'</td><td>'+fmtDate(i.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-invitations/'+i.id+'\',\'group-invitations\')">删除</button></td></tr>'; }
+function renderGroupInvitation(i) { const s={0:'待处理',1:'已接受',2:'已拒绝'}; const tp={0:'邀请',1:'申请'}; return '<tr><td>'+i.id+'</td><td>'+i.groupId+'</td><td>'+i.fromUserId+'</td><td>'+i.toUserId+'</td><td>'+(tp[i.type]||i.type)+'</td><td>'+(s[i.status]||i.status)+'</td><td>'+fmtDate(i.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-invitations/'+i.id+'\',\'group-invitations\')">删除</button></td></tr>'; }
 
 async function deleteItem(path, viewName) {
     if (!confirm('确定要删除？此操作不可恢复。')) return;

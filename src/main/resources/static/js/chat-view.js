@@ -6,6 +6,16 @@ async function loadChatView(gen) {
     panel.innerHTML = '';
     chatListData = [];
 
+    const content = document.getElementById('contentArea');
+    content.innerHTML = `<div class="im-empty">
+        <svg viewBox="0 0 120 120" width="100" height="100" style="opacity:0.35;margin-bottom:16px">
+            <defs><linearGradient id="emptyGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#5b8def"/><stop offset="100%" style="stop-color:#41d3bd"/></linearGradient></defs>
+            <rect x="15" y="25" width="90" height="65" rx="12" fill="url(#emptyGrad)" opacity="0.15"/>
+            <path d="M30 45h60M30 58h40M30 71h50" stroke="url(#emptyGrad)" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+        </svg>
+        <p style="font-size:14px;font-weight:500">选择一个会话开始聊天</p>
+    </div>`;
+
     // 加载好友列表作为会话
     try {
         const res = await fetch('/api/friends');

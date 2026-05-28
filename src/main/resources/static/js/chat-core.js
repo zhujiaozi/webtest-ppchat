@@ -81,6 +81,7 @@ function bindGlobalEvents() {
 
 function switchView(view) {
     currentView = view;
+    currentChat = null;
     const gen = ++viewGeneration;
     document.querySelectorAll('.im-nav-btn[data-view]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.view === view);
@@ -90,6 +91,11 @@ function switchView(view) {
         searchInput.value = '';
         searchInput.placeholder = { chat: '搜索会话...', friends: '搜索好友...', groups: '搜索群聊...', notifications: '搜索通知...', profile: '' }[view] || '搜索...';
     }
+    // 清空右栏 + 关闭抽屉
+    const content = document.getElementById('contentArea');
+    if (content) content.innerHTML = '';
+    const drawer = document.getElementById('infoDrawer');
+    if (drawer) drawer.classList.add('hidden');
     switch (view) {
         case 'chat': loadChatView(gen); break;
         case 'friends': loadFriendsView(gen); break;

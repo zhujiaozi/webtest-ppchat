@@ -11,6 +11,13 @@ async function loadGroupsView(gen) {
     createBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 创建群聊`;
     createBtn.onclick = () => showCreateGroup();
     panel.appendChild(createBtn);
+
+    // 加入群聊按钮
+    const joinBtn = document.createElement('button');
+    joinBtn.className = 'panel-btn';
+    joinBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 加入群聊`;
+    joinBtn.onclick = () => showJoinGroup();
+    panel.appendChild(joinBtn);
     try {
         const res = await fetch('/api/groups');
         if (isStale()) return;
@@ -68,19 +75,19 @@ async function showGroupDetail(groupId) {
         const isOwner = data.isOwner;
         const detail = content.querySelector('.im-detail-card');
         detail.innerHTML = `
-            <div style="text-align:center;margin-bottom:20px">
-                <div style="width:64px;height:64px;border-radius:16px;background:#4a90d9;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+            <div class="profile-avatar-area">
+                <div class="av" style="background:#4a90d9;width:64px;height:64px;border-radius:16px">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" width="28" height="28"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                 </div>
-                <div style="font-size:18px;font-weight:700">${escapeHtml(group.name)}</div>
-                <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">群ID: ${group.id}</div>
+                <div style="font-size:18px;font-weight:700;margin-top:10px">${escapeHtml(group.name)}</div>
+                <div style="font-size:12px;color:var(--text-tertiary)">群ID: ${group.id}</div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-                <button class="btn btn-primary btn-sm" onclick="openChat(${groupId},'${escapeHtml(group.name)}',true);switchView('chat')">进入聊天</button>
-                ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="showInviteMembers(${groupId})">邀请成员</button>` : ''}
-                <button class="btn btn-ghost btn-sm" onclick="exportGroupChat(${groupId})">导出记录</button>
-                <button class="btn btn-ghost btn-sm" onclick="leaveGroup(${groupId})">退出群聊</button>
-                ${isOwner ? `<button class="btn btn-danger btn-sm" onclick="dissolveGroup(${groupId})">解散群聊</button>` : ''}
+            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+                <button class="btn btn-primary" onclick="openChat(${groupId},'${escapeHtml(group.name).replace(/'/g, "\\'")}',true);switchView('chat')">进入聊天</button>
+                ${isOwner ? `<button class="btn btn-ghost" onclick="showInviteMembers(${groupId})">邀请成员</button>` : ''}
+                <button class="btn btn-ghost" onclick="exportGroupChat(${groupId})">导出记录</button>
+                <button class="btn btn-ghost" onclick="leaveGroup(${groupId})">退出群聊</button>
+                ${isOwner ? `<button class="btn btn-danger" onclick="dissolveGroup(${groupId})">解散群聊</button>` : ''}
             </div>
             <div style="margin-bottom:16px">
                 <label style="font-size:12px;color:var(--text-tertiary);display:block;margin-bottom:4px">群公告</label>
@@ -229,20 +236,18 @@ async function loadGroupInvitationsView(gen) {
 }
 
 function showInvitationDetail(inv) {
+    const fromName = inv.fromUserName || '用户';
     const content = document.getElementById('contentArea');
     content.innerHTML = `
         <div class="im-chat-header"><span class="ch-title">群聊邀请</span></div>
         <div class="im-detail"><div class="im-detail-card">
-            <div style="text-align:center;margin-bottom:20px">
-                <div style="width:64px;height:64px;border-radius:16px;background:#4a90d9;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+            <div class="profile-avatar-area">
+                <div class="av" style="background:#4a90d9;width:64px;height:64px;border-radius:16px">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" width="28" height="28"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                 </div>
-                <div style="font-size:18px;font-weight:700">${escapeHtml(inv.groupName || '群聊')}</div>
-                <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">邀请ID: ${inv.id} · 群ID: ${inv.groupId}</div>
+                <div style="font-size:18px;font-weight:700;margin-top:10px">${escapeHtml(inv.groupName || '群聊')}</div>
             </div>
-            <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">
-                ${escapeHtml(inv.fromUserName || '用户')} (ID: ${inv.fromUserId}) 邀请你加入此群
-            </div>
+            <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">${escapeHtml(fromName)} 邀请你加入该群聊</div>
             <div style="display:flex;gap:8px;justify-content:center">
                 <button class="btn btn-primary" onclick="acceptGroupInvitation(${inv.id})">同意</button>
                 <button class="btn btn-danger" onclick="rejectGroupInvitation(${inv.id})">拒绝</button>
@@ -273,7 +278,7 @@ async function showCreateGroup() {
     } catch (e) {}
     content.innerHTML = `<div class="im-chat-header"><span class="ch-title">创建群聊</span></div>
         <div class="im-detail"><div class="im-detail-card">
-            <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">创建群聊</h2>
+            <h2>创建群聊</h2>
             <div class="form-group"><label>群名称</label><input type="text" class="input" id="newGroupName" placeholder="请输入群名称" required></div>
             <div class="form-group"><label>邀请好友</label>
                 ${friends.length === 0 ? '<p style="color:var(--text-tertiary);font-size:13px">暂无好友</p>' :
@@ -297,4 +302,33 @@ async function doCreateGroup() {
     const group = await parseApiResponse(res);
     showToast('群聊创建成功');
     switchView('groups');
+}
+
+function showJoinGroup() {
+    const content = document.getElementById('contentArea');
+    content.innerHTML = `<div class="im-chat-header"><span class="ch-title">加入群聊</span></div>
+        <div class="im-detail"><div class="im-detail-card">
+            <h2>申请加入群聊</h2>
+            <div class="form-group"><label>群聊 ID</label>
+                <div style="display:flex;gap:8px">
+                    <input type="number" class="input" id="joinGroupId" placeholder="输入群聊 ID" style="flex:1">
+                    <button class="btn btn-primary" onclick="doRequestJoinGroup()">申请加入</button>
+                </div>
+            </div>
+            <div id="joinGroupResult"></div>
+        </div></div>`;
+}
+
+async function doRequestJoinGroup() {
+    const groupId = document.getElementById('joinGroupId').value.trim();
+    if (!groupId) { showToast('请输入群聊 ID', 'error'); return; }
+    const result = document.getElementById('joinGroupResult');
+    try {
+        const res = await fetch(`/api/groups/${groupId}/request-join`, { method: 'POST' });
+        const data = await parseApiResponse(res);
+        result.innerHTML = '<p style="color:var(--accent);font-size:13px;margin-top:12px">申请已发送，请等待群主审核</p>';
+        showToast('入群申请已发送');
+    } catch (e) {
+        result.innerHTML = `<p style="color:var(--danger);font-size:13px;margin-top:12px">${e.message || '申请失败'}</p>`;
+    }
 }
