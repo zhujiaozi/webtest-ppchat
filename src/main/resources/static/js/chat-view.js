@@ -1,8 +1,11 @@
 /** PP Chat — Chat View */
+
 async function loadChatView(gen) {
     const isStale = () => gen !== viewGeneration;
     const panel = document.getElementById('panelList');
     panel.innerHTML = '';
+    chatListData = [];
+
     // 加载好友列表作为会话
     try {
         const res = await fetch('/api/friends');
@@ -10,6 +13,7 @@ async function loadChatView(gen) {
         const data = await parseApiResponse(res);
         friendsData = data;
         const friends = data.friends || [];
+
         // 批量获取未读消息数
         let unreadMap = {};
         try {
@@ -17,21 +21,27 @@ async function loadChatView(gen) {
             if (isStale()) return;
             unreadMap = await parseApiResponse(unreadRes) || {};
         } catch (e) {}
+
         for (const f of friends) {
             const name = f.remark || f.friendName || ('好友 #' + f.friendId);
             const unreadCount = unreadMap[f.friendId] || 0;
+            const lastMsg = unreadCount > 0 ? `${unreadCount} 条未读消息` : '点击开始聊天';
             const div = document.createElement('div');
             div.className = 'conv-item' + (currentChat && !currentChat.isGroup && currentChat.id == f.friendId ? ' active' : '');
+            div.dataset.chatName = name;
             div.dataset.friendId = f.friendId;
             div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(name)}">${initial(name)}</div>
                 <div class="conv-body"><div class="conv-name">${escapeHtml(name)}</div>
-                <div class="conv-preview">点击开始聊天</div></div>
+                <div class="conv-preview">${escapeHtml(lastMsg)}</div></div>
                 ${unreadCount > 0 ? `<div class="conv-badge">${unreadCount}</div>` : ''}`;
             div.onclick = () => openChat(f.friendId, name, false);
             panel.appendChild(div);
+
+            chatListData.push({ id: f.friendId, name, isGroup: false, unread: unreadCount, element: div });
         }
     } catch (e) { console.error('加载好友失败', e); }
     if (isStale()) return;
+
     // 加载群聊
     try {
         const res = await fetch('/api/groups');
@@ -39,20 +49,33 @@ async function loadChatView(gen) {
         const groups = await parseApiResponse(res);
         groupsData = groups;
         for (const g of groups) {
+            const noticePreview = g.notice || '暂无公告';
             const div = document.createElement('div');
             div.className = 'conv-item' + (currentChat && currentChat.isGroup && currentChat.id == g.id ? ' active' : '');
+            div.dataset.chatName = g.name;
             div.dataset.groupId = g.id;
             div.innerHTML = `<div class="conv-avatar-ph" style="background:#4a90d9">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:#fff"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
             </div>
                 <div class="conv-body"><div class="conv-name">${escapeHtml(g.name)}</div>
-                <div class="conv-preview">${escapeHtml(g.notice || '暂无公告')}</div></div>`;
+                <div class="conv-preview">${escapeHtml(noticePreview)}</div></div>`;
             div.onclick = () => openChat(g.id, g.name, true);
             panel.appendChild(div);
+
+            chatListData.push({ id: g.id, name: g.name, isGroup: true, unread: 0, element: div });
         }
     } catch (e) { console.error('加载群聊失败', e); }
+
     // 检查好友申请数量，显示红点
     checkFriendRequestBadge();
+}
+
+function filterChatList(keyword) {
+    const kw = keyword.toLowerCase();
+    document.querySelectorAll('#panelList .conv-item').forEach(el => {
+        const name = (el.dataset.chatName || '').toLowerCase();
+        el.style.display = !kw || name.includes(kw) ? '' : 'none';
+    });
 }
 
 async function openChat(id, name, isGroup) {
@@ -69,7 +92,6 @@ async function _openChatImpl(id, name, isGroup) {
     currentChat = { id, name, isGroup };
     // 高亮
     document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
-    // 找到对应的 conv-item 并高亮
     const items = document.querySelectorAll('.conv-item');
     items.forEach(el => {
         const body = el.querySelector('.conv-name');
@@ -127,7 +149,7 @@ async function _openChatImpl(id, name, isGroup) {
         console.error('[openChat] imMessages element not found');
         return;
     }
-    box.innerHTML = ''; // 清空旧消息
+    box.innerHTML = '';
     if (!isGroup) {
         try {
             const res = await fetch(`/api/chat/private/${id}`);
@@ -152,7 +174,6 @@ async function _openChatImpl(id, name, isGroup) {
         if (!groupSubscriptions[id] && stompClient && wsConnected) {
             stompClient.subscribe(`/topic/group/${id}`, (msg) => {
                 const message = JSON.parse(msg.body);
-                // 过滤自己发送的消息（避免重复显示）
                 if (message.senderId == userId) return;
                 if (currentChat && currentChat.isGroup && currentChat.id == id) {
                     appendChatMessage(message);
@@ -203,8 +224,6 @@ function markMessageFailed(msgId) {
 }
 
 function playAudio(src) { new Audio(src).play(); }
-
-// ========== 信息抽屉 ==========
 
 function searchChatHistory() {
     if (!currentChat) return;
@@ -264,7 +283,6 @@ function initVoiceBtn() {
                 reader.onloadend = () => {
                     if (!currentChat) return;
                     const msgId = 'voice-' + Date.now();
-                    // 立即显示语音消息（乐观更新，带发送中状态）
                     const msgEl = appendChatMessage({
                         senderId: userId, sender: userName,
                         content: `[语音消息 ${duration}s]`,
@@ -284,7 +302,6 @@ function initVoiceBtn() {
                                 isGroup: currentChat.isGroup
                             })
                         );
-                        // 5秒后假设发送成功
                         setTimeout(() => {
                             const el = document.getElementById(msgId);
                             if (el) {
@@ -333,29 +350,3 @@ function initVoiceBtn() {
         }
     });
 }
-
-// 搜索用户（聊天视图）
-
-async function searchUsersForChat(keyword) {
-    const panel = document.getElementById('panelList');
-    panel.innerHTML = '';
-    try {
-        const res = await fetch(`/api/friends/search-friends?keyword=${encodeURIComponent(keyword)}`);
-        const users = await parseApiResponse(res);
-        users.forEach(u => {
-            const name = u.nickname || u.username;
-            const div = document.createElement('div');
-            div.className = 'conv-item';
-            div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(name)}">${initial(name)}</div>
-                <div class="conv-body"><div class="conv-name">${escapeHtml(name)}</div>
-                <div class="conv-preview">@${escapeHtml(u.username)}</div></div>`;
-            div.onclick = () => openChat(u.id, name, false);
-            panel.appendChild(div);
-        });
-    } catch (e) { console.error(e); }
-}
-
-// ============================================================
-//  好友视图
-// ============================================================
-

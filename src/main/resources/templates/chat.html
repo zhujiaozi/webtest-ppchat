@@ -37,8 +37,8 @@
         .im-sidebar {
             width: 72px; flex-shrink: 0;
             display: flex; flex-direction: column; align-items: center;
-            padding: 14px 0 12px; background: linear-gradient(180deg, rgba(24,34,56,.92), rgba(19,26,42,.96));
-            border-right: 1px solid rgba(255,255,255,.06);
+            padding: 14px 0 12px; background: var(--bg-nav);
+            border-right: 1px solid var(--border-light);
             box-shadow: inset -1px 0 0 rgba(255,255,255,.03);
             backdrop-filter: blur(18px);
             -webkit-app-region: drag;
@@ -46,7 +46,7 @@
         .im-sidebar .im-avatar {
             width: 40px; height: 40px; border-radius: 12px;
             object-fit: cover; display:block;
-            border: 2px solid rgba(255,255,255,.12); transition: all .22s ease;
+            border: 2px solid var(--border-light); transition: all .22s ease;
         }
         .im-sidebar .im-avatar:hover { border-color: rgba(255,255,255,.28); transform: translateY(-1px); }
         .im-sidebar .im-avatar-ph {
@@ -59,19 +59,19 @@
             border-radius: 16px; display:flex; align-items:center; justify-content:center;
             transition: all .22s ease; -webkit-app-region: no-drag;
         }
-        .im-user-entry:hover { background: rgba(255,255,255,.08); transform: translateY(-1px); }
+        .im-user-entry:hover { background: var(--bg-nav-hover); transform: translateY(-1px); }
         .im-sidebar .im-nav { display: flex; flex-direction: column; gap: 8px; flex: 1; margin-top: 10px; }
         .im-sidebar .im-nav-btn {
             width: 52px; height: 52px; border: none; background: transparent;
             border-radius: 16px; cursor: pointer;
-            color: rgba(232,238,255,.72); transition: all 0.22s ease; position: relative;
+            color: var(--text-nav); transition: all 0.22s ease; position: relative;
             display: flex; align-items: center; justify-content: center;
             -webkit-app-region: no-drag;
         }
-        .im-sidebar .im-nav-btn:hover { background: rgba(255,255,255,.08); color:#fff; transform: translateY(-1px) scale(1.02); }
+        .im-sidebar .im-nav-btn:hover { background: var(--bg-nav-hover); color: var(--text-nav-active); transform: translateY(-1px) scale(1.02); }
         .im-sidebar .im-nav-btn.active {
             background: linear-gradient(135deg, rgba(91,141,239,.92), rgba(108,167,255,.82));
-            color: #fff; box-shadow: 0 10px 24px rgba(91,141,239,.32);
+            color: var(--text-nav-active); box-shadow: 0 10px 24px rgba(91,141,239,.32);
         }
         .im-sidebar .im-bottom { margin-top: auto; display: flex; flex-direction: column; gap: 6px; align-items: center; }
         .im-sidebar .im-bottom .im-nav-btn { width: 44px; height: 44px; border-radius: 14px; }
@@ -477,13 +477,13 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </button>
             <button class="im-nav-btn" data-view="friends" title="好友列表" onclick="switchView('friends')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </button>
             <button class="im-nav-btn" data-view="groups" title="群聊列表" onclick="switchView('groups')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </button>
-            <button class="im-nav-btn" data-view="friendRequests" title="好友申请" onclick="switchView('friendRequests')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            <button class="im-nav-btn" data-view="notifications" title="通知" onclick="switchView('notifications')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             </button>
         </div>
 

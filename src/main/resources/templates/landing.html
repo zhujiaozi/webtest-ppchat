@@ -6,14 +6,23 @@
     <title>PP Chat — 在线聊天系统</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script th:src="@{/js/theme.js}"></script>
+    <style>
+        /* Landing 专用字体 — 粗犷几何风格 */
+        .landing-page { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        .landing-hero-content h1 {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-weight: 900; letter-spacing: -2px;
+        }
+        .landing-feature-card h3 { letter-spacing: -0.5px; }
+    </style>
 </head>
 <body>
 <div class="landing-page">
     <header class="landing-header">
         <span class="brand">PP Chat</span>
         <div class="nav-links">
-            <a th:href="@{/login}">登录</a>
-            <a th:href="@{/register}" class="btn btn-primary btn-sm">注册</a>
+            <a th:href="@{/login}" class="btn btn-ghost btn-sm">登录</a>
+            <a th:href="@{/register}" class="btn btn-ghost btn-sm">注册</a>
             <span id="theme-area"></span>
         </div>
     </header>
@@ -24,39 +33,38 @@
             <p class="landing-desc">一个现代化的在线聊天系统，支持实时消息、语音通话、群组聊天和好友管理</p>
             <div class="landing-actions">
                 <a th:href="@{/register}" class="btn btn-primary">开始使用</a>
-                <a th:href="@{/login}" class="btn btn-ghost">立即登录</a>
             </div>
         </div>
     </section>
     <section class="landing-features">
         <div class="landing-features-grid">
             <div class="landing-feature-card">
-                <div class="lf-icon">💬</div>
+                <div class="lf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
                 <h3>实时聊天</h3>
                 <p>基于 WebSocket 的实时消息推送，消息即时送达，支持一对一和群聊</p>
             </div>
             <div class="landing-feature-card">
-                <div class="lf-icon">🎤</div>
+                <div class="lf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
                 <h3>语音消息</h3>
                 <p>录制并发送语音消息，最长10秒，让沟通更生动</p>
             </div>
             <div class="landing-feature-card">
-                <div class="lf-icon">👥</div>
+                <div class="lf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
                 <h3>好友管理</h3>
                 <p>搜索添加好友，创建分组管理，设置备注名，轻松维护社交关系</p>
             </div>
             <div class="landing-feature-card">
-                <div class="lf-icon">🏠</div>
+                <div class="lf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
                 <h3>群组聊天</h3>
                 <p>创建群组邀请好友加入，设置群公告，多人实时互动</p>
             </div>
             <div class="landing-feature-card">
-                <div class="lf-icon">🔍</div>
+                <div class="lf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
                 <h3>消息搜索</h3>
                 <p>快速搜索聊天记录，支持按关键词筛选，轻松找到历史消息</p>
             </div>
             <div class="landing-feature-card">
-                <div class="lf-icon">🌙</div>
+                <div class="lf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></div>
                 <h3>主题切换</h3>
                 <p>支持亮色、暗色和跟随系统三种主题模式，舒适阅读体验</p>
             </div>

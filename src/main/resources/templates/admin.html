@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理 — PP Chat</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f3f4f6;color:#1f2937;font-size:14px}
+
+        /* Layout */
+        .admin-layout{display:flex;min-height:100vh}
+        .sidebar{width:240px;background:#111827;color:#9ca3af;display:flex;flex-direction:column;flex-shrink:0}
+        .sidebar .brand{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.06)}
+        .sidebar .brand h2{color:#fff;font-size:18px;font-weight:700;letter-spacing:-.5px}
+        .sidebar .brand small{color:rgba(255,255,255,.35);font-size:11px;letter-spacing:1px}
+        .sidebar nav{flex:1;padding:8px 0;overflow-y:auto}
+        .sidebar nav a{
+            display:flex;align-items:center;gap:10px;padding:10px 24px;color:#9ca3af;text-decoration:none;
+            font-size:13px;transition:all .15s;cursor:pointer;border-left:3px solid transparent;
+        }
+        .sidebar nav a:hover{background:rgba(255,255,255,.04);color:#e5e7eb}
+        .sidebar nav a.active{background:rgba(99,102,241,.1);color:#818cf8;border-left-color:#6366f1}
+        .sidebar .logout{padding:16px 24px;border-top:1px solid rgba(255,255,255,.06)}
+        .sidebar .logout a{color:#f87171;text-decoration:none;font-size:13px;transition:color .2s}
+        .sidebar .logout a:hover{color:#fca5a5}
+
+        .main{flex:1;padding:28px 32px;overflow-y:auto;background:#f3f4f6}
+        .main h2{margin-bottom:24px;font-size:20px;font-weight:700;color:#111827;letter-spacing:-.3px}
+
+        /* Dashboard */
+        .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+        .stat-card{
+            background:#fff;border-radius:12px;padding:20px 24px;
+            box-shadow:0 1px 3px rgba(0,0,0,.04);border:1px solid #e5e7eb;
+            transition:all .2s;
+        }
+        .stat-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
+        .stat-card .label{font-size:12px;color:#6b7280;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+        .stat-card .value{font-size:28px;font-weight:800;color:#111827}
+
+        /* Table */
+        .table-container{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.04);border:1px solid #e5e7eb;overflow-x:auto}
+        table{width:100%;border-collapse:collapse;font-size:13px}
+        thead th{background:#f9fafb;padding:12px 16px;text-align:left;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;white-space:nowrap;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+        tbody td{padding:12px 16px;border-bottom:1px solid #f3f4f6;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        tbody tr:hover{background:#f9fafb}
+        tbody tr:last-child td{border-bottom:none}
+
+        /* Buttons */
+        .btn{padding:5px 12px;border:none;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;font-weight:500}
+        .btn-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+        .btn-danger:hover{background:#fee2e2}
+        .btn-warning{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+        .btn-warning:hover{background:#fef3c7}
+        .btn-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+        .btn-success:hover{background:#dcfce7}
+        .btn-primary{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
+        .btn-primary:hover{background:#dbeafe}
+        .btn-sm{padding:3px 8px;font-size:11px}
+
+        /* Status badges */
+        .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+        .badge-ok{background:#dcfce7;color:#16a34a}
+        .badge-banned{background:#fee2e2;color:#dc2626}
+        .badge-pending{background:#fef3c7;color:#d97706}
+
+        /* Modal */
+        .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:1000;justify-content:center;align-items:center}
+        .modal-overlay.show{display:flex}
+        .modal{background:#fff;border-radius:16px;padding:28px;width:420px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:modalIn .2s ease}
+        @keyframes modalIn{from{opacity:0;transform:translateY(-10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+        .modal h3{margin-bottom:20px;font-size:16px;font-weight:700}
+        .modal input{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:16px;outline:none;transition:border-color .2s}
+        .modal input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+        .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+        .modal-actions .btn{padding:8px 20px;font-size:13px}
+
+        /* Empty state */
+        .empty{text-align:center;padding:48px;color:#9ca3af}
+
+        /* View sections */
+        .view{display:none}
+        .view.active{display:block;animation:fadeIn .2s ease}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    </style>
+</head>
+<body>
+<div class="admin-layout">
+    <div class="sidebar">
+        <div class="brand">
+            <h2>PP Chat</h2>
+            <small>ADMIN PANEL</small>
+        </div>
+        <nav id="nav">
+            <a class="active" data-view="dashboard" onclick="switchView('dashboard')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                仪表盘
+            </a>
+            <a data-view="users" onclick="switchView('users')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                用户管理
+            </a>
+            <a data-view="friends" onclick="switchView('friends')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                好友关系
+            </a>
+            <a data-view="friend-groups" onclick="switchView('friend-groups')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                好友分组
+            </a>
+            <a data-view="friend-requests" onclick="switchView('friend-requests')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                好友请求
+            </a>
+            <a data-view="private-messages" onclick="switchView('private-messages')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                私聊消息
+            </a>
+            <a data-view="group-chats" onclick="switchView('group-chats')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                群聊管理
+            </a>
+            <a data-view="group-members" onclick="switchView('group-members')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                群成员
+            </a>
+            <a data-view="group-messages" onclick="switchView('group-messages')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                群消息
+            </a>
+            <a data-view="group-invitations" onclick="switchView('group-invitations')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                群邀请
+            </a>
+        </nav>
+        <div class="logout">
+            <a th:href="@{/admin/logout}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:-2px;margin-right:4px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                退出登录
+            </a>
+        </div>
+    </div>
+    <div class="main">
+        <div id="view-dashboard" class="view active">
+            <h2>仪表盘</h2>
+            <div class="dashboard-grid" id="dashboard-cards"></div>
+        </div>
+        <div id="view-users" class="view">
+            <h2>用户管理</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>用户名</th><th>昵称</th><th>状态</th><th>登录次数</th><th>最后登录</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="tbody-users"></tbody></table></div>
+        </div>
+        <div id="view-friends" class="view">
+            <h2>好友关系</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>用户ID</th><th>好友ID</th><th>分组ID</th><th>备注</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="tbody-friends"></tbody></table></div>
+        </div>
+        <div id="view-friend-groups" class="view">
+            <h2>好友分组</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>用户ID</th><th>分组名</th><th>排序</th><th>操作</th></tr></thead><tbody id="tbody-friend-groups"></tbody></table></div>
+        </div>
+        <div id="view-friend-requests" class="view">
+            <h2>好友请求</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>发送者ID</th><th>接收者ID</th><th>留言</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-friend-requests"></tbody></table></div>
+        </div>
+        <div id="view-private-messages" class="view">
+            <h2>私聊消息</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>发送者ID</th><th>接收者ID</th><th>内容</th><th>类型</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-private-messages"></tbody></table></div>
+        </div>
+        <div id="view-group-chats" class="view">
+            <h2>群聊管理</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>群名</th><th>群主ID</th><th>公告</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="tbody-group-chats"></tbody></table></div>
+        </div>
+        <div id="view-group-members" class="view">
+            <h2>群成员</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>群ID</th><th>用户ID</th><th>角色</th><th>加入时间</th><th>操作</th></tr></thead><tbody id="tbody-group-members"></tbody></table></div>
+        </div>
+        <div id="view-group-messages" class="view">
+            <h2>群消息</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>群ID</th><th>发送者ID</th><th>内容</th><th>类型</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-group-messages"></tbody></table></div>
+        </div>
+        <div id="view-group-invitations" class="view">
+            <h2>群邀请</h2>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>群ID</th><th>邀请者ID</th><th>被邀请者ID</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-group-invitations"></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-reset">
+    <div class="modal">
+        <h3>重置密码</h3>
+        <input type="hidden" id="reset-user-id">
+        <input type="password" id="reset-new-password" placeholder="请输入新密码">
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="closeModal()">取消</button>
+            <button class="btn btn-success" onclick="doResetPassword()">确认重置</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = '/api/admin';
+let currentView = 'dashboard';
+
+function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    document.querySelectorAll('#nav a').forEach(a => a.classList.remove('active'));
+    document.querySelector('#nav a[data-view="' + view + '"]').classList.add('active');
+    loadView(view);
+}
+
+async function api(method, path, body) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+    return res.json();
+}
+
+async function loadView(view) {
+    switch (view) {
+        case 'dashboard': return loadDashboard();
+        case 'users': return loadUsers();
+        case 'friends': return loadGeneric('/friends', 'tbody-friends', renderFriend);
+        case 'friend-groups': return loadGeneric('/friend-groups', 'tbody-friend-groups', renderFriendGroup);
+        case 'friend-requests': return loadGeneric('/friend-requests', 'tbody-friend-requests', renderFriendRequest);
+        case 'private-messages': return loadGeneric('/private-messages', 'tbody-private-messages', renderPrivateMessage);
+        case 'group-chats': return loadGeneric('/group-chats', 'tbody-group-chats', renderGroupChat);
+        case 'group-members': return loadGeneric('/group-members', 'tbody-group-members', renderGroupMember);
+        case 'group-messages': return loadGeneric('/group-messages', 'tbody-group-messages', renderGroupMessage);
+        case 'group-invitations': return loadGeneric('/group-invitations', 'tbody-group-invitations', renderGroupInvitation);
+    }
+}
+
+async function loadDashboard() {
+    const res = await api('GET', '/dashboard');
+    if (res.code !== 200) return;
+    const d = res.data;
+    const labels = {
+        users: '用户总数', friends: '好友关系', friendGroups: '好友分组',
+        friendRequests: '好友请求', privateMessages: '私聊消息', groupChats: '群聊数量',
+        groupMembers: '群成员数', groupMessages: '群消息数', groupInvitations: '群邀请数'
+    };
+    document.getElementById('dashboard-cards').innerHTML = Object.entries(labels).map(([k, v]) =>
+        '<div class="stat-card"><div class="label">' + v + '</div><div class="value">' + (d[k] ?? 0) + '</div></div>'
+    ).join('');
+}
+
+async function loadUsers() {
+    const res = await api('GET', '/users');
+    const tbody = document.getElementById('tbody-users');
+    if (res.code !== 200 || !res.data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无数据</td></tr>'; return; }
+    tbody.innerHTML = res.data.map(u => {
+        const badge = u.status === -1
+            ? '<span class="badge badge-banned">已封禁</span>'
+            : '<span class="badge badge-ok">正常</span>';
+        const banBtn = u.status === -1
+            ? '<button class="btn btn-success btn-sm" onclick="unbanUser(' + u.id + ')">解封</button>'
+            : '<button class="btn btn-warning btn-sm" onclick="banUser(' + u.id + ')">封禁</button>';
+        return '<tr>' +
+            '<td>' + u.id + '</td><td>' + esc(u.username) + '</td><td>' + esc(u.nickname || '') + '</td>' +
+            '<td>' + badge + '</td><td>' + (u.loginCount || 0) + '</td>' +
+            '<td>' + fmtDate(u.lastLogin) + '</td><td>' + fmtDate(u.createdAt) + '</td>' +
+            '<td>' + banBtn + ' <button class="btn btn-primary btn-sm" onclick="showResetModal(' + u.id + ')">重置密码</button> <button class="btn btn-danger btn-sm" onclick="deleteItem(\'/users/' + u.id + '\',\'users\')">删除</button></td>' +
+            '</tr>';
+    }).join('');
+}
+
+async function banUser(id) { if (!confirm('确定要封禁该用户？')) return; await api('POST', '/users/' + id + '/ban'); loadUsers(); }
+async function unbanUser(id) { await api('POST', '/users/' + id + '/unban'); loadUsers(); }
+
+function showResetModal(id) {
+    document.getElementById('reset-user-id').value = id;
+    document.getElementById('reset-new-password').value = '';
+    document.getElementById('modal-reset').classList.add('show');
+}
+function closeModal() { document.getElementById('modal-reset').classList.remove('show'); }
+async function doResetPassword() {
+    const id = document.getElementById('reset-user-id').value;
+    const pwd = document.getElementById('reset-new-password').value;
+    if (!pwd) { alert('请输入新密码'); return; }
+    await api('POST', '/users/' + id + '/reset-password', { password: pwd });
+    closeModal(); alert('密码已重置');
+}
+
+async function loadGeneric(path, tbodyId, renderFn) {
+    const res = await api('GET', path);
+    const tbody = document.getElementById(tbodyId);
+    if (res.code !== 200 || !res.data.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty">暂无数据</td></tr>'; return; }
+    tbody.innerHTML = res.data.map(item => renderFn(item)).join('');
+}
+
+function renderFriend(f) { return '<tr><td>'+f.id+'</td><td>'+f.userId+'</td><td>'+f.friendId+'</td><td>'+(f.groupId||'-')+'</td><td>'+esc(f.remark||'')+'</td><td>'+fmtDate(f.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/friends/'+f.id+'\',\'friends\')">删除</button></td></tr>'; }
+function renderFriendGroup(g) { return '<tr><td>'+g.id+'</td><td>'+g.userId+'</td><td>'+esc(g.name)+'</td><td>'+g.sortOrder+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/friend-groups/'+g.id+'\',\'friend-groups\')">删除</button></td></tr>'; }
+function renderFriendRequest(r) { const s={0:'待处理',1:'已接受',2:'已拒绝'}; return '<tr><td>'+r.id+'</td><td>'+r.fromUserId+'</td><td>'+r.toUserId+'</td><td>'+esc(r.message||'')+'</td><td>'+(s[r.status]||r.status)+'</td><td>'+fmtDate(r.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/friend-requests/'+r.id+'\',\'friend-requests\')">删除</button></td></tr>'; }
+function renderPrivateMessage(m) { const t={0:'文本',1:'语音'},s={0:'未读',1:'已送达',2:'已读'}; const c=m.msgType===1?'[语音消息]':(m.content||'').substring(0,50); return '<tr><td>'+m.id+'</td><td>'+m.senderId+'</td><td>'+m.receiverId+'</td><td>'+esc(c)+'</td><td>'+(t[m.msgType]||m.msgType)+'</td><td>'+(s[m.status]||m.status)+'</td><td>'+fmtDate(m.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/private-messages/'+m.id+'\',\'private-messages\')">删除</button></td></tr>'; }
+function renderGroupChat(g) { return '<tr><td>'+g.id+'</td><td>'+esc(g.name)+'</td><td>'+g.ownerId+'</td><td>'+esc((g.notice||'').substring(0,40))+'</td><td>'+fmtDate(g.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-chats/'+g.id+'\',\'group-chats\')">删除</button></td></tr>'; }
+function renderGroupMember(m) { const r={0:'成员',1:'管理员',2:'群主'}; return '<tr><td>'+m.id+'</td><td>'+m.groupId+'</td><td>'+m.userId+'</td><td>'+(r[m.role]||m.role)+'</td><td>'+fmtDate(m.joinedAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-members/'+m.id+'\',\'group-members\')">删除</button></td></tr>'; }
+function renderGroupMessage(m) { const t={0:'文本',1:'语音'}; const c=m.msgType===1?'[语音消息]':(m.content||'').substring(0,50); return '<tr><td>'+m.id+'</td><td>'+m.groupId+'</td><td>'+m.senderId+'</td><td>'+esc(c)+'</td><td>'+(t[m.msgType]||m.msgType)+'</td><td>'+fmtDate(m.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-messages/'+m.id+'\',\'group-messages\')">删除</button></td></tr>'; }
+function renderGroupInvitation(i) { const s={0:'待处理',1:'已接受',2:'已拒绝'}; return '<tr><td>'+i.id+'</td><td>'+i.groupId+'</td><td>'+i.fromUserId+'</td><td>'+i.toUserId+'</td><td>'+(s[i.status]||i.status)+'</td><td>'+fmtDate(i.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-invitations/'+i.id+'\',\'group-invitations\')">删除</button></td></tr>'; }
+
+async function deleteItem(path, viewName) {
+    if (!confirm('确定要删除？此操作不可恢复。')) return;
+    const res = await api('DELETE', path);
+    if (res.code === 200) loadView(viewName); else alert(res.message || '删除失败');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmtDate(d) { if (!d) return '-'; return d.replace('T', ' ').substring(0, 19); }
+
+loadDashboard();
+</script>
+</body>
+</html>

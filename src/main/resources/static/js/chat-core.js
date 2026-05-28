@@ -41,6 +41,9 @@ let currentView = 'chat';      // 当前左侧选中的视图
 let currentChat = null;         // 当前打开的聊天 { id, name, isGroup }
 let friendsData = null;         // 缓存好友数据
 let groupsData = null;          // 缓存群数据
+let chatListData = [];          // 聊天列表数据（用于过滤）
+let friendListData = [];        // 好友列表数据（用于过滤）
+let friendRequestData = [];     // 好友申请数据（用于过滤）
 let groupSubscriptions = {};    // 已订阅的群 STOMP
 let isLoadingChat = false;      // 防止重复加载聊天
 
@@ -62,16 +65,13 @@ function bindGlobalEvents() {
         searchInput.addEventListener('input', function () {
             const keyword = this.value.trim();
             if (currentView === 'chat') {
-                if (!keyword) loadChatView(viewGeneration);
-                else searchUsersForChat(keyword);
+                filterChatList(keyword);
             } else if (currentView === 'friends') {
-                if (!keyword) loadFriendsView(viewGeneration);
-                else searchUsersForFriend(keyword);
+                filterFriendsList(keyword);
             } else if (currentView === 'groups') {
-                if (!keyword) loadGroupsView(viewGeneration);
-            } else if (currentView === 'friendRequests') {
-                // 好友申请视图搜索加好友
-                if (keyword) searchUsersForFriendFromRequests(keyword);
+                filterGroupsList(keyword);
+            } else if (currentView === 'notifications') {
+                filterNotifications(keyword);
             }
         });
     }
@@ -88,13 +88,13 @@ function switchView(view) {
     const searchInput = document.getElementById('panelSearchInput');
     if (searchInput) {
         searchInput.value = '';
-        searchInput.placeholder = { chat: '搜索联系人...', friends: '搜索用户...', groups: '搜索群聊...', friendRequests: '搜索用户加好友...', profile: '' }[view] || '搜索...';
+        searchInput.placeholder = { chat: '搜索会话...', friends: '搜索好友...', groups: '搜索群聊...', notifications: '搜索通知...', profile: '' }[view] || '搜索...';
     }
     switch (view) {
         case 'chat': loadChatView(gen); break;
         case 'friends': loadFriendsView(gen); break;
         case 'groups': loadGroupsView(gen); break;
-        case 'friendRequests': loadFriendRequestsView(gen); break;
+        case 'notifications': loadNotificationsView(gen); break;
         case 'profile': loadProfileView(gen); break;
     }
 }
@@ -226,14 +226,14 @@ async function checkFriendRequestBadge() {
     try {
         const res = await fetch('/api/friends/requests');
         const requests = await parseApiResponse(res);
-        const navBtn = document.querySelector('.im-nav-btn[data-view="friendRequests"]');
+        const navBtn = document.querySelector('.im-nav-btn[data-view="notifications"]');
         if (!navBtn) return;
-        const existing = navBtn.querySelector('.nav-req-badge');
+        const existing = navBtn.querySelector('.nav-notif-badge');
         if (requests && requests.length > 0) {
             if (!existing) {
                 const badge = document.createElement('span');
-                badge.className = 'nav-req-badge';
-                badge.style.cssText = 'position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid rgba(24,34,56,.92)';
+                badge.className = 'nav-notif-badge';
+                badge.style.cssText = 'position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--bg-nav)';
                 navBtn.appendChild(badge);
             }
         } else {

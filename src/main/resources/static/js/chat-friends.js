@@ -1,8 +1,22 @@
 /** PP Chat — Friends */
+
+// ============================================================
+//  Friends View
+// ============================================================
+
 async function loadFriendsView(gen) {
     const isStale = () => gen !== viewGeneration;
     const panel = document.getElementById('panelList');
     panel.innerHTML = '';
+    friendListData = [];
+
+    // 新建分组按钮
+    const createGroupBtn = document.createElement('button');
+    createGroupBtn.className = 'panel-btn';
+    createGroupBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新建分组`;
+    createGroupBtn.onclick = () => createGroup();
+    panel.appendChild(createGroupBtn);
+
     try {
         const res = await fetch('/api/friends');
         if (isStale()) return;
@@ -10,21 +24,16 @@ async function loadFriendsView(gen) {
         friendsData = data;
         const groups = data.groups || [];
         const friends = data.friends || [];
-        // 创建分组按钮
-        const createGroupBtn = document.createElement('button');
-        createGroupBtn.className = 'panel-btn';
-        createGroupBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新建分组`;
-        createGroupBtn.onclick = () => createGroup();
-        panel.appendChild(createGroupBtn);
-        // 搜索结果区
-        const searchArea = document.createElement('div');
-        searchArea.id = 'friendSearchArea';
-        panel.appendChild(searchArea);
-        // 按分组显示好友
+
         const renderedFriendIds = new Set();
+
         for (const g of groups) {
             const groupFriends = friends.filter(f => f.groupId === g.id);
+
+            // 分组头：名称 + 数量 + 删除按钮
             const titleRow = document.createElement('div');
+            titleRow.className = 'friend-group-header';
+            titleRow.dataset.groupId = g.id;
             titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border-light)';
             const title = document.createElement('div');
             title.className = 'im-panel-section-title';
@@ -39,35 +48,63 @@ async function loadFriendsView(gen) {
             titleRow.appendChild(title);
             titleRow.appendChild(deleteBtn);
             panel.appendChild(titleRow);
+
             for (const f of groupFriends) {
                 renderedFriendIds.add(f.friendId);
                 const name = f.remark || f.friendName || ('好友 #' + f.friendId);
                 const div = document.createElement('div');
                 div.className = 'friend-item';
+                div.dataset.groupId = g.id;
+                div.dataset.friendName = name;
                 div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(name)}">${initial(name)}</div>
                     <div class="f-name">${escapeHtml(name)}</div>`;
                 div.onclick = () => showFriendDetail(f);
                 panel.appendChild(div);
+                friendListData.push({ friendId: f.friendId, name, groupId: g.id, element: div, data: f });
             }
         }
+
         // 未分组好友
         const ungrouped = friends.filter(f => !renderedFriendIds.has(f.friendId));
         if (ungrouped.length > 0) {
+            const titleRow = document.createElement('div');
+            titleRow.className = 'friend-group-header';
+            titleRow.dataset.groupId = 'ungrouped';
+            titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border-light)';
             const title = document.createElement('div');
             title.className = 'im-panel-section-title';
+            title.style.cssText = 'flex:1;font-size:13px;font-weight:600;color:var(--text-secondary)';
             title.textContent = `未分组 (${ungrouped.length})`;
-            panel.appendChild(title);
+            titleRow.appendChild(title);
+            panel.appendChild(titleRow);
+
             for (const f of ungrouped) {
                 const name = f.remark || f.friendName || ('好友 #' + f.friendId);
                 const div = document.createElement('div');
                 div.className = 'friend-item';
+                div.dataset.groupId = 'ungrouped';
+                div.dataset.friendName = name;
                 div.innerHTML = `<div class="f-avatar" style="background:${avatarGradient(name)}">${initial(name)}</div>
                     <div class="f-name">${escapeHtml(name)}</div>`;
                 div.onclick = () => showFriendDetail(f);
                 panel.appendChild(div);
+                friendListData.push({ friendId: f.friendId, name, groupId: 'ungrouped', element: div, data: f });
             }
         }
     } catch (e) { console.error(e); }
+}
+
+function filterFriendsList(keyword) {
+    const kw = keyword.toLowerCase();
+    document.querySelectorAll('#panelList .friend-item').forEach(el => {
+        const name = (el.dataset.friendName || '').toLowerCase();
+        el.style.display = !kw || name.includes(kw) ? '' : 'none';
+    });
+    document.querySelectorAll('#panelList .friend-group-header').forEach(header => {
+        const gid = header.dataset.groupId;
+        const hasVisible = !!document.querySelector(`#panelList .friend-item[data-group-id="${gid}"]:not([style*="display: none"])`);
+        header.style.display = !kw || hasVisible ? '' : 'none';
+    });
 }
 
 function showFriendDetail(f) {
@@ -81,26 +118,68 @@ function showFriendDetail(f) {
         <div class="im-detail">
             <div class="im-detail-card">
                 <div class="profile-avatar-area">
-                    <div class="av" style="background:${avatarGradient(name)}">${initial(name)}</div>
-                    <div style="font-size:16px;font-weight:600">${escapeHtml(name)}</div>
+                    <div class="av" style="background:${avatarGradient(name)};width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:22px">${initial(name)}</div>
+                    <div style="font-size:18px;font-weight:600;margin-top:10px">${escapeHtml(name)}</div>
                     <div style="font-size:12px;color:var(--text-tertiary)">ID: ${f.friendId}</div>
                 </div>
-                <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px">
-                    <button class="btn btn-primary" onclick="openChat(${f.friendId}, '${escapeHtml(name)}', false);switchView('chat')">发消息</button>
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+                    <button class="btn btn-primary" onclick="openChat(${f.friendId}, '${escapeHtml(name).replace(/'/g, "\\'")}', false);switchView('chat')">发消息</button>
                     <button class="btn btn-ghost" onclick="setFriendRemark(${f.friendId})">设置备注</button>
                     <button class="btn btn-ghost" onclick="moveFriend(${f.friendId})">移动分组</button>
-                    <button class="btn btn-danger" onclick="deleteFriend(${f.friendId})">删除</button>
+                    <button class="btn btn-danger" onclick="deleteFriend(${f.friendId})">删除好友</button>
                 </div>
             </div>
         </div>`;
 }
 
-// 好友申请视图：左栏=申请列表(条目)，右栏=搜索加好友+申请详情(操作)
+// ============================================================
+//  Friend Requests View
+// ============================================================
+
 async function loadFriendRequestsView(gen) {
     const isStale = () => gen !== viewGeneration;
     const panel = document.getElementById('panelList');
     panel.innerHTML = '';
+    friendRequestData = [];
+
     // 右栏默认显示搜索加好友
+    showAddFriendPanel();
+
+    try {
+        const res = await fetch('/api/friends/requests');
+        if (isStale()) return;
+        const requests = await parseApiResponse(res);
+        if (!requests || requests.length === 0) {
+            panel.innerHTML = '<div style="padding:16px;color:var(--text-tertiary);font-size:13px;text-align:center">暂无待处理的好友申请</div>';
+            return;
+        }
+        for (const r of requests) {
+            const reqName = r.fromUserName || ('用户 #' + r.fromUserId);
+            const div = document.createElement('div');
+            div.className = 'conv-item';
+            div.dataset.senderName = reqName;
+            div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(reqName)}">${initial(reqName)}</div>
+                <div class="conv-body"><div class="conv-name">${escapeHtml(reqName)}</div>
+                <div class="conv-preview">${escapeHtml(r.message || '请求加你为好友')}</div></div>`;
+            div.onclick = () => showRequestDetail(r);
+            panel.appendChild(div);
+            friendRequestData.push({ requestId: r.id, senderName: reqName, element: div, data: r });
+        }
+        // 去掉侧边栏好友申请红点
+        const navBtn = document.querySelector('.im-nav-btn[data-view="friendRequests"] .nav-req-badge');
+        if (navBtn) navBtn.remove();
+    } catch (e) { console.error(e); }
+}
+
+function filterFriendRequests(keyword) {
+    const kw = keyword.toLowerCase();
+    document.querySelectorAll('#panelList .conv-item').forEach(el => {
+        const name = (el.dataset.senderName || '').toLowerCase();
+        el.style.display = !kw || name.includes(kw) ? '' : 'none';
+    });
+}
+
+function showAddFriendPanel() {
     const content = document.getElementById('contentArea');
     content.innerHTML = `<div class="im-chat-header"><span class="ch-title">添加好友</span></div>
         <div class="im-detail"><div class="im-detail-card">
@@ -113,47 +192,31 @@ async function loadFriendRequestsView(gen) {
             </div>
             <div id="addFriendResults"></div>
         </div></div>`;
-
-    try {
-        const res = await fetch('/api/friends/requests');
-        if (isStale()) return;
-        const requests = await parseApiResponse(res);
-        if (requests.length === 0) {
-            panel.innerHTML = '<div style="padding:16px;color:var(--text-tertiary);font-size:13px;text-align:center">暂无待处理的好友申请</div>';
-            return;
-        }
-        for (const r of requests) {
-            const reqName = r.fromUserName || ('用户 #' + r.fromUserId);
-            const div = document.createElement('div');
-            div.className = 'conv-item' + (r._active ? ' active' : '');
-            div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(reqName)}">${initial(reqName)}</div>
-                <div class="conv-body"><div class="conv-name">${escapeHtml(reqName)}</div>
-                <div class="conv-preview">${escapeHtml(r.message || '请求加你为好友')}</div></div>`;
-            div.onclick = () => showRequestDetail(r);
-            panel.appendChild(div);
-        }
-        // 去掉侧边栏好友申请红点
-        const navBtn = document.querySelector('.im-nav-btn[data-view="friendRequests"] .nav-req-badge');
-        if (navBtn) navBtn.remove();
-    } catch (e) { console.error(e); }
 }
 
 function showRequestDetail(r) {
     const reqName = r.fromUserName || ('用户 #' + r.fromUserId);
     // 高亮选中项
-    document.querySelectorAll('.im-panel-list .conv-item').forEach(el => el.classList.remove('active'));
-    const items = document.querySelectorAll('.im-panel-list .conv-item');
+    document.querySelectorAll('#panelList .conv-item').forEach(el => el.classList.remove('active'));
+    const items = document.querySelectorAll('#panelList .conv-item');
     items.forEach(el => {
         const nameEl = el.querySelector('.conv-name');
         if (nameEl && nameEl.textContent === reqName) el.classList.add('active');
     });
     const content = document.getElementById('contentArea');
     content.innerHTML = `
-        <div class="im-chat-header"><span class="ch-title">好友申请</span></div>
+        <div class="im-chat-header">
+            <span class="ch-title">好友申请</span>
+            <div class="ch-actions">
+                <button onclick="showAddFriendPanel()" title="搜索添加好友">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </button>
+            </div>
+        </div>
         <div class="im-detail"><div class="im-detail-card">
             <div class="profile-avatar-area">
-                <div class="av" style="background:${avatarGradient(reqName)}">${initial(reqName)}</div>
-                <div style="font-size:16px;font-weight:600">${escapeHtml(reqName)}</div>
+                <div class="av" style="background:${avatarGradient(reqName)};width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:22px">${initial(reqName)}</div>
+                <div style="font-size:18px;font-weight:600;margin-top:10px">${escapeHtml(reqName)}</div>
                 <div style="font-size:12px;color:var(--text-tertiary)">ID: ${r.fromUserId}</div>
             </div>
             <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">${escapeHtml(r.message || '请求加你为好友')}</div>
@@ -163,6 +226,10 @@ function showRequestDetail(r) {
             </div>
         </div></div>`;
 }
+
+// ============================================================
+//  Add Friend / Search User
+// ============================================================
 
 async function doSearchUserToAdd() {
     const keyword = document.getElementById('addFriendSearch').value.trim();
@@ -185,6 +252,19 @@ async function doSearchUserToAdd() {
         }
     } catch (e) { results.innerHTML = '<p style="color:var(--danger);font-size:13px">搜索失败</p>'; }
 }
+
+async function sendFriendRequest(toUserId) {
+    showInputDialog('发送好友申请', '验证消息（可留空）...', async (message) => {
+        const res = await fetch('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toUserId, message: message || '' }) });
+        const data = await parseApiResponse(res);
+        if (data.success) showToast('好友申请已发送');
+        else showToast(data.error || '发送失败', 'error');
+    });
+}
+
+// ============================================================
+//  Friend Action Helpers
+// ============================================================
 
 async function acceptRequest(id) {
     await fetch(`/api/friends/requests/${id}/accept`, { method: 'POST' });
@@ -252,35 +332,6 @@ async function confirmMoveFriend(friendId, groupId) {
     loadFriendsView(viewGeneration);
 }
 
-async function searchUsersForFriend(keyword) {
-    const area = document.getElementById('friendSearchArea');
-    if (!area) return;
-    area.innerHTML = '';
-    try {
-        const res = await fetch(`/api/friends/search?keyword=${encodeURIComponent(keyword)}`);
-        const users = await parseApiResponse(res);
-        if (users.length === 0) { area.innerHTML = '<div style="padding:12px;color:var(--text-tertiary);font-size:13px">未找到用户</div>'; return; }
-        for (const u of users) {
-            const name = u.nickname || u.username;
-            const div = document.createElement('div');
-            div.className = 'search-user-item';
-            div.innerHTML = `<div class="su-av">${initial(name)}</div>
-                <div class="su-info"><div class="su-name">${escapeHtml(name)}</div><div class="su-username">@${escapeHtml(u.username)}</div></div>
-                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();sendFriendRequest(${u.id})">加好友</button>`;
-            area.appendChild(div);
-        }
-    } catch (e) { console.error(e); }
-}
-
-async function sendFriendRequest(toUserId) {
-    showInputDialog('发送好友申请', '验证消息（可留空）...', async (message) => {
-        const res = await fetch('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toUserId, message: message || '' }) });
-        const data = await parseApiResponse(res);
-        if (data.success) showToast('好友申请已发送');
-        else showToast(data.error || '发送失败', 'error');
-    });
-}
-
 async function createGroup() {
     showInputDialog('新建分组', '输入分组名称...', async (name) => {
         if (!name || !name.trim()) {
@@ -314,4 +365,144 @@ async function confirmDeleteGroup(groupId) {
     } catch (e) {
         showToast('删除失败', 'error');
     }
+}
+
+// ============================================================
+//  Notifications View (合并好友申请 + 群聊邀请)
+// ============================================================
+
+let notificationsData = [];
+
+async function loadNotificationsView(gen) {
+    const isStale = () => gen !== viewGeneration;
+    const panel = document.getElementById('panelList');
+    panel.innerHTML = '';
+    notificationsData = [];
+
+    const content = document.getElementById('contentArea');
+    content.innerHTML = `<div class="im-chat-header"><span class="ch-title">通知</span></div>
+        <div class="im-empty"><p>选择左侧通知查看详情</p></div>`;
+
+    // 加载好友申请
+    try {
+        const res = await fetch('/api/friends/requests');
+        if (isStale()) return;
+        const requests = await parseApiResponse(res);
+        for (const r of (requests || [])) {
+            const name = r.fromUserName || ('用户 #' + r.fromUserId);
+            const div = document.createElement('div');
+            div.className = 'conv-item';
+            div.dataset.senderName = name.toLowerCase();
+            div.dataset.type = 'friend-request';
+            div.innerHTML = `<div class="conv-avatar-ph" style="background:${avatarGradient(name)}">${initial(name)}</div>
+                <div class="conv-body"><div class="conv-name">${escapeHtml(name)}</div>
+                <div class="conv-preview" style="color:var(--accent)">好友申请</div></div>`;
+            div.onclick = () => showNotificationDetail('friend-request', r);
+            panel.appendChild(div);
+            notificationsData.push({ type: 'friend-request', data: r, element: div });
+        }
+    } catch (e) {}
+
+    // 加载群聊邀请
+    try {
+        const res = await fetch('/api/groups/invitations');
+        if (isStale()) return;
+        const invitations = await parseApiResponse(res);
+        for (const inv of (invitations || [])) {
+            const groupName = inv.groupName || '群聊';
+            const fromName = inv.fromUserName || '用户';
+            const div = document.createElement('div');
+            div.className = 'conv-item';
+            div.dataset.senderName = (groupName + ' ' + fromName).toLowerCase();
+            div.dataset.type = 'group-invitation';
+            div.innerHTML = `<div class="conv-avatar-ph" style="background:#4a90d9">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18" style="color:#fff"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+                <div class="conv-body"><div class="conv-name">${escapeHtml(groupName)}</div>
+                <div class="conv-preview" style="color:#4a90d9">群聊邀请 · ${escapeHtml(fromName)}</div></div>`;
+            div.onclick = () => showNotificationDetail('group-invitation', inv);
+            panel.appendChild(div);
+            notificationsData.push({ type: 'group-invitation', data: inv, element: div });
+        }
+    } catch (e) {}
+
+    // 清除侧边栏红点
+    const navBtn = document.querySelector('.im-nav-btn[data-view="notifications"] .nav-notif-badge');
+    if (navBtn) navBtn.remove();
+
+    if (notificationsData.length === 0) {
+        panel.innerHTML = '<div style="padding:16px;color:var(--text-tertiary);font-size:13px;text-align:center">暂无新通知</div>';
+    }
+}
+
+function filterNotifications(keyword) {
+    const kw = keyword.toLowerCase();
+    document.querySelectorAll('#panelList .conv-item').forEach(el => {
+        const name = (el.dataset.senderName || '').toLowerCase();
+        el.style.display = !kw || name.includes(kw) ? '' : 'none';
+    });
+}
+
+function showNotificationDetail(type, data) {
+    const content = document.getElementById('contentArea');
+    if (type === 'friend-request') {
+        const r = data;
+        const name = r.fromUserName || ('用户 #' + r.fromUserId);
+        content.innerHTML = `
+            <div class="im-chat-header"><span class="ch-title">好友申请</span></div>
+            <div class="im-detail"><div class="im-detail-card">
+                <div style="text-align:center;margin-bottom:20px">
+                    <div style="width:64px;height:64px;border-radius:16px;background:${avatarGradient(name)};display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:#fff;font-weight:700;font-size:22px">${initial(name)}</div>
+                    <div style="font-size:18px;font-weight:600">${escapeHtml(name)}</div>
+                    <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">用户ID: ${r.fromUserId}</div>
+                </div>
+                <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">${escapeHtml(r.message || '请求加你为好友')}</div>
+                <div style="display:flex;gap:8px;justify-content:center">
+                    <button class="btn btn-primary" onclick="acceptNotifRequest(${r.id})">同意</button>
+                    <button class="btn btn-danger" onclick="rejectNotifRequest(${r.id})">拒绝</button>
+                </div>
+            </div></div>`;
+    } else if (type === 'group-invitation') {
+        const inv = data;
+        content.innerHTML = `
+            <div class="im-chat-header"><span class="ch-title">群聊邀请</span></div>
+            <div class="im-detail"><div class="im-detail-card">
+                <div style="text-align:center;margin-bottom:20px">
+                    <div style="width:64px;height:64px;border-radius:16px;background:#4a90d9;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" width="28" height="28"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div style="font-size:18px;font-weight:700">${escapeHtml(inv.groupName || '群聊')}</div>
+                    <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">邀请ID: ${inv.id} · 群ID: ${inv.groupId}</div>
+                </div>
+                <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:20px">${escapeHtml(inv.fromUserName || '用户')} (ID: ${inv.fromUserId}) 邀请你加入</div>
+                <div style="display:flex;gap:8px;justify-content:center">
+                    <button class="btn btn-primary" onclick="acceptNotifGroupInvitation(${inv.id})">同意</button>
+                    <button class="btn btn-danger" onclick="rejectNotifGroupInvitation(${inv.id})">拒绝</button>
+                </div>
+            </div></div>`;
+    }
+}
+
+async function acceptNotifRequest(id) {
+    await fetch(`/api/friends/requests/${id}/accept`, { method: 'POST' });
+    showToast('已同意好友申请');
+    loadNotificationsView(viewGeneration);
+}
+
+async function rejectNotifRequest(id) {
+    await fetch(`/api/friends/requests/${id}/reject`, { method: 'POST' });
+    showToast('已拒绝');
+    loadNotificationsView(viewGeneration);
+}
+
+async function acceptNotifGroupInvitation(id) {
+    await fetch(`/api/groups/invitations/${id}/accept`, { method: 'POST' });
+    showToast('已加入群聊');
+    loadNotificationsView(viewGeneration);
+}
+
+async function rejectNotifGroupInvitation(id) {
+    await fetch(`/api/groups/invitations/${id}/reject`, { method: 'POST' });
+    showToast('已拒绝邀请');
+    loadNotificationsView(viewGeneration);
 }

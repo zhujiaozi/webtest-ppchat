@@ -10,12 +10,13 @@ async function loadProfileView(gen) {
         const user = await parseApiResponse(res);
         content.innerHTML = `
             <div class="im-chat-header"><span class="ch-title">个人中心</span></div>
-            <div class="im-detail">
-                <div class="im-detail-card" style="max-width:480px;margin:0 auto">
+            <div class="im-detail" style="padding:24px;overflow-y:auto">
+                <div style="max-width:680px;margin:0 auto;background:var(--bg-card);border-radius:12px;padding:32px;box-shadow:var(--shadow-sm)">
                     <div class="profile-avatar-area">
                         <div class="av" style="background:${avatarGradient(user.nickname || user.username)}">${user.avatar ? `<img src="${user.avatar}" style="width:72px;height:72px;border-radius:50%;object-fit:cover">` : initial(user.nickname || user.username)}</div>
-                        <div style="font-size:16px;font-weight:600">${escapeHtml(user.nickname || user.username)}</div>
+                        <div style="font-size:18px;font-weight:700">${escapeHtml(user.nickname || user.username)}</div>
                         <div style="font-size:12px;color:var(--text-tertiary)">@${escapeHtml(user.username)}</div>
+                        <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;background:var(--bg-tertiary);display:inline-block;padding:2px 10px;border-radius:10px">ID: ${user.id}</div>
                     </div>
                     <div class="profile-stats">
                         <div class="profile-stat"><div class="sv">${user.loginCount || 0}</div><div class="sl">登录次数</div></div>
