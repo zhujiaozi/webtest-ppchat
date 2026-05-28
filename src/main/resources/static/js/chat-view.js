@@ -180,7 +180,7 @@ function appendChatMessage(msg) {
         const durationMatch = (msg.content || '').match(/(\d+)s/);
         const durationText = durationMatch ? ` ${durationMatch[1]}s` : '';
         div.innerHTML = `<div class="msg-av" style="background:${avatarGradient(isMine ? userName : senderName)}">${isMine ? initial(userName) : initial(senderName || '?')}</div>
-            <div>${senderHtml}<div class="im-msg-bubble"><button data-src="${msg.audioData}" onclick="playAudio(this.dataset.src)" style="background:none;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px">
+            <div>${senderHtml}<div class="im-msg-bubble" style="padding:6px 10px"><button data-src="${msg.audioData}" onclick="playAudio(this.dataset.src)" style="background:none;border:none;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:4px;padding:0;line-height:1.6;vertical-align:middle">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg> 播放语音${durationText}
             </button>${statusHtml}</div></div>`;
     } else {

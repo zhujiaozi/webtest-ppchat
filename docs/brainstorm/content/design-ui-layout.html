@@ -1,0 +1,182 @@
+<h2>PP 聊天系统 — UI 布局设计</h2>
+<p class="subtitle">微信/QQ 风格：左侧会话列表 + 右侧聊天区域</p>
+
+<h3>聊天主界面 /chat</h3>
+<div class="mockup">
+  <div class="mockup-header">聊天主界面 — 核心页面</div>
+  <div class="mockup-body" style="padding: 0; overflow: hidden;">
+    <div style="display: flex; height: 500px; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 13px;">
+
+      <!-- 左侧边栏：功能导航 -->
+      <div style="width: 56px; background: #2e2e3e; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; flex-shrink: 0;">
+        <div style="width: 40px; height: 40px; border-radius: 8px; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; cursor: pointer;">💬</div>
+        <div style="width: 40px; height: 40px; border-radius: 8px; background: transparent; display: flex; align-items: center; justify-content: center; color: #999; font-size: 18px; cursor: pointer;">👥</div>
+        <div style="width: 40px; height: 40px; border-radius: 8px; background: transparent; display: flex; align-items: center; justify-content: center; color: #999; font-size: 18px; cursor: pointer;">🏠</div>
+        <div style="flex: 1;"></div>
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: #e74c3c; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; cursor: pointer;">我</div>
+      </div>
+
+      <!-- 会话列表 -->
+      <div style="width: 240px; background: #f5f5f5; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; flex-shrink: 0;">
+        <!-- 搜索栏 -->
+        <div style="padding: 12px;">
+          <div style="background: white; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; gap: 6px; border: 1px solid #ddd;">
+            <span style="color: #999;">🔍</span>
+            <span style="color: #bbb; font-size: 12px;">搜索联系人或消息</span>
+          </div>
+        </div>
+        <!-- 会话列表 -->
+        <div style="flex: 1; overflow-y: auto;">
+          <!-- 选中状态 -->
+          <div style="padding: 12px 16px; background: #e8e8e8; cursor: pointer; display: flex; gap: 10px; align-items: center;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0;">张</div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: 600;">张三</span>
+                <span style="color: #999; font-size: 11px;">14:32</span>
+              </div>
+              <div style="color: #888; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">好的，明天见！</div>
+            </div>
+          </div>
+          <!-- 未读消息 -->
+          <div style="padding: 12px 16px; cursor: pointer; display: flex; gap: 10px; align-items: center;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #e74c3c; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0;">李</div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: 600;">李四</span>
+                <span style="color: #999; font-size: 11px;">13:15</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #888; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">你看到群消息了吗</span>
+                <span style="background: #e74c3c; color: white; border-radius: 10px; padding: 1px 6px; font-size: 10px; flex-shrink: 0;">3</span>
+              </div>
+            </div>
+          </div>
+          <!-- 群聊 -->
+          <div style="padding: 12px 16px; cursor: pointer; display: flex; gap: 10px; align-items: center;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: #27ae60; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; flex-shrink: 0;">👥</div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: 600;">计科2班群</span>
+                <span style="color: #999; font-size: 11px;">12:00</span>
+              </div>
+              <div style="color: #888; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">王五: 下午有课吗？</div>
+            </div>
+          </div>
+          <div style="padding: 12px 16px; cursor: pointer; display: flex; gap: 10px; align-items: center;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #f39c12; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0;">赵</div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: 600;">赵六</span>
+                <span style="color: #999; font-size: 11px;">昨天</span>
+              </div>
+              <div style="color: #888; font-size: 12px;">[语音消息]</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧聊天区域 -->
+      <div style="flex: 1; display: flex; flex-direction: column; background: #f0f0f0;">
+        <!-- 聊天头部 -->
+        <div style="padding: 12px 20px; background: white; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 600; font-size: 15px;">张三</span>
+          <span style="color: #999; cursor: pointer;">⋯</span>
+        </div>
+
+        <!-- 消息区域 -->
+        <div style="flex: 1; padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+          <!-- 时间标记 -->
+          <div style="text-align: center; color: #999; font-size: 11px;">14:20</div>
+
+          <!-- 对方消息 -->
+          <div style="display: flex; gap: 8px; align-items: flex-start;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; flex-shrink: 0;">张</div>
+            <div style="background: white; padding: 8px 12px; border-radius: 0 12px 12px 12px; max-width: 60%; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">明天下午有空吗？</div>
+          </div>
+
+          <!-- 我的消息 -->
+          <div style="display: flex; gap: 8px; align-items: flex-start; justify-content: flex-end;">
+            <div style="background: #95ec69; padding: 8px 12px; border-radius: 12px 0 12px 12px; max-width: 60%; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">有空，什么事？</div>
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #e74c3c; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; flex-shrink: 0;">我</div>
+          </div>
+
+          <!-- 对方消息 -->
+          <div style="display: flex; gap: 8px; align-items: flex-start;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; flex-shrink: 0;">张</div>
+            <div style="background: white; padding: 8px 12px; border-radius: 0 12px 12px 12px; max-width: 60%; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">好的，明天见！</div>
+          </div>
+
+          <!-- 语音消息示例 -->
+          <div style="display: flex; gap: 8px; align-items: flex-start;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; flex-shrink: 0;">张</div>
+            <div style="background: white; padding: 8px 14px; border-radius: 0 12px 12px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">
+              <span>🔊</span>
+              <div style="width: 80px; height: 4px; background: #e0e0e0; border-radius: 2px; position: relative;">
+                <div style="width: 30%; height: 100%; background: #3b82f6; border-radius: 2px;"></div>
+              </div>
+              <span style="color: #999; font-size: 11px;">0:05</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div style="background: white; border-top: 1px solid #e0e0e0; padding: 10px 16px;">
+          <!-- 工具栏 -->
+          <div style="display: flex; gap: 16px; margin-bottom: 8px; color: #666; font-size: 18px;">
+            <span style="cursor: pointer;" title="表情">😊</span>
+            <span style="cursor: pointer;" title="发送文件">📎</span>
+            <span style="cursor: pointer;" title="语音">🎤</span>
+            <span style="cursor: pointer;" title="截图">✂️</span>
+          </div>
+          <!-- 输入框 -->
+          <div style="display: flex; gap: 8px;">
+            <div style="flex: 1; min-height: 60px; border: 1px solid #ddd; border-radius: 6px; padding: 8px; color: #999; font-size: 13px;">输入消息...</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <button style="background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 13px;">发送</button>
+              <span style="color: #999; font-size: 10px; text-align: center;">Enter</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>页面清单</h3>
+  <table style="width:100%; border-collapse:collapse; font-size: 13px;">
+    <thead><tr style="background: rgba(59,130,246,0.1);">
+      <th style="padding:8px; text-align:left;">页面</th><th style="padding:8px; text-align:left;">类型</th><th style="padding:8px; text-align:left;">说明</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:6px 8px;">/login</td><td style="padding:6px 8px;">Thymeleaf</td><td style="padding:6px 8px;">简洁登录表单，支持跳转注册</td></tr>
+      <tr><td style="padding:6px 8px;">/register</td><td style="padding:6px 8px;">Thymeleaf</td><td style="padding:6px 8px;">注册表单（用户名+密码+昵称）</td></tr>
+      <tr><td style="padding:6px 8px;">/chat</td><td style="padding:6px 8px;">纯 HTML+JS</td><td style="padding:6px 8px;">⭐ 上图所示：三栏布局（导航+会话+聊天）</td></tr>
+      <tr><td style="padding:6px 8px;">/friends</td><td style="padding:6px 8px;">Thymeleaf</td><td style="padding:6px 8px;">好友分组管理、好友申请处理</td></tr>
+      <tr><td style="padding:6px 8px;">/groups</td><td style="padding:6px 8px;">Thymeleaf</td><td style="padding:6px 8px;">创建群、群成员管理、群公告</td></tr>
+      <tr><td style="padding:6px 8px;">/profile</td><td style="padding:6px 8px;">Thymeleaf</td><td style="padding:6px 8px;">修改昵称、头像、密码</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section" style="margin-top: 16px;">
+  <h3>聊天界面交互要点</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+    <div style="padding: 12px; background: rgba(34,197,94,0.08); border-radius: 8px; border-left: 3px solid #22c55e;">
+      <strong>消息气泡</strong>
+      <p style="margin: 4px 0 0; font-size: 12px; color: #666;">我的消息绿色靠右，对方白色靠左，语音消息显示播放条</p>
+    </div>
+    <div style="padding: 12px; background: rgba(59,130,246,0.08); border-radius: 8px; border-left: 3px solid #3b82f6;">
+      <strong>实时更新</strong>
+      <p style="margin: 4px 0 0; font-size: 12px; color: #666;">WebSocket 推送新消息，自动滚动到底部，未读计数实时刷新</p>
+    </div>
+    <div style="padding: 12px; background: rgba(245,158,11,0.08); border-radius: 8px; border-left: 3px solid #f59e0b;">
+      <strong>语音录制</strong>
+      <p style="margin: 4px 0 0; font-size: 12px; color: #666;">长按🎤录音，松开发送，MediaRecorder API 录制 → Base64 → WebSocket</p>
+    </div>
+    <div style="padding: 12px; background: rgba(168,85,247,0.08); border-radius: 8px; border-left: 3px solid #a855f7;">
+      <strong>聊天记录</strong>
+      <p style="margin: 4px 0 0; font-size: 12px; color: #666;">支持关键词搜索历史消息，可导出为 TXT 文件下载</p>
+    </div>
+  </div>
+</div>

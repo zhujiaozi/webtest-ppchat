@@ -1,0 +1,87 @@
+<h2>PP 聊天系统 — 架构方案对比</h2>
+<p class="subtitle">选择最适合 1 人开发 + 85 分目标的方案</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>全 Thymeleaf 服务端渲染</h3>
+      <p>所有页面由 Thymeleaf 渲染，WebSocket 仅用于消息推送</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>✅ 优点</h4>
+          <ul>
+            <li>开发最快，代码量最少</li>
+            <li>与参考教程完全一致，学习成本低</li>
+            <li>单体部署，无跨域问题</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>❌ 缺点</h4>
+          <ul>
+            <li>聊天体验差 — 每次操作可能触发页面刷新</li>
+            <li>无法实现流畅的实时聊天 UI</li>
+            <li>语音消息需要大量 JS，与 Thymeleaf 冲突</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>前后端分离 (Vue/React + REST API)</h3>
+      <p>纯 SPA 前端 + Spring Boot REST API + WebSocket 后端</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>✅ 优点</h4>
+          <ul>
+            <li>最佳聊天体验，完全 SPA</li>
+            <li>前后端可独立开发部署</li>
+            <li>现代前端框架，组件化开发</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>❌ 缺点</h4>
+          <ul>
+            <li>开发量翻倍 — 需要学 Vue/React</li>
+            <li>需要处理跨域、构建工具链</li>
+            <li>1 人维护前后端两套代码压力大</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>混合方案（推荐 ⭐）</h3>
+      <p>管理页面用 Thymeleaf，聊天核心用原生 JS + WebSocket</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>✅ 优点</h4>
+          <ul>
+            <li>聊天体验好 — 原生 JS 操控 DOM + WebSocket 实时通信</li>
+            <li>管理页面开发快 — Thymeleaf 复用教程模式</li>
+            <li>单体部署，无跨域，1 人可维护</li>
+            <li>语音消息用原生 MediaRecorder，自然集成</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>❌ 缺点</h4>
+          <ul>
+            <li>需要管理两套页面风格（Thymeleaf + 纯 HTML）</li>
+            <li>原生 JS 没有框架辅助，复杂交互需手写</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px; padding: 16px; background: rgba(59,130,246,0.1); border-radius: 8px; border-left: 4px solid #3b82f6;">
+  <h3 style="margin-top:0">💡 推荐方案 C 的理由</h3>
+  <p>聊天系统的核心难点是<strong>实时性</strong>。方案 C 把精力集中在聊天页面（原生 JS + WebSocket），而管理类页面（登录注册、好友管理 CRUD、群管理）用 Thymeleaf 快速搞定。这样既保证了聊天体验，又不会被前端框架的学习成本拖慢进度。</p>
+</div>
