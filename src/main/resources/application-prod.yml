@@ -1,0 +1,12 @@
+# 生产环境配置（通过 --spring.profiles.active=prod 激活）
+# 自动与 JAR 内 application.yml 合并，相同 key 以 prod 为准
+
+server:
+  port: 10601
+
+spring:
+  thymeleaf:
+    cache: true
+
+app:
+  upload-dir: /opt/pp-chat/uploads/
