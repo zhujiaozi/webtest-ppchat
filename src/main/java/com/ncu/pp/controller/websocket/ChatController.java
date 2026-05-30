@@ -3,15 +3,16 @@ package com.ncu.pp.controller.websocket;
 import com.ncu.pp.dto.ChatMessage;
 import com.ncu.pp.entity.PrivateMessage;
 import com.ncu.pp.entity.User;
+import com.ncu.pp.repository.UserRepository;
 import com.ncu.pp.service.ChatService;
 import com.ncu.pp.service.FileService;
 import com.ncu.pp.service.GroupService;
-import com.ncu.pp.repository.UserRepository;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 
 @Controller
@@ -36,11 +37,16 @@ public class ChatController {
     }
 
     @MessageMapping("/chat/private")
-    public void sendPrivateMessage(@Payload ChatMessage message) {
+    public void sendPrivateMessage(@Payload ChatMessage message, Principal principal) {
+        if (!isActiveSender(message.getSenderId(), principal)
+                || message.getReceiverId() == null
+                || !userRepository.existsById(message.getReceiverId())) {
+            return;
+        }
+
         message.setTime(LocalDateTime.now());
         message.setStatus(0);
 
-        // 语音消息：将 Base64 转为文件存储
         String audioUrl = null;
         if (message.getMsgType() != null && message.getMsgType() == 1 && message.getAudioData() != null) {
             try {
@@ -66,10 +72,16 @@ public class ChatController {
     }
 
     @MessageMapping("/chat/group")
-    public void sendGroupMessage(@Payload ChatMessage message) {
+    public void sendGroupMessage(@Payload ChatMessage message, Principal principal) {
+        Long groupId = parseLong(message.getReceiver());
+        if (!isActiveSender(message.getSenderId(), principal)
+                || groupId == null
+                || !groupService.isMember(groupId, message.getSenderId())) {
+            return;
+        }
+
         message.setTime(LocalDateTime.now());
 
-        // 语音消息：将 Base64 转为文件存储
         String audioUrl = null;
         if (message.getMsgType() != null && message.getMsgType() == 1 && message.getAudioData() != null) {
             try {
@@ -81,7 +93,7 @@ public class ChatController {
         }
 
         groupService.saveGroupMessage(
-                Long.parseLong(message.getReceiver()), message.getSenderId(),
+                groupId, message.getSenderId(),
                 message.getContent(), message.getMsgType(), audioUrl);
 
         User sender = userRepository.findById(message.getSenderId()).orElse(null);
@@ -91,5 +103,20 @@ public class ChatController {
 
         messagingTemplate.convertAndSend(
                 "/topic/group/" + message.getReceiver(), message);
+    }
+
+    private boolean isActiveSender(Long senderId, Principal principal) {
+        if (senderId == null || principal == null) {
+            return false;
+        }
+        return senderId.toString().equals(principal.getName()) && userRepository.existsById(senderId);
+    }
+
+    private Long parseLong(String value) {
+        try {
+            return value == null ? null : Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }
