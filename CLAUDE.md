@@ -178,6 +178,7 @@ node --check src/main/resources/static/js/chat-core.js
 6. **Run `compile` and `test` after backend changes**
 7. **Upload directory** (`uploads/`) is gitignored; use `.gitkeep` to preserve structure
 8. **ApiResponse<T>** wrapper for all REST responses; global exception handler returns consistent error format
+9. **Commit messages** — Use Conventional Commits-style prefixes with Chinese descriptions, e.g. `feat: 完善后台管理功能`, `fix: 删除账号后失效旧会话`, `docs: 更新项目说明`, `test: 补充登录锁定测试`. Do not push directly to `main`.
 
 ---
 

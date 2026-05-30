@@ -18,4 +18,8 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     @Modifying @Transactional
     @Query("DELETE FROM Friend f WHERE f.userId = ?1 OR f.friendId = ?1")
     void deleteAllByUserId(Long userId);
+
+    @Modifying @Transactional
+    @Query("UPDATE Friend f SET f.groupId = NULL WHERE f.groupId = ?1")
+    void clearGroupId(Long groupId);
 }

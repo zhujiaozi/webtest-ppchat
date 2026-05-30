@@ -4,6 +4,7 @@ import com.ncu.pp.entity.GroupChat;
 import com.ncu.pp.entity.GroupMember;
 import com.ncu.pp.entity.GroupMessage;
 import com.ncu.pp.repository.GroupChatRepository;
+import com.ncu.pp.repository.GroupInvitationRepository;
 import com.ncu.pp.repository.GroupMemberRepository;
 import com.ncu.pp.repository.GroupMessageRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,9 @@ class GroupServiceTest {
 
     @Mock
     private GroupMessageRepository groupMessageRepository;
+
+    @Mock
+    private GroupInvitationRepository groupInvitationRepository;
 
     @InjectMocks
     private GroupService groupService;
@@ -132,14 +136,14 @@ class GroupServiceTest {
     void dissolveGroup_DeletesGroupAndMembers() {
         // Arrange
         when(groupChatRepository.findById(1L)).thenReturn(Optional.of(testGroup));
-        when(groupMemberRepository.findByGroupId(1L)).thenReturn(Arrays.asList(testMember));
 
         // Act
         groupService.dissolveGroup(1L, 1L);
 
         // Assert
-        verify(groupMemberRepository).findByGroupId(1L);
-        verify(groupMemberRepository).deleteByGroupIdAndUserId(1L, 2L);
+        verify(groupMessageRepository).deleteAllByGroupId(1L);
+        verify(groupMemberRepository).deleteAllByGroupId(1L);
+        verify(groupInvitationRepository).deleteAllByGroupId(1L);
         verify(groupChatRepository).deleteById(1L);
     }
 

@@ -1,14 +1,19 @@
 package com.ncu.pp.controller.rest;
 
+import com.ncu.pp.dto.AdminPageResponse;
 import com.ncu.pp.dto.ApiResponse;
 import com.ncu.pp.entity.*;
 import com.ncu.pp.repository.*;
 import com.ncu.pp.service.UserService;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -24,6 +29,7 @@ public class AdminRestController {
     private final GroupMemberRepository groupMemberRepository;
     private final GroupMessageRepository groupMessageRepository;
     private final GroupInvitationRepository groupInvitationRepository;
+    private final AdminOperationLogRepository operationLogRepository;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
@@ -36,6 +42,7 @@ public class AdminRestController {
                                GroupMemberRepository groupMemberRepository,
                                GroupMessageRepository groupMessageRepository,
                                GroupInvitationRepository groupInvitationRepository,
+                               AdminOperationLogRepository operationLogRepository,
                                UserService userService,
                                PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -47,11 +54,10 @@ public class AdminRestController {
         this.groupMemberRepository = groupMemberRepository;
         this.groupMessageRepository = groupMessageRepository;
         this.groupInvitationRepository = groupInvitationRepository;
+        this.operationLogRepository = operationLogRepository;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
     }
-
-    // ==================== Dashboard ====================
 
     @GetMapping("/dashboard")
     public ApiResponse<Map<String, Long>> dashboard() {
@@ -65,24 +71,33 @@ public class AdminRestController {
         counts.put("groupMembers", groupMemberRepository.count());
         counts.put("groupMessages", groupMessageRepository.count());
         counts.put("groupInvitations", groupInvitationRepository.count());
+        counts.put("operationLogs", operationLogRepository.count());
         return ApiResponse.ok(counts);
     }
 
-    // ==================== Users ====================
-
     @GetMapping("/users")
-    public ApiResponse<List<User>> listUsers() {
-        return ApiResponse.ok(userRepository.findAll());
+    public ApiResponse<AdminPageResponse<User>> listUsers(@RequestParam(defaultValue = "0") int page,
+                                                          @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(userRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/users/{id}")
-    public ApiResponse<Void> deleteUser(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deleteUser(@PathVariable Long id, HttpSession session) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ApiResponse.fail(404, "用户不存在");
+        }
         userService.deleteUserAndData(id);
+        log(session, "DELETE", "USER", id, user.getUsername());
         return ApiResponse.ok();
     }
 
     @PostMapping("/users/{id}/reset-password")
-    public ApiResponse<Void> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    @Transactional
+    public ApiResponse<Void> resetPassword(@PathVariable Long id,
+                                           @RequestBody Map<String, String> body,
+                                           HttpSession session) {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
             return ApiResponse.fail(404, "用户不存在");
@@ -93,110 +108,162 @@ public class AdminRestController {
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        log(session, "RESET_PASSWORD", "USER", id, user.getUsername());
         return ApiResponse.ok();
     }
 
-    // ==================== Friends ====================
-
     @GetMapping("/friends")
-    public ApiResponse<List<Friend>> listFriends() {
-        return ApiResponse.ok(friendRepository.findAll());
+    public ApiResponse<AdminPageResponse<Friend>> listFriends(@RequestParam(defaultValue = "0") int page,
+                                                              @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(friendRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/friends/{id}")
-    public ApiResponse<Void> deleteFriend(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deleteFriend(@PathVariable Long id, HttpSession session) {
+        Friend friend = friendRepository.findById(id).orElse(null);
+        if (friend == null) {
+            return ApiResponse.fail(404, "好友关系不存在");
+        }
         friendRepository.deleteById(id);
+        friendRepository.deleteByUserIdAndFriendId(friend.getFriendId(), friend.getUserId());
+        log(session, "DELETE", "FRIEND", id, friend.getUserId() + " -> " + friend.getFriendId());
         return ApiResponse.ok();
     }
 
-    // ==================== Friend Groups ====================
-
     @GetMapping("/friend-groups")
-    public ApiResponse<List<FriendGroup>> listFriendGroups() {
-        return ApiResponse.ok(friendGroupRepository.findAll());
+    public ApiResponse<AdminPageResponse<FriendGroup>> listFriendGroups(@RequestParam(defaultValue = "0") int page,
+                                                                        @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(friendGroupRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/friend-groups/{id}")
-    public ApiResponse<Void> deleteFriendGroup(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deleteFriendGroup(@PathVariable Long id, HttpSession session) {
+        FriendGroup group = friendGroupRepository.findById(id).orElse(null);
+        if (group == null) {
+            return ApiResponse.fail(404, "好友分组不存在");
+        }
+        friendRepository.clearGroupId(id);
         friendGroupRepository.deleteById(id);
+        log(session, "DELETE", "FRIEND_GROUP", id, group.getName());
         return ApiResponse.ok();
     }
 
-    // ==================== Friend Requests ====================
-
     @GetMapping("/friend-requests")
-    public ApiResponse<List<FriendRequest>> listFriendRequests() {
-        return ApiResponse.ok(friendRequestRepository.findAll());
+    public ApiResponse<AdminPageResponse<FriendRequest>> listFriendRequests(@RequestParam(defaultValue = "0") int page,
+                                                                            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(friendRequestRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/friend-requests/{id}")
-    public ApiResponse<Void> deleteFriendRequest(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deleteFriendRequest(@PathVariable Long id, HttpSession session) {
         friendRequestRepository.deleteById(id);
+        log(session, "DELETE", "FRIEND_REQUEST", id, null);
         return ApiResponse.ok();
     }
 
-    // ==================== Private Messages ====================
-
     @GetMapping("/private-messages")
-    public ApiResponse<List<PrivateMessage>> listPrivateMessages() {
-        return ApiResponse.ok(privateMessageRepository.findAll());
+    public ApiResponse<AdminPageResponse<PrivateMessage>> listPrivateMessages(@RequestParam(defaultValue = "0") int page,
+                                                                              @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(privateMessageRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/private-messages/{id}")
-    public ApiResponse<Void> deletePrivateMessage(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deletePrivateMessage(@PathVariable Long id, HttpSession session) {
         privateMessageRepository.deleteById(id);
+        log(session, "DELETE", "PRIVATE_MESSAGE", id, null);
         return ApiResponse.ok();
     }
 
-    // ==================== Group Chats ====================
-
     @GetMapping("/group-chats")
-    public ApiResponse<List<GroupChat>> listGroupChats() {
-        return ApiResponse.ok(groupChatRepository.findAll());
+    public ApiResponse<AdminPageResponse<GroupChat>> listGroupChats(@RequestParam(defaultValue = "0") int page,
+                                                                    @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(groupChatRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/group-chats/{id}")
-    public ApiResponse<Void> deleteGroupChat(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deleteGroupChat(@PathVariable Long id, HttpSession session) {
+        GroupChat group = groupChatRepository.findById(id).orElse(null);
+        if (group == null) {
+            return ApiResponse.fail(404, "群聊不存在");
+        }
+        groupMessageRepository.deleteAllByGroupId(id);
+        groupMemberRepository.deleteAllByGroupId(id);
+        groupInvitationRepository.deleteAllByGroupId(id);
         groupChatRepository.deleteById(id);
+        log(session, "DELETE", "GROUP_CHAT", id, group.getName());
         return ApiResponse.ok();
     }
 
-    // ==================== Group Members ====================
-
     @GetMapping("/group-members")
-    public ApiResponse<List<GroupMember>> listGroupMembers() {
-        return ApiResponse.ok(groupMemberRepository.findAll());
+    public ApiResponse<AdminPageResponse<GroupMember>> listGroupMembers(@RequestParam(defaultValue = "0") int page,
+                                                                        @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(groupMemberRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/group-members/{id}")
-    public ApiResponse<Void> deleteGroupMember(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deleteGroupMember(@PathVariable Long id, HttpSession session) {
         groupMemberRepository.deleteById(id);
+        log(session, "DELETE", "GROUP_MEMBER", id, null);
         return ApiResponse.ok();
     }
 
-    // ==================== Group Messages ====================
-
     @GetMapping("/group-messages")
-    public ApiResponse<List<GroupMessage>> listGroupMessages() {
-        return ApiResponse.ok(groupMessageRepository.findAll());
+    public ApiResponse<AdminPageResponse<GroupMessage>> listGroupMessages(@RequestParam(defaultValue = "0") int page,
+                                                                          @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(groupMessageRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/group-messages/{id}")
-    public ApiResponse<Void> deleteGroupMessage(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deleteGroupMessage(@PathVariable Long id, HttpSession session) {
         groupMessageRepository.deleteById(id);
+        log(session, "DELETE", "GROUP_MESSAGE", id, null);
         return ApiResponse.ok();
     }
 
-    // ==================== Group Invitations ====================
-
     @GetMapping("/group-invitations")
-    public ApiResponse<List<GroupInvitation>> listGroupInvitations() {
-        return ApiResponse.ok(groupInvitationRepository.findAll());
+    public ApiResponse<AdminPageResponse<GroupInvitation>> listGroupInvitations(@RequestParam(defaultValue = "0") int page,
+                                                                                @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(groupInvitationRepository.findAll(pageable(page, size))));
     }
 
     @DeleteMapping("/group-invitations/{id}")
-    public ApiResponse<Void> deleteGroupInvitation(@PathVariable Long id) {
+    @Transactional
+    public ApiResponse<Void> deleteGroupInvitation(@PathVariable Long id, HttpSession session) {
         groupInvitationRepository.deleteById(id);
+        log(session, "DELETE", "GROUP_INVITATION", id, null);
         return ApiResponse.ok();
+    }
+
+    @GetMapping("/operation-logs")
+    public ApiResponse<AdminPageResponse<AdminOperationLog>> listOperationLogs(@RequestParam(defaultValue = "0") int page,
+                                                                               @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(AdminPageResponse.from(operationLogRepository.findAll(pageable(page, size))));
+    }
+
+    private Pageable pageable(int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(Math.max(1, size), 100);
+        return PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "id"));
+    }
+
+    private void log(HttpSession session, String action, String targetType, Long targetId, String detail) {
+        Admin admin = (Admin) session.getAttribute("currentAdmin");
+        AdminOperationLog log = new AdminOperationLog();
+        if (admin != null) {
+            log.setAdminId(admin.getId());
+            log.setAdminUsername(admin.getUsername());
+        }
+        log.setAction(action);
+        log.setTargetType(targetType);
+        log.setTargetId(targetId);
+        log.setDetail(detail);
+        operationLogRepository.save(log);
     }
 }
