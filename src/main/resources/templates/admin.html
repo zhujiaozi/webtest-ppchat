@@ -63,6 +63,8 @@
         .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
         .badge-ok{background:#dcfce7;color:#16a34a}
         .badge-pending{background:#fef3c7;color:#d97706}
+        .pagination{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px;color:#6b7280;font-size:12px}
+        .pagination .btn{padding:6px 10px}
 
         /* Modal */
         .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:1000;justify-content:center;align-items:center}
@@ -129,6 +131,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 群邀请
             </a>
+            <a data-view="operation-logs" onclick="switchView('operation-logs')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                操作日志
+            </a>
         </nav>
         <div class="logout">
             <a th:href="@{/admin/logout}">
@@ -187,6 +193,11 @@
             <div class="search-bar"><input type="text" id="search-group-invitations" placeholder="搜索ID、群ID、邀请者ID、被邀请者ID..." oninput="filterTable('group-invitations')"><span class="result-count" id="count-group-invitations"></span></div>
             <div class="table-container"><table><thead><tr><th>ID</th><th>群ID</th><th>邀请者ID</th><th>被邀请者ID</th><th>类型</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tbody-group-invitations"></tbody></table></div>
         </div>
+        <div id="view-operation-logs" class="view">
+            <h2>操作日志</h2>
+            <div class="search-bar"><input type="text" id="search-operation-logs" placeholder="搜索管理员、动作、对象、详情..." oninput="filterTable('operation-logs')"><span class="result-count" id="count-operation-logs"></span></div>
+            <div class="table-container"><table><thead><tr><th>ID</th><th>管理员</th><th>动作</th><th>对象</th><th>对象ID</th><th>详情</th><th>时间</th></tr></thead><tbody id="tbody-operation-logs"></tbody></table></div>
+        </div>
     </div>
 </div>
 
@@ -205,6 +216,8 @@
 <script>
 const API = '/api/admin';
 let currentView = 'dashboard';
+const pageState = {};
+const pageSize = 20;
 
 function switchView(view) {
     currentView = view;
@@ -215,6 +228,7 @@ function switchView(view) {
     // 清空搜索框
     const searchInput = document.getElementById('search-' + view);
     if (searchInput) searchInput.value = '';
+    pageState[view] = 0;
     loadView(view);
 }
 
@@ -237,6 +251,7 @@ async function loadView(view) {
         case 'group-members': return loadGeneric('/group-members', 'tbody-group-members', renderGroupMember, 'group-members');
         case 'group-messages': return loadGeneric('/group-messages', 'tbody-group-messages', renderGroupMessage, 'group-messages');
         case 'group-invitations': return loadGeneric('/group-invitations', 'tbody-group-invitations', renderGroupInvitation, 'group-invitations');
+        case 'operation-logs': return loadGeneric('/operation-logs', 'tbody-operation-logs', renderOperationLog, 'operation-logs');
     }
 }
 
@@ -247,7 +262,8 @@ async function loadDashboard() {
     const labels = {
         users: '用户总数', friends: '好友关系', friendGroups: '好友分组',
         friendRequests: '好友请求', privateMessages: '私聊消息', groupChats: '群聊数量',
-        groupMembers: '群成员数', groupMessages: '群消息数', groupInvitations: '群邀请数'
+        groupMembers: '群成员数', groupMessages: '群消息数', groupInvitations: '群邀请数',
+        operationLogs: '操作日志'
     };
     document.getElementById('dashboard-cards').innerHTML = Object.entries(labels).map(([k, v]) =>
         '<div class="stat-card"><div class="label">' + v + '</div><div class="value">' + (d[k] ?? 0) + '</div></div>'
@@ -255,10 +271,16 @@ async function loadDashboard() {
 }
 
 async function loadUsers() {
-    const res = await api('GET', '/users');
+    const res = await api('GET', withPage('/users', 'users'));
     const tbody = document.getElementById('tbody-users');
-    if (res.code !== 200 || !res.data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无数据</td></tr>'; updateCount('users', 0); return; }
-    tbody.innerHTML = res.data.map(u => {
+    const pageData = normalizePage(res.data);
+    if (res.code !== 200 || !pageData.content.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无数据</td></tr>';
+        updateCount('users', 0);
+        renderPagination('users', pageData);
+        return;
+    }
+    tbody.innerHTML = pageData.content.map(u => {
         const badge = u.status === -1 ? '<span class="badge" style="background:#fee2e2;color:#dc2626">已封禁</span>' : '<span class="badge badge-ok">正常</span>';
         return '<tr data-search="' + esc((u.id + ' ' + u.username + ' ' + (u.nickname||'')).toLowerCase()) + '">' +
             '<td>' + u.id + '</td><td>' + esc(u.username) + '</td><td>' + esc(u.nickname || '') + '</td>' +
@@ -266,7 +288,8 @@ async function loadUsers() {
             '<td>' + fmtDate(u.lastLogin) + '</td><td>' + fmtDate(u.createdAt) + '</td>' +
             '<td><button class="btn btn-primary btn-sm" onclick="showResetModal(' + u.id + ')">重置密码</button> <button class="btn btn-danger btn-sm" onclick="deleteItem(\'/users/' + u.id + '\',\'users\')">删除</button></td></tr>';
     }).join('');
-    updateCount('users', res.data.length);
+    updateCount('users', pageData.totalElements);
+    renderPagination('users', pageData);
 }
 
 
@@ -286,15 +309,57 @@ async function doResetPassword() {
 }
 
 async function loadGeneric(path, tbodyId, renderFn, viewName) {
-    const res = await api('GET', path);
+    const res = await api('GET', withPage(path, viewName));
     const tbody = document.getElementById(tbodyId);
-    if (res.code !== 200 || !res.data.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty">暂无数据</td></tr>'; updateCount(viewName, 0); return; }
-    tbody.innerHTML = res.data.map(item => {
+    const pageData = normalizePage(res.data);
+    if (res.code !== 200 || !pageData.content.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="empty">暂无数据</td></tr>';
+        updateCount(viewName, 0);
+        renderPagination(viewName, pageData);
+        return;
+    }
+    tbody.innerHTML = pageData.content.map(item => {
         const row = renderFn(item);
         // 在 tr 标签中注入 data-search 属性
         return row.replace('<tr>', '<tr data-search="' + esc(getSearchText(item).toLowerCase()) + '">');
     }).join('');
-    updateCount(viewName, res.data.length);
+    updateCount(viewName, pageData.totalElements);
+    renderPagination(viewName, pageData);
+}
+
+function withPage(path, viewName) {
+    const page = pageState[viewName] || 0;
+    return path + '?page=' + page + '&size=' + pageSize;
+}
+
+function normalizePage(data) {
+    if (!data) return { content: [], page: 0, size: pageSize, totalElements: 0, totalPages: 0 };
+    if (Array.isArray(data)) return { content: data, page: 0, size: data.length, totalElements: data.length, totalPages: data.length ? 1 : 0 };
+    return data;
+}
+
+function renderPagination(viewName, pageData) {
+    const view = document.getElementById('view-' + viewName);
+    if (!view) return;
+    let pager = document.getElementById('pager-' + viewName);
+    if (!pager) {
+        pager = document.createElement('div');
+        pager.id = 'pager-' + viewName;
+        pager.className = 'pagination';
+        view.appendChild(pager);
+    }
+    const current = pageData.page || 0;
+    const totalPages = pageData.totalPages || 0;
+    const total = pageData.totalElements || 0;
+    pager.innerHTML =
+        '<span>共 ' + total + ' 条，第 ' + (totalPages ? current + 1 : 0) + ' / ' + totalPages + ' 页</span>' +
+        '<button class="btn btn-primary" ' + (current <= 0 ? 'disabled' : '') + ' onclick="goPage(\'' + viewName + '\',' + (current - 1) + ')">上一页</button>' +
+        '<button class="btn btn-primary" ' + (current + 1 >= totalPages ? 'disabled' : '') + ' onclick="goPage(\'' + viewName + '\',' + (current + 1) + ')">下一页</button>';
+}
+
+function goPage(viewName, page) {
+    pageState[viewName] = Math.max(0, page);
+    loadView(viewName);
 }
 
 function getSearchText(item) {
@@ -332,6 +397,7 @@ function renderGroupChat(g) { return '<tr><td>'+g.id+'</td><td>'+esc(g.name)+'</
 function renderGroupMember(m) { const r={0:'成员',1:'管理员',2:'群主'}; return '<tr><td>'+m.id+'</td><td>'+m.groupId+'</td><td>'+m.userId+'</td><td>'+(r[m.role]||m.role)+'</td><td>'+fmtDate(m.joinedAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-members/'+m.id+'\',\'group-members\')">删除</button></td></tr>'; }
 function renderGroupMessage(m) { const t={0:'文本',1:'语音'}; const c=m.msgType===1?'[语音消息]':(m.content||'').substring(0,50); return '<tr><td>'+m.id+'</td><td>'+m.groupId+'</td><td>'+m.senderId+'</td><td>'+esc(c)+'</td><td>'+(t[m.msgType]||m.msgType)+'</td><td>'+fmtDate(m.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-messages/'+m.id+'\',\'group-messages\')">删除</button></td></tr>'; }
 function renderGroupInvitation(i) { const s={0:'待处理',1:'已接受',2:'已拒绝'}; const tp={0:'邀请',1:'申请'}; return '<tr><td>'+i.id+'</td><td>'+i.groupId+'</td><td>'+i.fromUserId+'</td><td>'+i.toUserId+'</td><td>'+(tp[i.type]||i.type)+'</td><td>'+(s[i.status]||i.status)+'</td><td>'+fmtDate(i.createdAt)+'</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem(\'/group-invitations/'+i.id+'\',\'group-invitations\')">删除</button></td></tr>'; }
+function renderOperationLog(l) { return '<tr><td>'+l.id+'</td><td>'+esc(l.adminUsername||'-')+'</td><td>'+esc(l.action||'')+'</td><td>'+esc(l.targetType||'')+'</td><td>'+(l.targetId||'-')+'</td><td>'+esc(l.detail||'')+'</td><td>'+fmtDate(l.createdAt)+'</td></tr>'; }
 
 async function deleteItem(path, viewName) {
     if (!confirm('确定要删除？此操作不可恢复。')) return;

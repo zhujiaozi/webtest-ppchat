@@ -1,6 +1,7 @@
 package com.ncu.pp.controller.page;
 
 import com.ncu.pp.entity.User;
+import com.ncu.pp.service.LoginAttemptService;
 import com.ncu.pp.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -13,9 +14,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class PageController {
 
     private final UserService userService;
+    private final LoginAttemptService loginAttemptService;
 
-    public PageController(UserService userService) {
+    public PageController(UserService userService, LoginAttemptService loginAttemptService) {
         this.userService = userService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @GetMapping("/login")
@@ -26,11 +29,19 @@ public class PageController {
     @PostMapping("/login")
     public String doLogin(@RequestParam String username, @RequestParam String password,
                           HttpSession session, Model model) {
-        User user = userService.login(username, password);
-        if (user == null) {
-            model.addAttribute("error", "用户名或密码错误");
+        var lockMessage = loginAttemptService.getLockMessage("user", username);
+        if (lockMessage.isPresent()) {
+            model.addAttribute("error", lockMessage.get());
             return "login";
         }
+
+        User user = userService.login(username, password);
+        if (user == null) {
+            model.addAttribute("error", loginAttemptService.recordFailure("user", username)
+                    .orElse("用户名或密码错误"));
+            return "login";
+        }
+        loginAttemptService.recordSuccess("user", username);
         session.setAttribute("currentUser", user);
         return "redirect:/chat";
     }
@@ -78,8 +89,8 @@ public class PageController {
 
     @PostMapping("/forgot-password")
     public String doForgotPassword(@RequestParam String username,
-                                    @RequestParam String newPassword,
-                                    Model model) {
+                                   @RequestParam String newPassword,
+                                   Model model) {
         String error = userService.resetPassword(username, newPassword);
         if (error != null) {
             model.addAttribute("error", error);
