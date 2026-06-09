@@ -58,7 +58,7 @@ cd webtest-ppchat
 # 编译
 ./mvnw compile
 
-# 运行测试（56 个用例）
+# 运行全部测试
 ./mvnw test
 
 # 启动应用
@@ -66,6 +66,12 @@ cd webtest-ppchat
 ```
 
 浏览器访问 http://localhost:8080
+
+如需运行单个测试类：
+
+```bash
+./mvnw test -Dtest=FriendServiceTest
+```
 
 ### 打包部署
 
@@ -166,21 +172,13 @@ src/main/resources/
 ./mvnw test
 ```
 
-```
-Tests run: 56, Failures: 0, Errors: 0, Skipped: 0
-
-UserServiceTest:      11 tests
-FriendServiceTest:    13 tests
-ChatServiceTest:       7 tests
-GroupServiceTest:     14 tests
-Controller Tests:     11 tests
-```
+当前仓库包含 Service 层与部分 Controller 层测试，覆盖用户、好友、聊天、群聊等核心模块。
 
 ---
 
 ## 部署
 
-已部署到阿里云 ECS：
+项目已完成线上部署，可通过 `https://pp.evog.top` 访问。
 
 | 项目 | 配置 |
 |------|------|
@@ -191,6 +189,14 @@ Controller Tests:     11 tests
 | 数据库 | 远程 MySQL 8.0 |
 
 部署流程详见 `reports/7.项目部署文档.md`。
+
+---
+
+## 课程资料与交付物
+
+- `reports/1` ~ `reports/10`：小组提交的课程文档
+- `reports/self/`：个人报告相关素材、截图与心得模板
+- `reports/PP Chat 在线聊天系统-课程答辩.pptx`：课程答辩演示文稿
 
 ---
 

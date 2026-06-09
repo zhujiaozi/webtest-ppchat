@@ -2,221 +2,121 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
-
 ## Project Overview
 
-**PP Chat** is a Spring Boot 4.0.6 + Java 21 web-based instant messaging application for the Nanchang University "Web Programming (Java EE)" course project. It implements user authentication, friend management (with groups), private chat, group chat, voice messages, personal center, theme switching, and chat history search/export.
+**PP Chat** is a Spring Boot 4.0.6 + Java 21 course project for Nanchang University's Web Programming (Java EE) class. It is a web-based chat system with user auth, friend management, private chat, group chat, voice messages, notifications, and an admin backend.
 
-### Tech Stack
-- **Backend**: Spring Boot 4.0.6, Java 21, Spring Data JPA/Hibernate, MySQL 8+
-- **Real-time**: WebSocket STOMP + SockJS + StompJS
-- **Template Engine**: Thymeleaf
-- **Security**: BCrypt (Spring Security) + custom Session interceptor
-- **Frontend**: Vanilla JavaScript SPA + HTML + CSS (no build tools)
-- **Testing**: JUnit 5, Spring Boot Test, Mockito
-- **Build**: Maven Wrapper (`mvnw` / `mvnw.cmd`)
-
----
+### Stack
+- **Backend:** Spring Boot, Spring Data JPA / Hibernate, MySQL
+- **Realtime:** WebSocket STOMP + SockJS
+- **Frontend:** Thymeleaf + vanilla JavaScript SPA modules
+- **Security:** Session-based auth with custom interceptors, BCrypt passwords
+- **Testing:** JUnit 5, Mockito, Spring Boot Test
 
 ## Common Commands
 
 ```bash
 # Compile
-./mvnw compile          # Linux/Mac
-mvnw.cmd compile        # Windows
+./mvnw compile
 
-# Run tests
-./mvnw test             # All tests
-./mvnw test -Dtest=FriendServiceTest  # Single test class
+# Run all tests
+./mvnw test
 
-# Start application
+# Run a single test class
+./mvnw test -Dtest=FriendServiceTest
+
+# Start the app locally
 ./mvnw spring-boot:run
 
-# Package
+# Build the jar without tests
 ./mvnw clean package -DskipTests
 
-# Check JS syntax (optional)
-node --check src/main/resources/static/js/chat-core.js
+# Check syntax for a frontend module when editing JS
+node --check src/main/resources/static/js/chat-view.js
 ```
 
----
+On Windows, use `mvnw.cmd` instead of `./mvnw` when needed.
 
-## Architecture
+## Big-Picture Architecture
 
-### Backend Layers
-| Layer | Path | Purpose |
-|-------|------|---------|
-| Page Controllers | `controller/page/` | Thymeleaf page rendering |
-| REST Controllers | `controller/rest/` | JSON API endpoints |
-| WebSocket Controller | `controller/websocket/ChatController.java` | STOMP message handling |
-| Services | `service/` | Business logic |
-| Repositories | `repository/` | JPA data access |
-| Entities | `entity/` | JPA entities (9 tables) |
-| Config | `config/` | Web, WebSocket, Security config |
-| Interceptor | `interceptor/LoginInterceptor.java` | Session auth |
+### Backend shape
+The app follows a conventional Spring layering:
+- `controller/page/` renders Thymeleaf pages
+- `controller/rest/` exposes JSON APIs wrapped in `ApiResponse<T>`
+- `controller/websocket/ChatController.java` handles STOMP chat messages
+- `service/` contains business logic
+- `repository/` contains JPA access
+- `entity/` models the chat domain
 
-### Frontend Modules (chat.html SPA)
-| File | Purpose |
-|------|---------|
-| `chat-core.js` | Global state, init, WebSocket, text sending, utilities |
-| `chat-ui.js` | Particles, resizer, drawer, modal system |
-| `chat-view.js` | Chat list, open chat, message rendering, voice recording, search |
-| `chat-friends.js` | Friends view, requests, remarks, move, delete |
-| `chat-groups.js` | Groups view, details, announcements, members, create |
-| `chat-profile.js` | Personal center, nickname, avatar, password |
-| `theme.js` | Theme switching (light/dark/system) |
-| `icons.js` | SVG icon library |
+Authentication is **not** implemented with a Spring Security filter chain. The app uses session-based auth:
+- login stores `currentUser` in session
+- `LoginInterceptor` protects normal user pages and APIs
+- admin routes use a separate admin flow and interceptor
 
-> Note: `chat.js` is a legacy bundled file no longer used by `chat.html`. Modify individual `chat-*.js` files instead.
+### Frontend shape
+The main user experience is the `chat.html` single-page shell backed by modular JS files under `src/main/resources/static/js/`.
 
----
+Important modules:
+- `chat-core.js` — global state, view switching, WebSocket init, shared utilities
+- `chat-view.js` — conversation UI, message rendering, voice recording, history search/export
+- `chat-friends.js` — friends, requests, notification-related friend actions
+- `chat-groups.js` — groups, group detail, invitations, announcements
+- `chat-profile.js` — profile editing
+- `chat-ui.js` — modal/drawer/resizer/toast UI behavior
+- `theme.js` — light/dark/system theme switching
 
-## Key Design Decisions
+Do **not** edit legacy `chat.js`; `chat.html` uses the split `chat-*.js` modules.
 
-### Database
-- 9 core tables: `pp_user`, `pp_friend_group`, `pp_friend`, `pp_friend_request`, `pp_private_message`, `pp_group_chat`, `pp_group_member`, `pp_group_message`, `pp_group_invitation`
-- Friend relationships stored bidirectionally (A→B and B→A)
-- JPA `ddl-auto: update` for automatic schema management
+### Realtime messaging model
+WebSocket/STOMP is central to the app:
+- endpoint: `/ws`
+- app prefix: `/app`
+- private messages: send to `/app/chat/private`, subscribe on `/user/queue/private`
+- group messages: send to `/app/chat/group`, subscribe on `/topic/group/{groupId}`
 
-### WebSocket STOMP
-- Endpoint: `/ws` (SockJS fallback)
-- App prefix: `/app`, Broker prefixes: `/topic`, `/queue`
-- Private: send to `/app/chat/private`, subscribe `/user/{userId}/queue/private`
-- Group: send to `/app/chat/group`, subscribe `/topic/group/{groupId}`
-- Auth: Handshake checks `session.currentUser`; Principal set to user ID string
-- Buffer size: 1MB (configured in `WebSocketConfig.java` and `application.yml`)
+The WebSocket handshake checks the existing HTTP session and sets the STOMP `Principal` to the user ID string. This is required for private message delivery to work.
 
-### Authentication
-- Custom Session-based auth (not Spring Security filter chain)
-- Login stores `User` object in `session.setAttribute("currentUser", user)`
-- `LoginInterceptor` redirects unauthenticated requests to `/login`
-- Password field hidden from API responses via `@JsonIgnore`
+### Data model and domain rules
+The main schema centers on users, friends, groups, and messages.
 
-### Voice Messages
-- Recorded via MediaRecorder API (`audio/webm;codecs=opus`)
-- Converted to Base64 Data URL, sent via STOMP
-- Saved as files in `uploads/audio/`, database stores URL only
-- Max duration: 10 seconds
+Important domain facts:
+- friend relationships are stored **bidirectionally** in `pp_friend`
+- group invitations and join requests share `pp_group_invitation`, distinguished by `type`
+- private messages store a `status` field used for unread/read handling
+- voice messages are persisted as files under `uploads/audio/`; the database stores only the URL
+- JPA runs with `ddl-auto: update`, so entity changes can affect schema automatically
 
-### Performance Optimizations
-- Batch queries to avoid N+1 (e.g., `countUnreadGroupedBySender`, `findAllById`)
-- Generation counter pattern prevents async view loading race conditions
-- Enriched API responses include sender names to avoid extra fetches
+There are 10 core tables documented in `README.md` / `reports/5.数据库设计文档.md`, including both `pp_user` and `pp_admin`.
 
----
+## Patterns That Matter Here
 
-## API Endpoints Summary
-
-### Friends (`/api/friends`)
-- `GET /` — Get friends and groups
-- `GET /search?keyword=` — Search all users
-- `GET /search-friends?keyword=` — Search only friends
-- `POST /request` — Send friend request
-- `GET /requests` — Get pending requests (enriched with sender name)
-- `POST /requests/{id}/accept|reject`
-- `POST /groups` — Create group
-- `PUT /groups/{id}` — Rename group
-- `DELETE /groups/{id}` — Delete group (moves friends to ungrouped)
-- `DELETE /{friendId}` — Delete friend (bidirectional)
-- `PUT /{friendId}/move` — Move to group
-- `PUT /{friendId}/remark` — Set remark
-
-### Chat (`/api/chat`)
-- `GET /private/{friendId}` — Get conversation
-- `GET /private/{friendId}/search?keyword=` — Search conversation
-- `POST /private/{friendId}/read` — Mark as read
-- `GET /private/{friendId}/unread` — Unread count
-- `GET /private/unread-all` — Batch unread counts (Map)
-- `GET /private/{friendId}/export` — Export as TXT
-
-### Groups (`/api/groups`)
-- `GET /` — Get user's groups
-- `POST /` — Create group
-- `GET /{id}` — Get group detail with members
-- `PUT /{id}/notice` — Update announcement (owner only)
-- `DELETE /{id}/members/{userId}` — Kick member (owner only)
-- `POST /{id}/leave` — Leave group
-- `DELETE /{id}` — Dissolve group (owner only)
-- `POST /{id}/invite` — Invite member
-- `GET /invitations` — Get pending invitations
-- `POST /invitations/{id}/accept|reject`
-- `GET /{id}/messages` — Get messages (enriched)
-- `GET /{id}/messages/search?keyword=` — Search messages
-- `GET /{id}/export` — Export group chat
-
-### Profile (`/api/profile`)
-- `GET /` — Get current user profile
-- `PUT /nickname` — Update nickname
-- `POST /avatar` — Upload avatar (multipart)
-- `PUT /password` — Change password
-
----
+- Keep controller code thin; business rules belong in services.
+- Prefer batch loading patterns already used in services to avoid N+1 queries.
+- Preserve the generation-counter style used in frontend view switching to avoid stale async updates.
+- When editing message flows, check both REST history loading and WebSocket delivery paths.
+- When editing voice messages, follow the existing pipeline: browser recording → Base64 transfer → `FileService` save → URL persisted in message record.
 
 ## Important Files
 
-| File | Purpose |
-|------|---------|
-| `src/main/resources/application.yml` | DB config, upload dir, WebSocket buffer sizes |
-| `src/main/java/com/ncu/pp/config/WebSocketConfig.java` | STOMP endpoint, auth handshake, buffer limits |
-| `src/main/java/com/ncu/pp/config/WebConfig.java` | LoginInterceptor, resource handlers |
-| `src/main/java/com/ncu/pp/interceptor/LoginInterceptor.java` | Session auth check |
-| `src/main/resources/templates/chat.html` | Main SPA page with inline CSS |
-| `src/main/resources/static/css/style.css` | Global styles, theme variables |
-| `docs/superpowers/specs/2026-05-16-pp-chat-design.md` | Original design spec |
-| `reports/` | Course deliverables (10 markdown docs) |
+- `src/main/resources/application.yml` — shared config including upload path and WebSocket buffer sizes
+- `src/main/resources/application-prod.yml` — production overrides
+- `src/main/java/com/ncu/pp/config/WebSocketConfig.java` — STOMP endpoint, handshake auth, message limits
+- `src/main/java/com/ncu/pp/config/WebConfig.java` — interceptor wiring and resource handlers
+- `src/main/java/com/ncu/pp/interceptor/LoginInterceptor.java` — user session gate
+- `src/main/resources/templates/chat.html` — main SPA shell
+- `src/main/resources/templates/admin.html` — admin UI
+- `src/main/resources/static/css/style.css` — global styling and theme variables
 
----
+## Reports and Deliverables
 
-## Development Guidelines
+The repository includes course deliverables under `reports/`.
+- `reports/1` through `reports/10` are the team submission documents
+- `reports/self/` contains individual-report materials, screenshots, and reusable心得 content
 
-1. **No frontend build tools** — All JS/CSS loaded directly via Thymeleaf
-2. **Modify `chat-*.js` modules** — Not the legacy `chat.js`
-3. **Service layer for business logic** — Controllers should be thin
-4. **Batch queries over loops** — Avoid N+1 with `findAllById`, `GROUP BY`
-5. **Use generation counter for async views** — Prevent race conditions in `switchView()`
-6. **Run `compile` and `test` after backend changes**
-7. **Upload directory** (`uploads/`) is gitignored; use `.gitkeep` to preserve structure
-8. **ApiResponse<T>** wrapper for all REST responses; global exception handler returns consistent error format
-9. **Commit messages** — Use Conventional Commits-style prefixes with Chinese descriptions, e.g. `feat: 完善后台管理功能`, `fix: 删除账号后失效旧会话`, `docs: 更新项目说明`, `test: 补充登录锁定测试`. Do not push directly to `main`.
+When updating reports, prefer aligning claims with the current codebase and deployment state rather than expanding the docs speculatively.
 
----
+## Notes From README / Current Repo State
 
-## Known Issues & Solutions
-
-| Issue | Solution |
-|-------|----------|
-| STOMP buffer limit (64KB) blocks voice messages | Increased to 1MB in `WebSocketConfig.java` + `application.yml` |
-| WebSocket messages not delivered to receiver | Set Principal in `DefaultHandshakeHandler.determineUser()` |
-| Rapid view switching mixes content | Generation counter pattern in `switchView()` |
-| N+1 queries in message lists | Batch load users with `findAllById()`, build Map |
-| Deleting group leaves orphaned groupId | Move friends to ungrouped before deleting group |
-| Filenames with spaces break URLs | Sanitize with regex replacement |
-| Password leaked in API responses | Added `@JsonIgnore` on `User.password` |
-
----
-
-## Testing
-
-- 56 unit tests across UserService, FriendService, ChatService, GroupService
-- Integration tests for ChatRestController, ProfileRestController
-- Test coverage ~78%
-- Run with `./mvnw test`
-
----
-
-## Course Deliverables
-
-Located in `reports/`:
-1. `1.项目访问地址.md` — Deployment URL (to be filled)
-2. `2.项目代码地址.md` — Git repo URL (to be filled)
-3. `3.需求分析文档.md` — Requirements analysis
-4. `4.设计文档.md` — System design
-5. `5.数据库设计文档.md` — Database schema
-6. `6.接口设计文档.md` — API documentation
-7. `7.项目部署文档.md` — Deployment guide
-8. `8.测试用例.md` — Test cases
-9. `9.交流记录分工记录.md` — Team communication log
-10. `10.完整实验报告.md` — Complete lab report
-
-Team members: 郭峰 (lead), 陈弦, 齐睿, 沈越, 宋佳伟, 李子旸
+- The project is intended to be runnable locally with MySQL and deployable behind Nginx with HTTPS.
+- The online deployment and repo URL are documented in `README.md`.
+- The app includes a separate admin backend in addition to the user-facing chat flow.
