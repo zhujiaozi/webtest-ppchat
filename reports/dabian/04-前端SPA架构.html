@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>第 4 章：前端 SPA 架构</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <nav class="chapter-nav">
+        <a href="index.html">目录</a>
+        <a href="03-WebSocket实时通信.html">← 上一章</a>
+        <a href="05-语音消息实现.html">下一章 →</a>
+    </nav>
+    <main>
+        <h1>第 4 章：前端 SPA 架构</h1>
+
+        <h2>4.1 为什么用原生 JS？</h2>
+        <p>项目采用原生 JavaScript + 模块化设计，没有使用 Vue/React 框架。</p>
+
+        <div class="callout callout-info">
+            <strong>原因：</strong>
+            <ul>
+                <li>课程要求掌握原生 JavaScript 能力</li>
+                <li>项目规模适中，不需要复杂状态管理</li>
+                <li>避免构建工具和打包流程</li>
+                <li>直接通过 Thymeleaf 渲染加载</li>
+            </ul>
+        </div>
+
+        <h2>4.2 模块划分</h2>
+
+        <table>
+            <tr><th>文件</th><th>职责</th></tr>
+            <tr><td>chat-core.js</td><td>全局状态、WebSocket 初始化、视图切换</td></tr>
+            <tr><td>chat-view.js</td><td>聊天窗口、消息渲染、语音录制、搜索导出</td></tr>
+            <tr><td>chat-friends.js</td><td>好友列表、申请处理、通知中心</td></tr>
+            <tr><td>chat-groups.js</td><td>群聊列表、群详情、成员管理</td></tr>
+            <tr><td>chat-profile.js</td><td>个人中心、资料修改</td></tr>
+            <tr><td>chat-ui.js</td><td>UI 组件（模态框、抽屉、分隔线）</td></tr>
+            <tr><td>theme.js</td><td>主题切换（日间/夜间/跟随系统）</td></tr>
+        </table>
+
+        <div class="callout callout-warning">
+            <strong>注意：</strong>项目中有 <code>chat.js</code> 是早期单文件版本，已废弃。实际运行时加载的是拆分后的 <code>chat-*.js</code> 模块。
+        </div>
+
+        <h2>4.3 视图切换机制</h2>
+
+        <pre><code class="language-javascript">function switchView(view) {
+    currentView = view;
+    currentChat = null;
+    const gen = ++viewGeneration;
+    
+    // 清空内容区和抽屉
+    const content = document.getElementById('contentArea');
+    if (content) content.innerHTML = '';
+    const drawer = document.getElementById('infoDrawer');
+    if (drawer) drawer.classList.add('hidden');
+    
+    // 加载对应视图
+    switch (view) {
+        case 'chat': loadChatView(gen); break;
+        case 'friends': loadFriendsView(gen); break;
+        case 'groups': loadGroupsView(gen); break;
+        case 'notifications': loadNotificationsView(gen); break;
+        case 'profile': loadProfileView(gen); break;
+    }
+}
+</code></pre>
+
+        <div class="key-point">
+            <strong>关键设计：</strong>使用 generation counter 防止异步加载时视图混乱。
+        </div>
+
+        <h2>4.4 主题系统</h2>
+
+        <p>支持三种主题：日间模式、夜间模式、跟随系统。</p>
+
+        <ul>
+            <li>主题配置存储在 <code>localStorage</code></li>
+            <li>通过 CSS 变量控制颜色</li>
+            <li>切换时平滑过渡</li>
+        </ul>
+
+        <h2>4.5 前端状态管理</h2>
+
+        <p>使用全局变量管理核心状态：</p>
+
+        <ul>
+            <li><code>currentUser</code>：当前登录用户</li>
+            <li><code>currentView</code>：当前视图</li>
+            <li><code>currentChat</code>：当前聊天对象</li>
+            <li><code>stompClient</code>：WebSocket 连接</li>
+            <li><code>viewGeneration</code>：视图代数（防止异步冲突）</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <strong>答辩建议：</strong>可以主动说明"如果项目继续扩展，会考虑引入 Vue 或 React"，显示你对技术选型的思考。
+        </div>
+
+    </main>
+    <footer class="chapter-footer">
+        <nav class="chapter-nav bottom">
+            <a href="03-WebSocket实时通信.html">← 上一章</a>
+            <a href="05-语音消息实现.html">下一章 →</a>
+        </nav>
+    </footer>
+    <script src="assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #f8f8f2;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: Consolas, Monaco, 'Andale Mono', monospace;
+  direction: ltr;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  line-height: 1.5;
+  tab-size: 4;
+}
+
+.token.comment { color: #6272a4; }
+.token.string { color: #50fa7b; }
+.token.number { color: #bd93f9; }
+.token.keyword { color: #ff79c6; }
+.token.function { color: #8be9fd; }
+.token.operator { color: #ff79c6; }
+.token.class-name { color: #f1fa8c; }
+.token.punctuation { color: #f8f8f2; }

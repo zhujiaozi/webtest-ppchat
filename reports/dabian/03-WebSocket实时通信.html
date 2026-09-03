@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>第 3 章：WebSocket 实时通信</title>
+    <link rel="stylesheet" href="assets/prism/prism.css">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <nav class="chapter-nav">
+        <a href="index.html">目录</a>
+        <a href="02-核心功能实现.html">← 上一章</a>
+        <a href="04-前端SPA架构.html">下一章 →</a>
+    </nav>
+    <main>
+        <h1>第 3 章：WebSocket 实时通信</h1>
+
+        <h2>3.1 为什么用 WebSocket？</h2>
+        <p>相比 HTTP 轮询，WebSocket 提供了真正的双向通信能力，服务器可以主动推送消息给客户端。</p>
+
+        <table>
+            <tr><th>技术</th><th>优点</th><th>缺点</th></tr>
+            <tr><td>HTTP 轮询</td><td>实现简单</td><td>浪费带宽，延迟高，服务器压力大</td></tr>
+            <tr><td>WebSocket</td><td>双向通信，实时性强，服务器可主动推送</td><td>需要浏览器支持</td></tr>
+        </table>
+
+        <h2>3.2 STOMP 协议</h2>
+        <p><strong>STOMP（Simple Text Oriented Messaging Protocol）</strong> 是运行在 WebSocket 之上的消息协议。</p>
+
+        <div class="callout callout-info">
+            <strong>为什么不直接用 WebSocket？</strong>
+            <p>原生 WebSocket 只提供传输通道，没有消息路由、订阅等概念。STOMP 增加了：</p>
+            <ul>
+                <li>消息目的地（destination）</li>
+                <li>订阅机制（subscribe）</li>
+                <li>消息代理（broker）</li>
+            </ul>
+        </div>
+
+        <h3>本项目的配置</h3>
+        <ul>
+            <li>WebSocket 端点：<code>/ws</code></li>
+            <li>应用前缀：<code>/app</code></li>
+            <li>广播前缀：<code>/topic</code>（群聊）</li>
+            <li>点对点前缀：<code>/queue</code>（私聊）</li>
+        </ul>
+
+        <h2>3.3 私聊消息链路</h2>
+
+        <h3>发送流程</h3>
+        <pre><code class="language-javascript">// 前端发送
+stompClient.send("/app/chat/private", {}, JSON.stringify({
+    senderId: currentUserId,
+    receiverId: friendId,
+    content: "你好",
+    msgType: 0
+}));
+</code></pre>
+
+        <pre><code class="language-java">// 后端处理
+@MessageMapping("/chat/private")
+public void sendPrivateMessage(@Payload ChatMessage message, Principal principal) {
+    // 1. 校验发送者身份
+    // 2. 保存消息到数据库
+    // 3. 推送给接收者
+    messagingTemplate.convertAndSendToUser(
+        message.getReceiverId().toString(),
+        "/queue/private",
+        message
+    );
+}
+</code></pre>
+
+        <h3>接收流程</h3>
+        <pre><code class="language-javascript">// 前端订阅
+stompClient.subscribe('/user/queue/private', (message) => {
+    const data = JSON.parse(message.body);
+    appendMessage(data);
+});
+</code></pre>
+
+        <div class="key-point">
+            <strong>关键：</strong>后端只推送给接收者，发送者由前端立即渲染，避免重复。
+        </div>
+
+        <h2>3.4 群聊消息链路</h2>
+
+        <h3>发送流程</h3>
+        <pre><code class="language-javascript">// 前端发送
+stompClient.send("/app/chat/group", {}, JSON.stringify({
+    senderId: currentUserId,
+    receiver: groupId,
+    content: "大家好"
+}));
+</code></pre>
+
+        <h3>接收流程</h3>
+        <pre><code class="language-javascript">// 前端订阅
+stompClient.subscribe('/topic/group/' + groupId, (message) => {
+    const data = JSON.parse(message.body);
+    appendMessage(data);
+});
+</code></pre>
+
+        <div class="key-point">
+            <strong>私聊 vs 群聊：</strong>
+            <ul>
+                <li>私聊：点对点，<code>/user/{userId}/queue/private</code></li>
+                <li>群聊：广播，<code>/topic/group/{groupId}</code></li>
+            </ul>
+        </div>
+
+        <h2>3.5 握手认证</h2>
+        <p>WebSocket 连接建立时，需要从 HTTP Session 读取用户信息，设置为 STOMP Principal，这样私聊消息才能准确路由。</p>
+
+        <div class="callout callout-warning">
+            <strong>常见问题：</strong>如果忘记设置 Principal，<code>convertAndSendToUser</code> 会失败，私聊消息无法推送。
+        </div>
+
+        <h2>3.6 Buffer 限制问题</h2>
+        <p>默认消息大小限制 64KB，语音消息 Base64 编码后会超出。</p>
+        <p><strong>解决：</strong>在 <code>application.yml</code> 和 <code>WebSocketConfig</code> 中增大到 1MB。</p>
+
+    </main>
+    <footer class="chapter-footer">
+        <nav class="chapter-nav bottom">
+            <a href="02-核心功能实现.html">← 上一章</a>
+            <a href="04-前端SPA架构.html">下一章 →</a>
+        </nav>
+    </footer>
+    <script src="assets/prism/prism.js"></script>
+    <script src="assets/script.js"></script>
+</body>
+</html>

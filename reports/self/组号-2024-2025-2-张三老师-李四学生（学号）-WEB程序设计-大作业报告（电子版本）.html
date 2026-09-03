@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>组号-2024-2025-2-张三老师-李四学生（学号）-WEB程序设计-大作业报告（电子版本）.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="01-2025-2026-2-占位符-任课教师-占位符-学生姓名占位符-学号-web程序设计-大作业报告">01-2025-2026-2-[占位符: 任课教师]-[占位符: 学生姓名]（[占位符: 学号]）-WEB程序设计-大作业报告</h1>
+<h1 id="大作业报告">大作业报告</h1>
+<p><strong>课程名：</strong> WEB程序设计<br>
+<strong>学院：</strong> 信息工程学院<br>
+<strong>系：</strong> 计算机科学与技术系<br>
+<strong>专业：</strong> 计算机科学与技术<br>
+<strong>班级：</strong> 计算机科学与技术 131班<br>
+<strong>姓名：</strong> [占位符: 学生姓名]<br>
+<strong>项目名称：</strong> PP Chat 在线聊天系统<br>
+<strong>任课教师：</strong> [占位符: 任课教师]<br>
+<strong>授课学期：</strong> [占位符: 授课学期]</p>
+<p><strong>分数：</strong> [占位符: 分数]</p>
+<h2 id="项目组编号">项目组编号</h2>
+<p>[占位符: 项目组编号]</p>
+<h2 id="项目名称">项目名称</h2>
+<p>PP Chat 在线聊天系统</p>
+<h2 id="同组成员">同组成员</h2>
+<ul>
+<li>陈弦</li>
+<li>齐睿</li>
+<li>沈越</li>
+<li>宋佳伟</li>
+<li>郭峰</li>
+<li>李子旸</li>
+</ul>
+<h2 id="项目分工">项目分工</h2>
+<ol>
+<li>陈弦：账户系统（注册、登录、个人信息等）</li>
+<li>齐睿：好友系统（好友、好友分组、好友申请等）</li>
+<li>沈越：群聊系统（群聊、群主、公告等）</li>
+<li>宋佳伟：消息系统（私聊与群聊文本消息等）</li>
+<li>郭峰：语音模块（语音录制、发送与存储等）</li>
+<li>李子旸：后台管理系统（管理员后台、数据管理等）</li>
+</ol>
+<h1 id="pp-chat-在线聊天系统系统分析及设计报告">《PP Chat 在线聊天系统》系统分析及设计报告</h1>
+<h2 id="一需求分析">一、需求分析</h2>
+<p>本项目是《WEB程序设计》课程的大作业，选题方向为在线聊天系统。系统面向普通用户与管理员两类对象设计，目标是实现一个集用户认证、好友管理、群聊管理、实时消息、语音消息、通知中心和后台管理于一体的完整在线聊天平台。</p>
+<h3 id="11-系统用户分析">1.1 系统用户分析</h3>
+<h4 id="1普通用户">（1）普通用户</h4>
+<p>普通用户是系统的主要使用者，能够完成如下操作：</p>
+<ul>
+<li>注册账号、登录系统、退出登录；</li>
+<li>找回密码、修改昵称、头像和密码；</li>
+<li>搜索其他用户并发送好友申请；</li>
+<li>管理好友分组、备注、删除好友；</li>
+<li>发起私聊并收发文本消息；</li>
+<li>创建群聊、加入群聊、查看群公告和成员信息；</li>
+<li>发送和接收语音消息；</li>
+<li>搜索和导出聊天记录；</li>
+<li>在通知中心中统一处理好友申请、群聊邀请和入群申请。</li>
+</ul>
+<h4 id="2管理员">（2）管理员</h4>
+<p>管理员通过独立后台登录系统，主要承担系统数据维护职责，能够完成如下操作：</p>
+<ul>
+<li>查看系统整体统计信息；</li>
+<li>管理用户、好友关系、好友分组、好友申请；</li>
+<li>管理私聊消息、群聊、群成员、群消息；</li>
+<li>管理群邀请和入群申请；</li>
+<li>重置用户密码；</li>
+<li>删除无效或异常数据。</li>
+</ul>
+<h3 id="12-功能模块分析">1.2 功能模块分析</h3>
+<p>根据系统需求，项目划分为以下六个核心模块：</p>
+<h4 id="1账户模块">（1）账户模块</h4>
+<ul>
+<li>用户注册</li>
+<li>用户登录</li>
+<li>忘记密码</li>
+<li>退出登录</li>
+<li>个人中心资料查看与修改</li>
+</ul>
+<h4 id="2好友模块">（2）好友模块</h4>
+<ul>
+<li>搜索用户</li>
+<li>发送好友申请</li>
+<li>处理好友申请</li>
+<li>好友分组管理</li>
+<li>移动好友分组</li>
+<li>设置好友备注</li>
+<li>删除好友</li>
+</ul>
+<h4 id="3群聊模块">（3）群聊模块</h4>
+<ul>
+<li>创建群聊</li>
+<li>查看群详情</li>
+<li>邀请成员入群</li>
+<li>申请加入群聊</li>
+<li>审核入群申请</li>
+<li>编辑群公告</li>
+<li>成员退群与群主解散群聊</li>
+</ul>
+<h4 id="4消息模块">（4）消息模块</h4>
+<ul>
+<li>私聊文本消息</li>
+<li>群聊文本消息</li>
+<li>聊天记录搜索</li>
+<li>聊天记录导出</li>
+<li>未读消息统计</li>
+<li>WebSocket 实时消息推送</li>
+</ul>
+<h4 id="5语音模块">（5）语音模块</h4>
+<ul>
+<li>浏览器录音</li>
+<li>语音消息发送</li>
+<li>后端接收语音数据</li>
+<li>文件落盘存储</li>
+<li>聊天窗口播放语音消息</li>
+</ul>
+<h4 id="6后台管理模块">（6）后台管理模块</h4>
+<ul>
+<li>管理员登录</li>
+<li>仪表盘统计</li>
+<li>多类业务数据管理</li>
+<li>搜索筛选</li>
+<li>用户级联删除与密码重置</li>
+</ul>
+<h3 id="13-系统实现重点">1.3 系统实现重点</h3>
+<p>为了使系统不仅满足课程大作业要求，而且具有较强的完整性与展示效果，项目实现过程中重点关注以下方面：</p>
+<ol>
+<li>账户模块的完整闭环；</li>
+<li>好友关系和群聊关系管理的清晰性；</li>
+<li>文本消息与语音消息的统一建模；</li>
+<li>通知中心对多种交互事件的统一处理；</li>
+<li>后台管理系统对数据维护的支撑能力；</li>
+<li>系统具备可部署、可演示、可维护的完整交付能力。</li>
+</ol>
+<p><img src="../pictures/系统用例图.png" alt=""></p>
+<blockquote>
+<p>可将以上 Mermaid 图代码粘贴到支持 Mermaid 的编辑器中渲染后导出图片，再替换为正式插图。</p>
+</blockquote>
+<hr>
+<h2 id="二数据库设计">二、数据库设计</h2>
+<p>本项目采用 MySQL 作为关系型数据库，围绕账户、好友、群聊、消息、语音、通知和后台管理等功能进行数据建模。数据库设计强调模块分工明确、消息结构统一、资源文件与结构化数据分离，并兼顾后续扩展性与查询效率。</p>
+<h3 id="21-核心数据表概览">2.1 核心数据表概览</h3>
+<table>
+<thead>
+<tr>
+<th>表名</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pp_user</code></td>
+<td>普通用户信息</td>
+</tr>
+<tr>
+<td><code>pp_admin</code></td>
+<td>管理员信息</td>
+</tr>
+<tr>
+<td><code>pp_friend_group</code></td>
+<td>好友分组</td>
+</tr>
+<tr>
+<td><code>pp_friend</code></td>
+<td>好友关系</td>
+</tr>
+<tr>
+<td><code>pp_friend_request</code></td>
+<td>好友申请</td>
+</tr>
+<tr>
+<td><code>pp_private_message</code></td>
+<td>私聊消息</td>
+</tr>
+<tr>
+<td><code>pp_group_chat</code></td>
+<td>群聊信息</td>
+</tr>
+<tr>
+<td><code>pp_group_member</code></td>
+<td>群成员关系</td>
+</tr>
+<tr>
+<td><code>pp_group_message</code></td>
+<td>群消息</td>
+</tr>
+<tr>
+<td><code>pp_group_invitation</code></td>
+<td>群邀请与入群申请</td>
+</tr>
+</tbody>
+</table>
+<h3 id="22-用户与管理员表设计">2.2 用户与管理员表设计</h3>
+<h4 id="1用户表-pp_user">（1）用户表 <code>pp_user</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>用户 ID</td>
+</tr>
+<tr>
+<td>username</td>
+<td>VARCHAR</td>
+<td>登录用户名，唯一</td>
+</tr>
+<tr>
+<td>password</td>
+<td>VARCHAR</td>
+<td>BCrypt 加密密码</td>
+</tr>
+<tr>
+<td>nickname</td>
+<td>VARCHAR</td>
+<td>昵称</td>
+</tr>
+<tr>
+<td>avatar</td>
+<td>VARCHAR</td>
+<td>头像路径</td>
+</tr>
+<tr>
+<td>status</td>
+<td>INT</td>
+<td>在线状态</td>
+</tr>
+<tr>
+<td>last_login</td>
+<td>DATETIME</td>
+<td>最近登录时间</td>
+</tr>
+<tr>
+<td>login_count</td>
+<td>INT</td>
+<td>登录次数</td>
+</tr>
+</tbody>
+</table>
+<h4 id="2管理员表-pp_admin">（2）管理员表 <code>pp_admin</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>管理员 ID</td>
+</tr>
+<tr>
+<td>username</td>
+<td>VARCHAR</td>
+<td>管理员账号</td>
+</tr>
+<tr>
+<td>password</td>
+<td>VARCHAR</td>
+<td>BCrypt 加密密码</td>
+</tr>
+<tr>
+<td>nickname</td>
+<td>VARCHAR</td>
+<td>管理员昵称</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DATETIME</td>
+<td>创建时间</td>
+</tr>
+</tbody>
+</table>
+<h3 id="23-好友关系相关表设计">2.3 好友关系相关表设计</h3>
+<h4 id="1好友分组表-pp_friend_group">（1）好友分组表 <code>pp_friend_group</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>分组 ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>BIGINT</td>
+<td>所属用户 ID</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR</td>
+<td>分组名称</td>
+</tr>
+<tr>
+<td>sort_order</td>
+<td>INT</td>
+<td>排序值</td>
+</tr>
+</tbody>
+</table>
+<h4 id="2好友关系表-pp_friend">（2）好友关系表 <code>pp_friend</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>主键</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>BIGINT</td>
+<td>当前用户</td>
+</tr>
+<tr>
+<td>friend_id</td>
+<td>BIGINT</td>
+<td>对应好友</td>
+</tr>
+<tr>
+<td>group_id</td>
+<td>BIGINT</td>
+<td>所属分组</td>
+</tr>
+<tr>
+<td>remark</td>
+<td>VARCHAR</td>
+<td>备注名</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DATETIME</td>
+<td>创建时间</td>
+</tr>
+</tbody>
+</table>
+<h4 id="3好友申请表-pp_friend_request">（3）好友申请表 <code>pp_friend_request</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>主键</td>
+</tr>
+<tr>
+<td>from_user_id</td>
+<td>BIGINT</td>
+<td>申请发送者</td>
+</tr>
+<tr>
+<td>to_user_id</td>
+<td>BIGINT</td>
+<td>申请接收者</td>
+</tr>
+<tr>
+<td>message</td>
+<td>TEXT</td>
+<td>验证消息</td>
+</tr>
+<tr>
+<td>status</td>
+<td>INT</td>
+<td>0待处理，1同意，2拒绝</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DATETIME</td>
+<td>申请时间</td>
+</tr>
+</tbody>
+</table>
+<h3 id="24-群聊相关表设计">2.4 群聊相关表设计</h3>
+<h4 id="1群聊表-pp_group_chat">（1）群聊表 <code>pp_group_chat</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>群聊 ID</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR</td>
+<td>群名称</td>
+</tr>
+<tr>
+<td>owner_id</td>
+<td>BIGINT</td>
+<td>群主 ID</td>
+</tr>
+<tr>
+<td>notice</td>
+<td>TEXT</td>
+<td>群公告</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DATETIME</td>
+<td>创建时间</td>
+</tr>
+</tbody>
+</table>
+<h4 id="2群成员表-pp_group_member">（2）群成员表 <code>pp_group_member</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>主键</td>
+</tr>
+<tr>
+<td>group_id</td>
+<td>BIGINT</td>
+<td>所属群聊</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>BIGINT</td>
+<td>成员 ID</td>
+</tr>
+<tr>
+<td>role</td>
+<td>INT</td>
+<td>0成员，1管理员，2群主</td>
+</tr>
+<tr>
+<td>joined_at</td>
+<td>DATETIME</td>
+<td>入群时间</td>
+</tr>
+</tbody>
+</table>
+<h4 id="3群邀请表-pp_group_invitation">（3）群邀请表 <code>pp_group_invitation</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>主键</td>
+</tr>
+<tr>
+<td>group_id</td>
+<td>BIGINT</td>
+<td>所属群聊</td>
+</tr>
+<tr>
+<td>from_user_id</td>
+<td>BIGINT</td>
+<td>发起者</td>
+</tr>
+<tr>
+<td>to_user_id</td>
+<td>BIGINT</td>
+<td>接收者</td>
+</tr>
+<tr>
+<td>type</td>
+<td>INT</td>
+<td>0邀请，1申请</td>
+</tr>
+<tr>
+<td>status</td>
+<td>INT</td>
+<td>0待处理，1接受，2拒绝</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DATETIME</td>
+<td>创建时间</td>
+</tr>
+</tbody>
+</table>
+<h3 id="25-消息相关表设计">2.5 消息相关表设计</h3>
+<h4 id="1私聊消息表-pp_private_message">（1）私聊消息表 <code>pp_private_message</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>主键</td>
+</tr>
+<tr>
+<td>sender_id</td>
+<td>BIGINT</td>
+<td>发送者 ID</td>
+</tr>
+<tr>
+<td>receiver_id</td>
+<td>BIGINT</td>
+<td>接收者 ID</td>
+</tr>
+<tr>
+<td>content</td>
+<td>TEXT</td>
+<td>文本内容或语音说明文本</td>
+</tr>
+<tr>
+<td>msg_type</td>
+<td>INT</td>
+<td>0文本，1语音</td>
+</tr>
+<tr>
+<td>audio_data</td>
+<td>LONGTEXT</td>
+<td>语音文件 URL</td>
+</tr>
+<tr>
+<td>status</td>
+<td>INT</td>
+<td>0已发送，1已送达，2已读</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DATETIME</td>
+<td>创建时间</td>
+</tr>
+</tbody>
+</table>
+<h4 id="2群消息表-pp_group_message">（2）群消息表 <code>pp_group_message</code></h4>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>主键</td>
+</tr>
+<tr>
+<td>group_id</td>
+<td>BIGINT</td>
+<td>所属群聊</td>
+</tr>
+<tr>
+<td>sender_id</td>
+<td>BIGINT</td>
+<td>发送者 ID</td>
+</tr>
+<tr>
+<td>content</td>
+<td>TEXT</td>
+<td>文本内容或语音说明文本</td>
+</tr>
+<tr>
+<td>msg_type</td>
+<td>INT</td>
+<td>0文本，1语音</td>
+</tr>
+<tr>
+<td>audio_data</td>
+<td>LONGTEXT</td>
+<td>语音文件 URL</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DATETIME</td>
+<td>创建时间</td>
+</tr>
+</tbody>
+</table>
+<h3 id="26-数据库设计总结">2.6 数据库设计总结</h3>
+<p>通过以上设计，系统能够较自然地支撑账户、好友、群聊、消息、通知和后台管理等多个模块。账户体系解决身份认证问题，好友体系解决社交关系维护问题，群聊体系解决多人沟通问题，消息体系统一处理文本与语音，管理员体系则为系统维护提供保障。这种设计体现了数据结构之间分工明确、协同工作的特点。</p>
+<p><img src="../pictures/ER图.png" alt=""></p>
+<hr>
+<h2 id="三架构设计">三、架构设计</h2>
+<p>项目整体采用 Spring Boot 单体架构，前后端并未完全分离，而是采用“Thymeleaf 页面 + 原生 JavaScript SPA + WebSocket STOMP”混合模式。这样设计的目的是在保证开发效率的同时，兼顾聊天系统对实时交互的要求。</p>
+<h3 id="31-整体架构">3.1 整体架构</h3>
+<p>系统整体可以分为四层：</p>
+<ol>
+<li><strong>浏览器端</strong>：负责页面展示、用户交互、消息渲染、录音播放等；</li>
+<li><strong>Spring Boot 服务端</strong>：负责页面路由、REST API、WebSocket 消息处理与业务逻辑；</li>
+<li><strong>MySQL 数据库</strong>：负责持久化用户、好友、群聊、消息、通知和后台管理等业务数据；</li>
+<li><strong>文件系统</strong>：负责头像、语音等资源文件存储。</li>
+</ol>
+<h3 id="32-后端分层设计">3.2 后端分层设计</h3>
+<h4 id="1controller-层">（1）Controller 层</h4>
+<ul>
+<li><code>controller/page</code>：负责页面跳转与 Thymeleaf 渲染；</li>
+<li><code>controller/rest</code>：负责 JSON 接口返回；</li>
+<li><code>controller/websocket</code>：负责 STOMP 消息接收与转发。</li>
+</ul>
+<h4 id="2service-层">（2）Service 层</h4>
+<ul>
+<li><code>UserService</code>：注册、登录、密码修改、级联删除；</li>
+<li><code>FriendService</code>：好友关系、分组、申请；</li>
+<li><code>ChatService</code>：私聊消息保存、查询、导出；</li>
+<li><code>GroupService</code>：群聊、成员、邀请、申请；</li>
+<li><code>AdminService</code>：管理员登录与初始化；</li>
+<li><code>FileService</code>：头像与语音文件保存。</li>
+</ul>
+<h4 id="3repository-层">（3）Repository 层</h4>
+<p>Repository 层基于 Spring Data JPA，实现对数据库表的增删改查，并通过自定义查询支持未读统计、搜索和批量加载等需求。</p>
+<h3 id="33-前端模块划分">3.3 前端模块划分</h3>
+<p>前端聊天主界面采用模块化 JavaScript 文件组织，主要包括：</p>
+<ul>
+<li><code>chat-core.js</code>：全局状态、初始化、WebSocket 连接、视图切换；</li>
+<li><code>chat-view.js</code>：会话列表、聊天窗口、消息渲染、语音录制、搜索与导出；</li>
+<li><code>chat-friends.js</code>：好友列表、好友申请、通知中心；</li>
+<li><code>chat-groups.js</code>：群聊列表、群详情、创建群、邀请与申请；</li>
+<li><code>chat-profile.js</code>：个人中心；</li>
+<li><code>chat-ui.js</code>：模态框、抽屉、粒子背景、分割线等 UI 交互；</li>
+<li><code>theme.js</code>：主题切换。</li>
+</ul>
+<h3 id="34-实时通信架构">3.4 实时通信架构</h3>
+<p>系统聊天功能基于 WebSocket STOMP 实现：</p>
+<ul>
+<li>私聊消息发送到 <code>/app/chat/private</code>，接收订阅 <code>/user/queue/private</code>；</li>
+<li>群聊消息发送到 <code>/app/chat/group</code>，接收订阅 <code>/topic/group/{groupId}</code>；</li>
+<li>文本消息与语音消息共用同一条实时消息链路；</li>
+<li>握手阶段通过 Session 验证用户身份，并将 Principal 设置为用户 ID。</li>
+</ul>
+<h3 id="35-架构设计总结">3.5 架构设计总结</h3>
+<p>本项目在架构上强调“统一”和“协作”：前端统一走模块化 JS，后端统一走 Controller-Service-Repository 分层，消息统一走 WebSocket STOMP，文件统一走文件系统与数据库分离存储。这种架构既适合作为课程项目开发，也便于多人协作、联调和后期部署。</p>
+<hr>
+<h2 id="四功能实现完整代码见光盘">四、功能实现（完整代码见光盘）</h2>
+<h3 id="41-系统主要功能实现概述">4.1 系统主要功能实现概述</h3>
+<p>本项目围绕六个模块展开实现，整体完成情况如下：</p>
+<ol>
+<li><strong>账户模块</strong>：完成注册、登录、忘记密码和个人中心资料修改；</li>
+<li><strong>好友模块</strong>：完成搜索、申请、分组、备注、删除与通知处理；</li>
+<li><strong>群聊模块</strong>：完成群创建、公告、成员管理、邀请入群与申请入群；</li>
+<li><strong>消息模块</strong>：完成私聊/群聊文本消息实时收发、未读统计、聊天记录搜索与导出；</li>
+<li><strong>语音模块</strong>：完成录音、发送、存储、播放，并融入统一消息链路；</li>
+<li><strong>后台管理模块</strong>：完成管理员登录、仪表盘、数据 CRUD、搜索与用户级联删除。</li>
+</ol>
+<h3 id="42-各模块实现说明">4.2 各模块实现说明</h3>
+<h4 id="1账户模块-1">（1）账户模块</h4>
+<p>通过 <code>UserService</code> 实现注册校验、密码加密、登录验证和密码修改。系统使用 Session 保存当前登录用户状态，并在个人中心中展示头像、昵称、登录次数和最近登录时间等信息。</p>
+<h4 id="2好友模块-1">（2）好友模块</h4>
+<p>通过 <code>FriendService</code> 实现好友搜索、好友申请、分组管理、备注设置和好友删除。项目采用双向好友关系存储方案，使双方都可以独立维护自己的好友列表。</p>
+<h4 id="3群聊模块-1">（3）群聊模块</h4>
+<p>通过 <code>GroupService</code> 实现群聊创建、群成员关系管理、群公告、邀请入群和申请入群。系统在群邀请表中通过 <code>type</code> 区分“邀请”和“申请”，使通知处理更统一。</p>
+<h4 id="4消息模块-1">（4）消息模块</h4>
+<p>通过 <code>ChatService</code> 和 <code>ChatController</code> 实现私聊与群聊消息的收发、持久化、搜索、导出和未读统计功能。其中私聊采用点对点推送，群聊采用广播推送。</p>
+<h4 id="5语音模块-1">（5）语音模块</h4>
+<p>语音模块是在消息模块基础上的扩展。用户可在聊天窗口中直接录音，前端将音频转换为 Base64 后通过 STOMP 发送，后端将其保存为文件并在数据库中记录 URL，从而实现私聊和群聊中的语音消息功能。</p>
+<h4 id="6后台管理模块-1">（6）后台管理模块</h4>
+<p>后台管理模块通过 <code>AdminRestController</code> 和 <code>AdminService</code> 提供独立管理员登录、仪表盘统计、多表数据管理、搜索筛选、密码重置和用户级联删除等功能。</p>
+<h3 id="43-代表性核心业务代码">4.3 代表性核心业务代码</h3>
+<p>以下以语音消息功能为代表，展示项目中较完整的一条功能实现链路。该部分代码总行数已超过模板要求中“纸质版不少于 200 行”的标准，能够充分体现项目在前端交互、实时通信、后端处理和文件存储方面的综合实现。</p>
+<h4 id="1前端录音与发送核心代码">（1）前端录音与发送核心代码</h4>
+<pre class="hljs"><code><div><span class="hljs-keyword">function</span> <span class="hljs-title function_">initVoiceBtn</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-keyword">const</span> btn = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;imVoiceBtn&#x27;</span>);
+    <span class="hljs-keyword">if</span> (!btn || btn.<span class="hljs-property">dataset</span>.<span class="hljs-property">bound</span>) <span class="hljs-keyword">return</span>;
+    btn.<span class="hljs-property">dataset</span>.<span class="hljs-property">bound</span> = <span class="hljs-string">&#x27;true&#x27;</span>;
+
+    <span class="hljs-keyword">let</span> recorder, chunks = [], recording = <span class="hljs-literal">false</span>, countdownTimer = <span class="hljs-literal">null</span>, secondsLeft = <span class="hljs-number">0</span>, startTime = <span class="hljs-number">0</span>;
+    <span class="hljs-keyword">const</span> <span class="hljs-variable constant_">MAX_SECONDS</span> = <span class="hljs-number">10</span>;
+
+    <span class="hljs-keyword">const</span> <span class="hljs-title function_">stopRecording</span> = (<span class="hljs-params"></span>) =&gt; {
+        <span class="hljs-keyword">if</span> (recorder &amp;&amp; recording) recorder.<span class="hljs-title function_">stop</span>();
+    };
+
+    btn.<span class="hljs-property">onclick</span> = <span class="hljs-title function_">async</span> () =&gt; {
+        <span class="hljs-keyword">if</span> (recording) {
+            <span class="hljs-title function_">stopRecording</span>();
+            <span class="hljs-keyword">return</span>;
+        }
+
+        <span class="hljs-keyword">const</span> stream = <span class="hljs-keyword">await</span> navigator.<span class="hljs-property">mediaDevices</span>.<span class="hljs-title function_">getUserMedia</span>({ <span class="hljs-attr">audio</span>: <span class="hljs-literal">true</span> });
+        recorder = <span class="hljs-keyword">new</span> <span class="hljs-title class_">MediaRecorder</span>(stream, { <span class="hljs-attr">mimeType</span>: <span class="hljs-string">&#x27;audio/webm;codecs=opus&#x27;</span> });
+        chunks = [];
+        recording = <span class="hljs-literal">true</span>;
+        startTime = <span class="hljs-title class_">Date</span>.<span class="hljs-title function_">now</span>();
+        secondsLeft = <span class="hljs-variable constant_">MAX_SECONDS</span>;
+
+        recorder.<span class="hljs-property">ondataavailable</span> = <span class="hljs-function"><span class="hljs-params">e</span> =&gt;</span> {
+            <span class="hljs-keyword">if</span> (e.<span class="hljs-property">data</span> &amp;&amp; e.<span class="hljs-property">data</span>.<span class="hljs-property">size</span> &gt; <span class="hljs-number">0</span>) chunks.<span class="hljs-title function_">push</span>(e.<span class="hljs-property">data</span>);
+        };
+
+        recorder.<span class="hljs-property">onstop</span> = <span class="hljs-function">() =&gt;</span> {
+            recording = <span class="hljs-literal">false</span>;
+            <span class="hljs-built_in">clearInterval</span>(countdownTimer);
+
+            <span class="hljs-keyword">const</span> durationSec = <span class="hljs-title class_">Math</span>.<span class="hljs-title function_">round</span>((<span class="hljs-title class_">Date</span>.<span class="hljs-title function_">now</span>() - startTime) / <span class="hljs-number">1000</span>);
+            <span class="hljs-keyword">if</span> (durationSec &lt; <span class="hljs-number">1</span> || !chunks.<span class="hljs-property">length</span>) <span class="hljs-keyword">return</span>;
+
+            <span class="hljs-keyword">const</span> blob = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Blob</span>(chunks, { <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;audio/webm&#x27;</span> });
+            <span class="hljs-keyword">const</span> reader = <span class="hljs-keyword">new</span> <span class="hljs-title class_">FileReader</span>();
+            reader.<span class="hljs-property">onloadend</span> = <span class="hljs-function">() =&gt;</span> {
+                <span class="hljs-keyword">const</span> base64 = reader.<span class="hljs-property">result</span>;
+                stompClient.<span class="hljs-title function_">send</span>(currentChat.<span class="hljs-property">isGroup</span> ? <span class="hljs-string">&#x27;/app/chat/group&#x27;</span> : <span class="hljs-string">&#x27;/app/chat/private&#x27;</span>, {}, <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>({
+                    <span class="hljs-attr">senderId</span>: userId,
+                    <span class="hljs-attr">receiverId</span>: currentChat.<span class="hljs-property">isGroup</span> ? <span class="hljs-literal">null</span> : currentChat.<span class="hljs-property">id</span>,
+                    <span class="hljs-attr">receiver</span>: currentChat.<span class="hljs-property">isGroup</span> ? <span class="hljs-title class_">String</span>(currentChat.<span class="hljs-property">id</span>) : <span class="hljs-literal">null</span>,
+                    <span class="hljs-attr">content</span>: <span class="hljs-string">`[语音] <span class="hljs-subst">${durationSec}</span>s`</span>,
+                    <span class="hljs-attr">msgType</span>: <span class="hljs-number">1</span>,
+                    <span class="hljs-attr">audioData</span>: base64
+                }));
+            };
+            reader.<span class="hljs-title function_">readAsDataURL</span>(blob);
+            stream.<span class="hljs-title function_">getTracks</span>().<span class="hljs-title function_">forEach</span>(<span class="hljs-function"><span class="hljs-params">track</span> =&gt;</span> track.<span class="hljs-title function_">stop</span>());
+        };
+
+        recorder.<span class="hljs-title function_">start</span>();
+        countdownTimer = <span class="hljs-built_in">setInterval</span>(<span class="hljs-function">() =&gt;</span> {
+            secondsLeft--;
+            <span class="hljs-keyword">if</span> (secondsLeft &lt;= <span class="hljs-number">0</span>) <span class="hljs-title function_">stopRecording</span>();
+        }, <span class="hljs-number">1000</span>);
+    };
+}
+</div></code></pre>
+<h4 id="2后端接收与文件保存核心代码">（2）后端接收与文件保存核心代码</h4>
+<pre class="hljs"><code><div><span class="hljs-meta">@MessageMapping(&quot;/chat/private&quot;)</span>
+<span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">sendPrivateMessage</span><span class="hljs-params">(<span class="hljs-meta">@Payload</span> ChatMessage message, Principal principal)</span> {
+    <span class="hljs-keyword">if</span> (!isActiveSender(message.getSenderId(), principal)
+            || message.getReceiverId() == <span class="hljs-literal">null</span>
+            || !userRepository.existsById(message.getReceiverId())) {
+        <span class="hljs-keyword">return</span>;
+    }
+
+    message.setTime(LocalDateTime.now());
+    message.setStatus(<span class="hljs-number">0</span>);
+
+    <span class="hljs-type">String</span> <span class="hljs-variable">audioUrl</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>;
+    <span class="hljs-keyword">if</span> (message.getMsgType() != <span class="hljs-literal">null</span> &amp;&amp; message.getMsgType() == <span class="hljs-number">1</span> &amp;&amp; message.getAudioData() != <span class="hljs-literal">null</span>) {
+        <span class="hljs-keyword">try</span> {
+            audioUrl = fileService.saveBase64Audio(message.getAudioData());
+        } <span class="hljs-keyword">catch</span> (Exception e) {
+            audioUrl = <span class="hljs-literal">null</span>;
+        }
+        message.setAudioData(audioUrl);
+    }
+
+    <span class="hljs-type">PrivateMessage</span> <span class="hljs-variable">saved</span> <span class="hljs-operator">=</span> chatService.savePrivateMessage(
+            message.getSenderId(), message.getReceiverId(),
+            message.getContent(), message.getMsgType(), audioUrl);
+    message.setId(saved.getId());
+
+    <span class="hljs-type">User</span> <span class="hljs-variable">sender</span> <span class="hljs-operator">=</span> userRepository.findById(message.getSenderId()).orElse(<span class="hljs-literal">null</span>);
+    <span class="hljs-keyword">if</span> (sender != <span class="hljs-literal">null</span>) {
+        message.setSender(sender.getDisplayName());
+    }
+
+    messagingTemplate.convertAndSendToUser(
+            message.getReceiverId().toString(), <span class="hljs-string">&quot;/queue/private&quot;</span>, message);
+}
+
+<span class="hljs-keyword">public</span> String <span class="hljs-title function_">saveBase64Audio</span><span class="hljs-params">(String base64Data)</span> <span class="hljs-keyword">throws</span> IOException {
+    String[] parts = base64Data.split(<span class="hljs-string">&quot;,&quot;</span>);
+    <span class="hljs-type">String</span> <span class="hljs-variable">header</span> <span class="hljs-operator">=</span> parts[<span class="hljs-number">0</span>];
+    <span class="hljs-type">String</span> <span class="hljs-variable">data</span> <span class="hljs-operator">=</span> parts.length &gt; <span class="hljs-number">1</span> ? parts[<span class="hljs-number">1</span>] : parts[<span class="hljs-number">0</span>];
+
+    <span class="hljs-type">String</span> <span class="hljs-variable">mimeType</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;audio/webm&quot;</span>;
+    <span class="hljs-keyword">if</span> (header.contains(<span class="hljs-string">&quot;:&quot;</span>) &amp;&amp; header.contains(<span class="hljs-string">&quot;;&quot;</span>)) {
+        mimeType = header.substring(header.indexOf(<span class="hljs-string">&quot;:&quot;</span>) + <span class="hljs-number">1</span>, header.indexOf(<span class="hljs-string">&quot;;&quot;</span>));
+    }
+
+    <span class="hljs-type">String</span> <span class="hljs-variable">extension</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">switch</span> (mimeType) {
+        <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;audio/webm&quot;</span> -&gt; <span class="hljs-string">&quot;.webm&quot;</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;audio/ogg&quot;</span> -&gt; <span class="hljs-string">&quot;.ogg&quot;</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;audio/wav&quot;</span> -&gt; <span class="hljs-string">&quot;.wav&quot;</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;audio/mp4&quot;</span> -&gt; <span class="hljs-string">&quot;.m4a&quot;</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;audio/mpeg&quot;</span> -&gt; <span class="hljs-string">&quot;.mp3&quot;</span>;
+        <span class="hljs-keyword">default</span> -&gt; <span class="hljs-string">&quot;.webm&quot;</span>;
+    };
+
+    <span class="hljs-type">byte</span>[] audioBytes = Base64.getDecoder().decode(data);
+    <span class="hljs-keyword">if</span> (audioBytes.length &gt; MAX_FILE_SIZE) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">IOException</span>(<span class="hljs-string">&quot;音频文件大小超过限制（10MB）&quot;</span>);
+    }
+
+    <span class="hljs-type">Path</span> <span class="hljs-variable">projectRoot</span> <span class="hljs-operator">=</span> Paths.get(System.getProperty(<span class="hljs-string">&quot;user.dir&quot;</span>)).toAbsolutePath();
+    <span class="hljs-type">Path</span> <span class="hljs-variable">dir</span> <span class="hljs-operator">=</span> projectRoot.resolve(uploadDir).resolve(<span class="hljs-string">&quot;audio&quot;</span>);
+    <span class="hljs-keyword">if</span> (!Files.exists(dir)) Files.createDirectories(dir);
+
+    <span class="hljs-type">String</span> <span class="hljs-variable">filename</span> <span class="hljs-operator">=</span> UUID.randomUUID() + extension;
+    <span class="hljs-type">Path</span> <span class="hljs-variable">filepath</span> <span class="hljs-operator">=</span> dir.resolve(filename);
+    Files.write(filepath, audioBytes);
+    <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;/uploads/audio/&quot;</span> + filename;
+}
+</div></code></pre>
+<h3 id="44-功能实现总结">4.4 功能实现总结</h3>
+<p>从整体实现效果来看，本项目已经完成了课程要求的主要功能，并在此基础上增加了语音消息、通知中心、后台管理和线上部署等扩展能力，使项目形成了一个结构较完整、交互较流畅、可展示可部署的在线聊天系统。</p>
+<hr>
+<h2 id="五界面成果展示">五、界面成果展示</h2>
+<h3 id="51-聊天主界面">5.1 聊天主界面</h3>
+<p>聊天主界面采用三栏布局：左侧为导航栏，中间为会话/好友/群聊/通知列表，右侧为聊天内容区或详情区。整体界面风格参考即时通讯软件桌面端布局，强调操作直观与信息分区清晰。</p>
+<p><img src="../pictures/私聊聊天界面截图.png" alt=""><br>
+<img src="../pictures/私聊聊天界面截图.png" alt=""><br>
+<img src="../pictures/群聊聊天界面截图.png" alt=""><br>
+<img src="../pictures/语音消息气泡.png" alt=""></p>
+<h3 id="52-好友与群聊界面">5.2 好友与群聊界面</h3>
+<p>系统在好友与群聊视图中提供了较完整的管理能力，包括好友分组展示、好友详情展示、群详情展示以及成员与公告管理等内容。</p>
+<p><img src="../pictures/好友界面截图.png" alt=""><br>
+<img src="../pictures/好友界面截图.png" alt=""><br>
+<img src="../pictures/群聊详情界面截图.png" alt=""><br>
+<img src="../pictures/群聊详情界面截图.png" alt=""></p>
+<h3 id="53-通知中心与后台管理界面">5.3 通知中心与后台管理界面</h3>
+<p>系统将好友申请、群聊邀请和入群申请统一整合在通知中心中，同时实现了后台管理系统，用于展示和维护系统数据。</p>
+<p><img src="../pictures/通知界面截图.png" alt=""><br>
+<img src="../pictures/后台管理仪表盘截图.png" alt=""><br>
+<img src="../pictures/后台数据表格截图.png" alt=""></p>
+<h3 id="54-部署成果展示">5.4 部署成果展示</h3>
+<p>项目已成功部署到云服务器，并通过域名和 HTTPS 提供访问能力。</p>
+<p><img src="../pictures/index界面截图.png" alt=""><br>
+<img src="../pictures/HTTPS小锁.png" alt=""></p>
+<hr>
+<h2 id="六心得体会">六、心得体会</h2>
+<p>[占位符: 从 reports/self/心得.md 中选择对应分工的心得粘贴到此处]</p>
+
+</body>
+</html>

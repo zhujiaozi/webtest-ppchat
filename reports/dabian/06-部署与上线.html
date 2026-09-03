@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>第 6 章：部署与上线</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <nav class="chapter-nav">
+        <a href="index.html">目录</a>
+        <a href="05-语音消息实现.html">← 上一章</a>
+        <a href="07-常见问题与答题思路.html">下一章 →</a>
+    </nav>
+    <main>
+        <h1>第 6 章：部署与上线</h1>
+
+        <h2>6.1 线上环境信息</h2>
+
+        <table>
+            <tr><th>项目</th><th>配置</th></tr>
+            <tr><td>域名</td><td>pp.evog.top</td></tr>
+            <tr><td>服务器</td><td>Ubuntu 24.04、OpenJDK 21</td></tr>
+            <tr><td>反向代理</td><td>Nginx + Let's Encrypt SSL</td></tr>
+            <tr><td>应用端口</td><td>127.0.0.1:10601（仅 Nginx 可访问）</td></tr>
+            <tr><td>数据库</td><td>远程 MySQL 8.0</td></tr>
+        </table>
+
+        <h2>6.2 部署流程</h2>
+
+        <h3>1. 打包应用</h3>
+        <pre><code class="language-bash">./mvnw clean package -DskipTests
+</code></pre>
+
+        <h3>2. 上传到服务器</h3>
+        <pre><code class="language-bash">scp target/pp-chat.jar user@server:/opt/pp-chat/
+</code></pre>
+
+        <h3>3. 配置 Nginx</h3>
+        <pre><code class="language-nginx">server {
+    listen 443 ssl;
+    server_name pp.evog.top;
+    
+    ssl_certificate /etc/letsencrypt/live/pp.evog.top/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/pp.evog.top/privkey.pem;
+    
+    location / {
+        proxy_pass http://127.0.0.1:10601;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    
+    location /ws {
+        proxy_pass http://127.0.0.1:10601/ws;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+</code></pre>
+
+        <h3>4. 启动应用</h3>
+        <pre><code class="language-bash">nohup java -jar /opt/pp-chat/pp-chat.jar --spring.profiles.active=prod > app.log 2>&1 &
+</code></pre>
+
+        <h2>6.3 HTTPS 配置</h2>
+
+        <p><strong>为什么必须配置 HTTPS？</strong></p>
+        <ul>
+            <li>浏览器安全策略要求：<code>getUserMedia()</code> 只能在 HTTPS 或 localhost 下调用</li>
+            <li>没有 HTTPS，语音录制功能完全无法使用</li>
+        </ul>
+
+        <h3>使用 Let's Encrypt 申请证书</h3>
+        <pre><code class="language-bash">sudo certbot --nginx -d pp.evog.top
+</code></pre>
+
+        <div class="key-point">
+            <strong>部署时的坑：</strong>最初没配置 HTTPS，导致语音功能失效，花了很长时间才定位到问题。
+        </div>
+
+        <h2>6.4 生产环境配置</h2>
+
+        <p>使用 <code>application-prod.yml</code> 覆盖开发配置：</p>
+
+        <ul>
+            <li>端口：10601</li>
+            <li>数据库：远程 MySQL</li>
+            <li>上传目录：<code>/opt/pp-chat/uploads/</code></li>
+            <li>日志级别：INFO</li>
+        </ul>
+
+        <h2>6.5 更新部署</h2>
+
+        <pre><code class="language-bash"># 1. 停止旧进程
+ps aux | grep pp-chat.jar
+kill [PID]
+
+# 2. 备份数据
+mysqldump > backup.sql
+
+# 3. 上传新版本
+scp target/pp-chat.jar user@server:/opt/pp-chat/
+
+# 4. 启动新版本
+nohup java -jar /opt/pp-chat/pp-chat.jar --spring.profiles.active=prod > app.log 2>&1 &
+</code></pre>
+
+        <h2>6.6 常见问题</h2>
+
+        <h3>问题 1：端口被占用</h3>
+        <pre><code class="language-bash">netstat -tlnp | grep 10601
+</code></pre>
+
+        <h3>问题 2：无法连接数据库</h3>
+        <p>检查防火墙、数据库权限、连接字符串</p>
+
+        <h3>问题 3：文件上传失败</h3>
+        <p>检查上传目录权限、磁盘空间</p>
+
+        <div class="callout callout-tip">
+            <strong>答辩建议：</strong>可以说"从本地到线上的部署过程让我理解了生产环境的复杂性"，展示实战经验。
+        </div>
+
+    </main>
+    <footer class="chapter-footer">
+        <nav class="chapter-nav bottom">
+            <a href="05-语音消息实现.html">← 上一章</a>
+            <a href="07-常见问题与答题思路.html">下一章 →</a>
+        </nav>
+    </footer>
+    <script src="assets/script.js"></script>
+</body>
+</html>

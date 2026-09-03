@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>第 5 章：语音消息实现 - PP Chat 答辩复习</title>
+    <link rel="stylesheet" href="assets/prism/prism.css">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <nav class="chapter-nav">
+        <a href="index.html">目录</a>
+        <a href="04-前端SPA架构.html">← 上一章</a>
+        <a href="06-部署与上线.html">下一章 →</a>
+    </nav>
+
+    <main>
+        <h1>第 5 章：语音消息实现</h1>
+
+        <div class="callout callout-tip">
+            <strong>这是答辩重点！</strong>
+            <p>语音消息是项目的特色功能，涉及前端录音、实时传输、文件存储多个环节，是展示技术深度的好机会。</p>
+        </div>
+
+        <h2>5.1 完整实现链路</h2>
+
+        <pre><code>前端录音（MediaRecorder）
+    ↓
+转为 Base64 Data URL
+    ↓
+通过 WebSocket 发送到后端
+    ↓
+后端解码 Base64
+    ↓
+保存为文件（uploads/audio/xxx.webm）
+    ↓
+数据库只存 URL（/uploads/audio/xxx.webm）
+    ↓
+前端接收消息，显示语音气泡
+    ↓
+点击播放，加载音频文件
+</code></pre>
+
+        <h2>5.2 前端录音实现</h2>
+
+        <h3>核心代码</h3>
+        <pre><code class="language-javascript">// 申请麦克风权限
+const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+// 创建录音器
+const recorder = new MediaRecorder(stream, {
+    mimeType: 'audio/webm;codecs=opus'
+});
+
+// 收集音频数据
+let chunks = [];
+recorder.ondataavailable = e => {
+    if (e.data && e.data.size > 0) chunks.push(e.data);
+};
+
+// 录音结束
+recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        const base64 = reader.result;  // data:audio/webm;base64,xxx
+        // 通过 WebSocket 发送
+        stompClient.send('/app/chat/private', {}, JSON.stringify({
+            msgType: 1,
+            audioData: base64,
+            content: '[语音] 10s'
+        }));
+    };
+    reader.readAsDataURL(blob);
+};
+
+// 开始录音
+recorder.start();
+</code></pre>
+
+        <div class="key-point">
+            <strong>关键点：</strong>
+            <ul>
+                <li>使用 <code>audio/webm;codecs=opus</code> 格式，浏览器支持好，压缩率高</li>
+                <li>限制录音时长 10 秒，避免文件过大</li>
+                <li>通过 FileReader 转为 Base64，方便传输</li>
+            </ul>
+        </div>
+
+        <h2>5.3 后端文件保存</h2>
+
+        <pre><code class="language-java">public String saveBase64Audio(String base64Data) throws IOException {
+    // 1. 分离头部和数据
+    String[] parts = base64Data.split(",");
+    String data = parts.length > 1 ? parts[1] : parts[0];
+    
+    // 2. Base64 解码
+    byte[] audioBytes = Base64.getDecoder().decode(data);
+    
+    // 3. 检查文件大小
+    if (audioBytes.length > MAX_FILE_SIZE) {
+        throw new IOException("音频文件大小超过限制（10MB）");
+    }
+    
+    // 4. 生成文件名
+    String filename = UUID.randomUUID() + ".webm";
+    
+    // 5. 保存到磁盘
+    Path dir = Paths.get(uploadDir).resolve("audio");
+    if (!Files.exists(dir)) Files.createDirectories(dir);
+    Path filepath = dir.resolve(filename);
+    Files.write(filepath, audioBytes);
+    
+    // 6. 返回 URL
+    return "/uploads/audio/" + filename;
+}
+</code></pre>
+
+        <h2>5.4 为什么不直接存数据库？</h2>
+
+        <table>
+            <thead>
+                <tr><th>方案</th><th>优点</th><th>缺点</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Base64 存 MySQL</td>
+                    <td>实现简单</td>
+                    <td>数据库膨胀严重，查询慢，备份困难</td>
+                </tr>
+                <tr>
+                    <td>文件存磁盘 + URL 存数据库</td>
+                    <td>数据库轻量，扩展性好，可用 CDN 加速</td>
+                    <td>需要处理文件管理</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+            <strong>答辩高频问题</strong>
+            <p>Q: 你们最开始是怎么做的？</p>
+            <p><strong>回答：</strong>最初确实尝试过把 Base64 直接存 MySQL，但很快发现数据库膨胀得很快，后来改为文件落盘方案。这个过程让我们理解了"数据库应该存什么，文件系统应该存什么"。</p>
+        </div>
+
+        <h2>5.5 HTTPS 与麦克风权限</h2>
+
+        <p>浏览器的安全策略要求：<code>getUserMedia()</code> 只能在 HTTPS 或 localhost 环境下调用。</p>
+
+        <div class="key-point">
+            <strong>部署时的坑：</strong>
+            <p>项目最初部署到服务器时没有配置 HTTPS，导致语音录制功能完全无法使用。后来通过 Nginx + Let's Encrypt 配置了 SSL 证书才解决。</p>
+        </div>
+
+        <h2>5.6 为什么限制 10 秒？</h2>
+
+        <ul>
+            <li><strong>传输稳定性：</strong>时长过长，Base64 编码后体积大，WebSocket 传输容易超时</li>
+            <li><strong>用户体验：</strong>聊天场景下，短语音更符合使用习惯</li>
+            <li><strong>存储成本：</strong>控制单个文件大小，便于管理</li>
+        </ul>
+
+        <h2>5.7 前端播放逻辑</h2>
+
+        <pre><code class="language-javascript">// 点击语音气泡播放
+const audio = new Audio(audioUrl);
+audio.play();
+</code></pre>
+
+        <p>实际项目中还增加了播放状态管理、进度显示等功能。</p>
+
+        <h2>5.8 答辩展示建议</h2>
+
+        <div class="callout callout-tip">
+            <strong>推荐展示流程：</strong>
+            <ol>
+                <li>先说明"为什么要实现语音消息"（增强用户体验，展示技术能力）</li>
+                <li>画出完整链路图：录音 → Base64 → WebSocket → 解码 → 落盘 → URL</li>
+                <li>强调遇到的问题：HTTPS、文件大小、传输超时</li>
+                <li>说明解决方案：限制时长、增大 buffer、文件落盘</li>
+                <li>现场演示：录音 → 发送 → 接收 → 播放</li>
+            </ol>
+        </div>
+    </main>
+
+    <footer class="chapter-footer">
+        <nav class="chapter-nav bottom">
+            <a href="04-前端SPA架构.html">← 上一章</a>
+            <a href="06-部署与上线.html">下一章 →</a>
+        </nav>
+    </footer>
+
+    <script src="assets/prism/prism.js"></script>
+    <script src="assets/script.js"></script>
+</body>
+</html>

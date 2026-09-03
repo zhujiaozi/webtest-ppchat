@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>第 7 章：常见问题与答题思路</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <nav class="chapter-nav">
+        <a href="index.html">目录</a>
+        <a href="06-部署与上线.html">← 上一章</a>
+    </nav>
+    <main>
+        <h1>第 7 章：常见问题与答题思路</h1>
+        
+        <div class="intro-box">
+            <h2>答辩核心原则</h2>
+            <ul>
+                <li>不要只说"做了什么"，要说"为什么这样做"</li>
+                <li>主动展示技术亮点，不要等老师问</li>
+                <li>承认不足并说明改进方向</li>
+                <li>用具体例子，不要空谈概念</li>
+            </ul>
+        </div>
+
+        <h2>高频问题速查</h2>
+
+        <h3>Q1: 项目最大的技术难点？</h3>
+        <div class="callout callout-info">
+            <strong>推荐回答（语音模块）：</strong>
+            <ul>
+                <li>难点1：浏览器麦克风权限需要 HTTPS，最初部署时没配置导致功能失效</li>
+                <li>难点2：语音 Base64 编码后超过 WebSocket 默认 buffer 限制（64KB）</li>
+                <li>难点3：最初把音频存数据库导致严重膨胀</li>
+                <li>解决：配置 HTTPS、增大 buffer 到 1MB、限制时长 10 秒、改用文件系统存储</li>
+            </ul>
+        </div>
+
+        <h3>Q2: 为什么不用 Spring Security？</h3>
+        <div class="callout callout-info">
+            <strong>推荐回答：</strong>
+            <p>采用 Session + 自定义拦截器实现认证，原因：</p>
+            <ul>
+                <li>项目需求相对简单，只需登录/登出和权限拦截</li>
+                <li>自定义拦截器更直观，容易理解和调试</li>
+                <li>避免 Spring Security 的复杂配置</li>
+            </ul>
+        </div>
+
+        <h3>Q3: 好友关系为什么双向存储？</h3>
+        <div class="callout callout-info">
+            <strong>推荐回答：</strong>
+            <p>A 加 B 为好友时，同时插入 (A, B) 和 (B, A) 两条记录</p>
+            <p><strong>优点：</strong>查询效率高，WHERE user_id = A 无需 UNION；删除同时删两条，保持一致性</p>
+            <p><strong>缺点：</strong>占用存储空间多，但对好友数量不大的场景可接受</p>
+        </div>
+
+        <h3>Q4: 私聊和群聊有什么不同？</h3>
+        <div class="callout callout-info">
+            <table>
+                <tr><th></th><th>私聊</th><th>群聊</th></tr>
+                <tr><td>发送</td><td>/app/chat/private</td><td>/app/chat/group</td></tr>
+                <tr><td>接收</td><td>/user/queue/private</td><td>/topic/group/{id}</td></tr>
+                <tr><td>方式</td><td>点对点（一对一）</td><td>广播（一对多）</td></tr>
+            </table>
+        </div>
+
+        <h3>Q5: WebSocket 和 HTTP 轮询有什么区别？</h3>
+        <div class="callout callout-info">
+            <p><strong>HTTP 轮询：</strong>客户端反复请求，有延迟，服务器压力大</p>
+            <p><strong>WebSocket：</strong>一次连接持续通信，实时，服务器主动推送</p>
+        </div>
+
+        <h3>Q6: 如果用户量很大怎么优化？</h3>
+        <div class="callout callout-info">
+            <ul>
+                <li>引入 Redis 缓存好友列表、用户信息</li>
+                <li>群聊消息通过 MQ 异步分发</li>
+                <li>数据库读写分离、消息表按时间分片</li>
+                <li>使用对象存储（OSS）替代本地文件</li>
+                <li>WebSocket 多实例 + 消息路由层</li>
+            </ul>
+        </div>
+
+        <h3>Q7: 项目有哪些不足？</h3>
+        <div class="callout callout-warning">
+            <strong>主动说不足显示深度：</strong>
+            <ul>
+                <li>安全性：密码重置应该加验证码</li>
+                <li>性能：缺少缓存层</li>
+                <li>可扩展性：单体架构难以水平扩展</li>
+                <li>前端：原生 JS 开发效率低</li>
+                <li>测试：缺少压力测试</li>
+            </ul>
+        </div>
+
+        <h3>Q8: 你从这个项目学到了什么？</h3>
+        <div class="callout callout-tip">
+            <p><strong>技术层面：</strong>深入理解 WebSocket 实时通信、文件处理、数据库设计</p>
+            <p><strong>工程层面：</strong>经历了从本地开发到线上部署的完整流程，学会排查线上问题</p>
+        </div>
+
+        <h2>答辩技巧</h2>
+        <div class="key-point">
+            <strong>黄金法则：</strong>
+            <ol>
+                <li>开场主动介绍：项目背景 → 技术栈 → 核心功能 → 技术亮点</li>
+                <li>讲故事：说"遇到什么问题、怎么解决的"</li>
+                <li>展示代码：准备 1-2 段核心代码片段主动讲解</li>
+                <li>现场演示：最好演示一个完整流程</li>
+                <li>承认不足：主动说不足和改进方向</li>
+            </ol>
+        </div>
+
+        <h2>最后检查清单</h2>
+        <ul>
+            <li>☐ 线上地址能访问（https://pp.evog.top）</li>
+            <li>☐ 测试账号准备好（至少两个）</li>
+            <li>☐ 后台账号记住（admin/admin123）</li>
+            <li>☐ 能说出 1-2 个技术难点和解决方案</li>
+            <li>☐ 能画出 WebSocket 消息流程图</li>
+            <li>☐ 能说出项目不足和改进方向</li>
+        </ul>
+
+        <div class="intro-box">
+            <h2>祝答辩顺利！</h2>
+            <p>你们做了一个完整的项目，从设计到上线。展示出你们的思考和努力，结果一定不会差。</p>
+        </div>
+    </main>
+    <footer class="chapter-footer">
+        <nav class="chapter-nav bottom">
+            <a href="06-部署与上线.html">← 上一章</a>
+            <a href="index.html">返回目录</a>
+        </nav>
+    </footer>
+    <script src="assets/script.js"></script>
+</body>
+</html>

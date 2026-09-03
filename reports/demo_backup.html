@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PP Chat - 技术架构演示</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#000;--text:#fff;--accent:#00d4ff}
+[data-theme="light"]{--bg:#fff;--text:#000;--accent:#0066cc}
+body{font-family:sans-serif;background:var(--bg);color:var(--text);transition:all 0.3s}
+.theme-toggle{position:fixed;top:30px;right:30px;z-index:1000;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.theme-toggle:hover{transform:scale(1.1)}
+.hero{height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.hero h1{font-size:6vw;font-weight:700;background:linear-gradient(90deg,var(--accent),#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section{min-height:100vh;padding:10vh 5vw;display:flex;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;max-width:1400px}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:30px;transition:all 0.3s}
+.card:hover{transform:translateY(-5px);border-color:var(--accent)}
+.card h3{color:var(--accent);margin-bottom:12px}
+h2{font-size:3rem;text-align:center;margin-bottom:60px}
+.flow{max-width:900px}
+.flow-item{display:flex;gap:25px;margin:25px 0;padding:25px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px}
+.flow-item .num{min-width:50px;height:50px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+code{background:rgba(124,58,237,0.15);padding:3px 8px;border-radius:4px;color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;max-width:1200px}
+.stat{text-align:center;padding:30px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px}
+.stat .value{font-size:2.5rem;font-weight:700;color:var(--accent)}
+[data-theme="light"] .card{background:#fff;border-color:#e0e0e0}
+[data-theme="light"] .flow-item{background:#fff;border-color:#e0e0e0}
+[data-theme="light"] .stat{background:#fff;border-color:#e0e0e0}
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+<div class="hero"><h1>PP Chat</h1><p>Spring Boot + WebSocket 实时聊天系统</p></div>
+<div class="section"><div style="max-width:1400px;width:100%"><h2>技术栈</h2><div class="grid">
+<div class="card"><h3>Spring Boot 4.0.6</h3><p>Java 21 后端框架，REST API + WebSocket</p></div>
+<div class="card"><h3>WebSocket STOMP</h3><p>实时双向通信，1MB 缓冲区支持语音传输</p></div>
+<div class="card"><h3>MySQL 8.0 + JPA</h3><p>10 张核心表，好友双向存储设计</p></div>
+<div class="card"><h3>原生 JS SPA</h3><p>2964 行代码，8 个模块化文件</p></div>
+<div class="card"><h3>Session 认证</h3><p>自定义拦截器，BCrypt 密码加密</p></div>
+<div class="card"><h3>Nginx + HTTPS</h3><p>Lets Encrypt 证书，端口仅监听 127.0.0.1</p></div>
+</div></div></div>
+<div class="section"><div class="flow"><h2>私聊消息流转</h2>
+<div class="flow-item"><div class="num">1</div><div class="text"><h4>前端发送</h4><p><code>stompClient.send('/app/chat/private')</code></p></div></div>
+<div class="flow-item"><div class="num">2</div><div class="text"><h4>后端处理</h4><p>ChatController 校验保存到 pp_private_message 表</p></div></div>
+<div class="flow-item"><div class="num">3</div><div class="text"><h4>实时推送</h4><p><code>convertAndSendToUser(receiverId, "/queue/private")</code></p></div></div>
+<div class="flow-item"><div class="num">4</div><div class="text"><h4>客户端接收</h4><p>订阅 /user/queue/private 实时渲染</p></div></div>
+</div></div>
+<div class="section"><div class="flow"><h2>语音消息（技术亮点）</h2>
+<div class="flow-item"><div class="num">1</div><div class="text"><h4>MediaRecorder 录音</h4><p>audio/webm;codecs=opus，限制 10 秒</p></div></div>
+<div class="flow-item"><div class="num">2</div><div class="text"><h4>Base64 传输</h4><p>Data URL 通过 WebSocket 发送（约 68KB）</p></div></div>
+<div class="flow-item"><div class="num">3</div><div class="text"><h4>文件落盘</h4><p>FileService 解码保存到 /uploads/audio/</p></div></div>
+<div class="flow-item"><div class="num">4</div><div class="text"><h4>数据库存 URL</h4><p>只存路径，前端 new Audio(url).play() 播放</p></div></div>
+<p style="margin-top:20px;padding:20px;background:rgba(255,255,255,0.05);border-left:4px solid var(--accent);border-radius:8px"><strong>关键：</strong>三处缓冲区同步扩大到 1MB</p>
+</div></div>
+<div class="section"><div><h2>项目数据</h2><div class="stats">
+<div class="stat"><div class="value">10</div><div class="label">核心数据表</div></div>
+<div class="stat"><div class="value">51</div><div class="label">后端 Java 类</div></div>
+<div class="stat"><div class="value">2964</div><div class="label">前端 JS 行数</div></div>
+<div class="stat"><div class="value">8</div><div class="label">模块化文件</div></div>
+<div class="stat"><div class="value">10</div><div class="label">测试类</div></div>
+<div class="stat"><div class="value">62MB</div><div class="label">打包后 JAR</div></div>
+</div></div></div>
+<div style="height:40vh;display:flex;align-items:center;justify-content:center"><div style="text-align:center">
+<h1 style="font-size:2.5rem">https://pp.evog.top</h1>
+<p>已部署上线 · github.com/zhujiaozi/webtest-ppchat</p>
+</div></div>
+<script>
+function toggleTheme(){const html=document.documentElement;const current=html.getAttribute("data-theme");const next=current==="light"?"dark":"light";html.setAttribute("data-theme",next);localStorage.setItem("theme",next);document.querySelector(".theme-toggle").textContent=next==="light"?"🌙":"☀️";}
+const saved=localStorage.getItem("theme")||"dark";document.documentElement.setAttribute("data-theme",saved);document.querySelector(".theme-toggle").textContent=saved==="light"?"🌙":"☀️";
+</script></body></html>

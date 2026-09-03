@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PP Chat - 技术架构演示</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#000;--text:#fff;--accent:#00d4ff}
+[data-theme="light"]{--bg:#fff;--text:#000;--accent:#0066cc}
+body{font-family:sans-serif;background:var(--bg);color:var(--text);transition:all 0.3s}
+.theme-toggle{position:fixed;top:30px;right:30px;z-index:1000;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.theme-toggle:hover{transform:scale(1.1)}
+.hero{height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.hero h1{font-size:6vw;font-weight:700;background:linear-gradient(90deg,var(--accent),#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section{min-height:100vh;padding:10vh 5vw;display:flex;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;max-width:1400px}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:30px;transition:all 0.3s}
+.card:hover{transform:translateY(-5px);border-color:var(--accent)}
+.card h3{color:var(--accent);margin-bottom:12px}
+h2{font-size:3rem;text-align:center;margin-bottom:60px}
+.flow{max-width:900px}
+.flow-item{display:flex;gap:25px;margin:25px 0;padding:25px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px}
+.flow-item .num{min-width:50px;height:50px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+code{background:rgba(124,58,237,0.15);padding:3px 8px;border-radius:4px;color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;max-width:1200px}
+.stat{text-align:center;padding:30px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px}
+.stat .value{font-size:2.5rem;font-weight:700;color:var(--accent)}
+[data-theme="light"] .card{background:#fff;border-color:#e0e0e0}
+[data-theme="light"] .flow-item{background:#fff;border-color:#e0e0e0}
+[data-theme="light"] .stat{background:#fff;border-color:#e0e0e0}
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+<div class="hero"><h1>PP Chat</h1><p>Spring Boot + WebSocket 实时聊天系统</p></div>
+<div class="section"><div style="max-width:1400px;width:100%"><h2>技术栈</h2><div class="grid">
+<div class="card"><h3>Spring Boot 4.0.6</h3><p>Java 21 后端框架，REST API + WebSocket</p></div>
+<div class="card"><h3>WebSocket STOMP</h3><p>实时双向通信，1MB 缓冲区支持语音传输</p></div>
+<div class="card"><h3>MySQL 8.0 + JPA</h3><p>10 张核心表，好友双向存储设计</p></div>
+<div class="card"><h3>原生 JS SPA</h3><p>Thymeleaf 模板引擎，8 个模块化 JS 文件</p></div>
+<div class="card"><h3>Session 认证</h3><p>自定义拦截器，BCrypt 密码加密</p></div>
+<div class="card"><h3>Nginx + HTTPS</h3><p>Lets Encrypt 证书，端口仅监听 127.0.0.1</p></div>
+</div></div></div>
+<div class="section"><div class="flow"><h2>私聊消息流转（群聊同理）</h2>
+<div class="flow-item"><div class="num">1</div><div class="text"><h4>前端发送</h4><p>用户输入消息，点击发送。<code>stompClient.send('/app/chat/private', {}, JSON.stringify(message))</code></p></div></div>
+<div class="flow-item"><div class="num">2</div><div class="text"><h4>后端接收</h4><p>ChatController 的 <code>@MessageMapping("/chat/private")</code> 接收消息</p></div></div>
+<div class="flow-item"><div class="num">3</div><div class="text"><h4>身份校验</h4><p>验证 Principal（WebSocket 握手时设置），确保发送者身份合法</p></div></div>
+<div class="flow-item"><div class="num">4</div><div class="text"><h4>保存数据库</h4><p>ChatService 将消息保存到 <code>pp_private_message</code> 表</p></div></div>
+<div class="flow-item"><div class="num">5</div><div class="text"><h4>实时推送</h4><p><code>messagingTemplate.convertAndSendToUser(receiverId, "/queue/private", message)</code></p></div></div>
+<div class="flow-item"><div class="num">6</div><div class="text"><h4>客户端接收</h4><p>接收者订阅 <code>/user/queue/private</code>，收到消息后实时渲染到聊天窗口</p></div></div>
+</div></div>
+<div class="section"><div class="flow"><h2>语音消息实现（技术亮点）</h2>
+<div class="flow-item"><div class="num">1</div><div class="text"><h4>申请麦克风权限</h4><p><code>navigator.mediaDevices.getUserMedia({audio: true})</code> 获取音频流（需 HTTPS）</p></div></div>
+<div class="flow-item"><div class="num">2</div><div class="text"><h4>MediaRecorder 录音</h4><p>创建 MediaRecorder，格式 <code>audio/webm;codecs=opus</code>，限制 10 秒防止文件过大</p></div></div>
+<div class="flow-item"><div class="num">3</div><div class="text"><h4>转 Base64</h4><p>录音结束后，通过 FileReader 将 Blob 转为 Base64 Data URL（约 68KB）</p></div></div>
+<div class="flow-item"><div class="num">4</div><div class="text"><h4>WebSocket 发送</h4><p>通过 STOMP 发送，需要 1MB 缓冲区支持（默认 64KB 不够）</p></div></div>
+<div class="flow-item"><div class="num">5</div><div class="text"><h4>后端解码</h4><p><code>FileService.saveBase64Audio()</code> 解码 Base64，保存到 <code>/uploads/audio/xxx.webm</code></p></div></div>
+<div class="flow-item"><div class="num">6</div><div class="text"><h4>数据库存 URL</h4><p>只存文件路径，避免数据库膨胀</p></div></div>
+<div class="flow-item"><div class="num">7</div><div class="text"><h4>播放</h4><p>接收者获取 URL，<code>new Audio(url).play()</code> 实时播放</p></div></div>
+</div></div>
+<div class="section"><div style="max-width:1400px;width:100%"><h2>核心功能模块</h2><div class="grid">
+<div class="card"><h3>用户认证</h3><p>注册、登录、忘记密码、Session 认证、BCrypt 密码加密</p></div>
+<div class="card"><h3>好友管理</h3><p>搜索用户、好友申请、分组管理、备注、移动、双向存储</p></div>
+<div class="card"><h3>私聊</h3><p>实时文本消息、未读计数、聊天记录搜索、导出 TXT</p></div>
+<div class="card"><h3>群聊</h3><p>创建群聊、群公告、邀请/申请机制、成员管理、实时广播</p></div>
+<div class="card"><h3>语音消息</h3><p>浏览器录音、Base64 传输、文件落盘、实时播放</p></div>
+<div class="card"><h3>后台管理</h3><p>独立管理员认证、仪表盘统计、数据维护、级联删除</p></div>
+</div></div></div>
+<div class="section"><div style="max-width:1400px;width:100%"><h2>数据库设计（10 张核心表）</h2><div class="grid">
+<div class="card"><h3>pp_user</h3><p>用户表，BCrypt 密码，登录统计</p></div>
+<div class="card"><h3>pp_friend_group</h3><p>好友分组，支持自定义分组</p></div>
+<div class="card"><h3>pp_friend</h3><p>好友关系，双向存储</p></div>
+<div class="card"><h3>pp_friend_request</h3><p>好友申请，状态流转</p></div>
+<div class="card"><h3>pp_private_message</h3><p>私聊消息，支持文本和语音</p></div>
+<div class="card"><h3>pp_group_chat</h3><p>群聊信息，群主、公告</p></div>
+<div class="card"><h3>pp_group_member</h3><p>群成员，角色权限</p></div>
+<div class="card"><h3>pp_group_message</h3><p>群聊消息，广播机制</p></div>
+<div class="card"><h3>pp_group_invitation</h3><p>群邀请/申请，type 区分</p></div>
+<div class="card"><h3>pp_admin</h3><p>管理员，独立认证</p></div>
+</div></div></div>
+<div class="section"><div style="max-width:1400px;width:100%"><h2>部署架构</h2><div class="grid">
+<div class="card"><h3>服务器环境</h3><p>Ubuntu 24.04 + OpenJDK 21</p></div>
+<div class="card"><h3>反向代理</h3><p>Nginx + Let's Encrypt SSL 自动续期</p></div>
+<div class="card"><h3>应用配置</h3><p>端口 127.0.0.1:10601，仅 Nginx 可访问</p></div>
+<div class="card"><h3>数据库</h3><p>远程 MySQL 8.0，HikariCP 连接池</p></div>
+<div class="card"><h3>文件存储</h3><p>/opt/pp-chat/uploads/ 存储语音和头像</p></div>
+<div class="card"><h3>启动方式</h3><p>nohup java -jar，生产配置 application-prod.yml</p></div>
+</div></div></div>
+<div style="height:50vh;display:flex;align-items:center;justify-content:center"><div style="text-align:center">
+<h1 style="font-size:3rem;margin-bottom:30px">https://pp.evog.top</h1>
+<p style="font-size:1.2rem">已部署上线 · 支持实时演示</p>
+<p style="font-size:1rem;opacity:0.7;margin-top:10px">github.com/zhujiaozi/webtest-ppchat</p>
+</div></div>
+<script>
+function toggleTheme(){const html=document.documentElement;const current=html.getAttribute("data-theme");const next=current==="light"?"dark":"light";html.setAttribute("data-theme",next);localStorage.setItem("theme",next);document.querySelector(".theme-toggle").textContent=next==="light"?"🌙":"☀️";}
+const saved=localStorage.getItem("theme")||"dark";document.documentElement.setAttribute("data-theme",saved);document.querySelector(".theme-toggle").textContent=saved==="light"?"🌙":"☀️";
+</script></body></html>

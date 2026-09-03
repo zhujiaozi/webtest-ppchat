@@ -1,0 +1,39 @@
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1e40af;
+  --accent: #0ea5e9;
+}
+
+.chapter-nav {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+code {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+pre code {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.callout-info {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.terminal {
+  background: #1e293b !important;
+  border: 1px solid #334155;
+}
+
+.terminal code {
+  background: transparent;
+}
+
+.terminal code::before {
+  content: "$ ";
+  color: #22c55e;
+  font-weight: bold;
+}
